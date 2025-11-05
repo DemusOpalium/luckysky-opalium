@@ -1,4 +1,3 @@
-# .github/workflows/build.yml – falls noch nicht so drin
 name: Build LuckySky-Opalium
 on:
   push: { branches: [ "main" ] }
@@ -8,10 +7,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with: { lfs: true }   # schadet nicht, auch wenn wir LFS hier nicht nutzen
+        with: { lfs: true }
+
+      - name: Ensure real Gradle wrapper JAR (guard)
+        run: |
+          if [ ! -s gradle/wrapper/gradle-wrapper.jar ] || [ $(stat -c%s gradle/wrapper/gradle-wrapper.jar) -lt 50000 ]; then
+            echo "Wrapper jar missing or too small, fetching from Maven Central..."
+            curl -L -o gradle/wrapper/gradle-wrapper.jar \
+              https://repo1.maven.org/maven2/org/gradle/gradle-wrapper/8.10.2/gradle-wrapper-8.10.2.jar
+          fi
+
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: '21', cache: gradle }
+
       - run: chmod +x ./gradlew
       - run: ./gradlew clean build --warning-mode all
+
       - uses: actions/upload-artifact@v4
         with: { name: luckysky-opalium, path: build/libs/*.jar }
