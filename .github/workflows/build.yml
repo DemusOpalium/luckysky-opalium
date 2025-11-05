@@ -14,30 +14,34 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          lfs: false   # LFS nicht nötig. Wir erzeugen die Wrapper-JAR im CI.
+          lfs: false   # Kein LFS nötig – wir erzeugen die Wrapper-JAR im CI.
 
       - name: Ensure wrapper properties exist
+        shell: bash
         run: |
+          set -euo pipefail
           mkdir -p gradle/wrapper
           if [ ! -f gradle/wrapper/gradle-wrapper.properties ]; then
             cat > gradle/wrapper/gradle-wrapper.properties <<'EOF'
-          distributionBase=GRADLE_USER_HOME
-          distributionPath=wrapper/dists
-          distributionUrl=https\://services.gradle.org/distributions/gradle-8.10.2-bin.zip
-          zipStoreBase=GRADLE_USER_HOME
-          zipStorePath=wrapper/dists
-          EOF
+distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+distributionUrl=https\://services.gradle.org/distributions/gradle-8.10.2-bin.zip
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists
+EOF
           fi
 
       - name: Prepare real Gradle wrapper JAR (extract from official ZIP)
+        shell: bash
         run: |
-          set -e
+          set -euo pipefail
           mkdir -p gradle/wrapper
           curl -L -o gradle-8.10.2-bin.zip https://services.gradle.org/distributions/gradle-8.10.2-bin.zip
-          # Extrahiere NUR die Wrapper-JAR direkt aus dem ZIP in den Zielpfad:
-          unzip -p gradle-8.10.2-bin.zip gradle-8.10.2/lib/plugins/gradle-wrapper-8.10.2.jar > gradle/wrapper/gradle-wrapper.jar
+          # Richtiger interner Pfad im ZIP ist gradle/lib/plugins/..., nicht gradle-8.10.2/...
+          unzip -p gradle-8.10.2-bin.zip gradle/lib/plugins/gradle-wrapper-8.10.2.jar > gradle/wrapper/gradle-wrapper.jar
           rm -f gradle-8.10.2-bin.zip
-          # Sanity-Check (muss groß sein, keine 554 Bytes):
+          # Sanity-Check: echte Datei muss > 50 KB sein (keine 554-Byte-Fehlerseite)
+          echo "Wrapper size: $(stat -c%s gradle/wrapper/gradle-wrapper.jar) bytes"
           test $(stat -c%s gradle/wrapper/gradle-wrapper.jar) -gt 50000
 
       - name: Setup Temurin JDK 21
@@ -47,9 +51,16 @@ jobs:
           java-version: '21'
           cache: gradle
 
-      - name: Make gradlew executable (LF ok)
+      - name: Make gradlew executable (normalize LF)
+        shell: bash
         run: |
-          git ls-files gradlew >/dev/null 2>&1 || true
+          set -euo pipefail
+          # Falls gradlew fehlt (sollte vorhanden sein), verhindern wir Absturz:
+          if [ ! -f ./gradlew ]; then
+            echo "::error file=gradlew::gradlew fehlt im Repo."
+            exit 1
+          fi
+          sed -i 's/\r$//' ./gradlew || true
           chmod +x ./gradlew
 
       - name: Build
