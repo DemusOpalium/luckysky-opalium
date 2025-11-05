@@ -3,4 +3,14 @@ main: de.opalium.luckysky.LuckySkyPlugin
 version: 0.1.0
 api-version: '1.21'
 author: DemusOpalium
-description: LuckySky mini-game tools for Opalium Haven
+description: LuckySky world tools and rig controller for Opalium Haven.
+
+commands:
+  ls:
+    description: LuckySky control command
+    usage: /ls <start|stop|reset|clean|rig_on|rig_off|plat|plat+|corridor|sign|bind|mode5|mode20|mode60|wither|taunt_on|taunt_off>
+    permission: luckysky.admin
+
+permissions:
+  luckysky.admin:
+    default: op
