@@ -14,33 +14,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Temurin JDK 21
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '21'
-          cache: 'gradle'
+          cache: gradle
 
-      - name: Build (use wrapper if present, otherwise download Gradle)
-        shell: bash
-        run: |
-          set -e
-          if [ -f gradle/wrapper/gradle-wrapper.jar ]; then
-            echo "Using Gradle Wrapper"
-            chmod +x gradlew || true
-            CMD="bash ./gradlew"
-          else
-            echo "Wrapper JAR missing – downloading Gradle 8.10.2..."
-            curl -sL -o gradle.zip https://services.gradle.org/distributions/gradle-8.10.2-bin.zip
-            unzip -q gradle.zip
-            CMD="./gradle-8.10.2/bin/gradle"
-          fi
-          $CMD --version
-          $CMD clean build
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Build with Gradle Wrapper
+        run: ./gradlew clean build
 
       - name: Upload plugin jar
-        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: luckysky-opalium
+          name: luckysky-opalium-jar
           path: build/libs/*.jar
