@@ -1,0 +1,17 @@
+name: LuckySky-Opalium
+version: "${version}"
+main: de.opalium.luckysky.LuckySkyPlugin
+api-version: "1.21"
+authors: [ "DemusOpalium" ]
+description: "${description}"
+website: "https://github.com/DemusOpalium/luckysky-opalium"
+
+commands:
+  ls:
+    description: LuckySky control root command
+    usage: "/ls <start|stop|reset|clean|rig_on|rig_off|plat|plat+|corridor|sign|bind|mode5|mode20|mode60|wither|taunt_on|taunt_off>"
+    aliases: [ luckysky ]
+permissions:
+  luckysky.admin:
+    default: op
+    description: Allows full control of LuckySky commands
