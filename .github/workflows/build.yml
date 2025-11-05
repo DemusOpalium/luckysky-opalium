@@ -14,7 +14,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          lfs: false   # Kein LFS nötig – wir erzeugen die Wrapper-JAR im CI.
+          lfs: false
 
       - name: Ensure wrapper properties exist
         shell: bash
@@ -31,16 +31,34 @@ zipStorePath=wrapper/dists
 EOF
           fi
 
+      - name: Download Gradle distribution
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "⬇️  Downloading Gradle 8.10.2 ..."
+          curl -L -o gradle-8.10.2-bin.zip https://services.gradle.org/distributions/gradle-8.10.2-bin.zip
+          echo "✅ Download complete (size: $(stat -c%s gradle-8.10.2-bin.zip) bytes)"
+
+      - name: DEBUG list ZIP contents (proof of internal path)
+        shell: bash
+        run: |
+          echo "Listing first 200 lines of ZIP contents to verify path:"
+          unzip -l gradle-8.10.2-bin.zip | head -n 200
+
       - name: Prepare real Gradle wrapper JAR (extract from official ZIP)
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p gradle/wrapper
-          curl -L -o gradle-8.10.2-bin.zip https://services.gradle.org/distributions/gradle-8.10.2-bin.zip
-          # Richtiger interner Pfad im ZIP ist gradle/lib/plugins/..., nicht gradle-8.10.2/...
-          unzip -p gradle-8.10.2-bin.zip gradle/lib/plugins/gradle-wrapper-8.10.2.jar > gradle/wrapper/gradle-wrapper.jar
+          # Finde dynamisch den korrekten Pfad im ZIP (funktioniert bei allen Gradle-Versionen)
+          WRAPPER_PATH=$(unzip -l gradle-8.10.2-bin.zip | grep "gradle-wrapper-8.10.2.jar" | awk '{print $4}' | head -n1)
+          echo "Detected wrapper path in ZIP: $WRAPPER_PATH"
+          if [ -z "$WRAPPER_PATH" ]; then
+            echo "::error::gradle-wrapper.jar not found inside ZIP!"
+            exit 11
+          fi
+          unzip -p gradle-8.10.2-bin.zip "$WRAPPER_PATH" > gradle/wrapper/gradle-wrapper.jar
           rm -f gradle-8.10.2-bin.zip
-          # Sanity-Check: echte Datei muss > 50 KB sein (keine 554-Byte-Fehlerseite)
           echo "Wrapper size: $(stat -c%s gradle/wrapper/gradle-wrapper.jar) bytes"
           test $(stat -c%s gradle/wrapper/gradle-wrapper.jar) -gt 50000
 
@@ -55,7 +73,6 @@ EOF
         shell: bash
         run: |
           set -euo pipefail
-          # Falls gradlew fehlt (sollte vorhanden sein), verhindern wir Absturz:
           if [ ! -f ./gradlew ]; then
             echo "::error file=gradlew::gradlew fehlt im Repo."
             exit 1
