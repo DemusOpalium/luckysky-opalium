@@ -3,7 +3,8 @@ name: build
 on:
   push:
     branches: [ "main" ]
-  workflow_dispatch: {}
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
   build:
@@ -13,20 +14,33 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up JDK 21
+      - name: Set up Temurin JDK 21
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
-          java-version: "21"
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'gradle'
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-
-      - name: Build with Gradle
-        run: ./gradlew clean build
+      - name: Build (use wrapper if present, otherwise download Gradle)
+        shell: bash
+        run: |
+          set -e
+          if [ -f gradle/wrapper/gradle-wrapper.jar ]; then
+            echo "Using Gradle Wrapper"
+            chmod +x gradlew || true
+            CMD="bash ./gradlew"
+          else
+            echo "Wrapper JAR missing – downloading Gradle 8.10.2..."
+            curl -sL -o gradle.zip https://services.gradle.org/distributions/gradle-8.10.2-bin.zip
+            unzip -q gradle.zip
+            CMD="./gradle-8.10.2/bin/gradle"
+          fi
+          $CMD --version
+          $CMD clean build
 
       - name: Upload plugin jar
+        if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: LuckySky-Opalium
+          name: luckysky-opalium
           path: build/libs/*.jar
