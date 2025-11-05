@@ -5,7 +5,6 @@ import de.opalium.luckysky.util.ConfigKeys;
 import de.opalium.luckysky.util.Messages;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
-import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.HashMap;
@@ -98,13 +97,7 @@ public class SessionManager {
             }
             if (remainingSeconds <= 0) {
                 stopSession();
-                Optional<World> optionalWorld = plugin.getGameWorld();
-                optionalWorld.ifPresent(world -> {
-                    String message = messages.format("session-stopped", null);
-                    for (Player player : world.getPlayers()) {
-                        player.sendMessage(message);
-                    }
-                });
+                plugin.getGameWorld().ifPresent(world -> messages.broadcast(world, "session-stopped", null));
                 return;
             }
             remainingSeconds--;

@@ -47,6 +47,7 @@ public class WitherService implements Listener {
         }
         World world = optionalWorld.get();
         Location spawnLocation = readSpawnLocation(world);
+        spawnLocation.getChunk().load();
         Wither wither = (Wither) world.spawnEntity(spawnLocation, EntityType.WITHER);
         this.witherId = wither.getUniqueId();
         if (tauntsEnabled) {

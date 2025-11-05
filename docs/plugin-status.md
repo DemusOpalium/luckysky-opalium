@@ -1,5 +1,7 @@
 # LuckySky-Opalium Plugin Status (Paper 1.21.1+)
 
+**Status:** ✅ READY – Core gameplay release (v0.2.0).
+
 ## Release: v0.2.0 Core
 - ✅ Builds via `gradle build`, producing `build/libs/LuckySky-Opalium-0.2.0.jar`.
 - ✅ Targets `api-version: "1.21"` and Java 21.

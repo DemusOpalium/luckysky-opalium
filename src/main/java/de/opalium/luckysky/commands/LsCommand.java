@@ -4,6 +4,7 @@ import de.opalium.luckysky.LuckySkyPlugin;
 import de.opalium.luckysky.core.SessionManager;
 import de.opalium.luckysky.util.ConfigKeys;
 import de.opalium.luckysky.util.Messages;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -14,7 +15,6 @@ import org.bukkit.util.StringUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -78,7 +78,8 @@ public class LsCommand implements CommandExecutor, TabCompleter {
     }
 
     private void handleStart(CommandSender sender) {
-        if (plugin.getGameWorld().isEmpty()) {
+        Optional<World> worldOptional = plugin.getGameWorld();
+        if (worldOptional.isEmpty()) {
             messages.send(sender, "world-missing");
             return;
         }
@@ -87,9 +88,8 @@ public class LsCommand implements CommandExecutor, TabCompleter {
             messages.send(sender, "session-already-running");
             return;
         }
-        Map<String, String> placeholders = new HashMap<>();
-        placeholders.put("minutes", String.valueOf(sessionManager.getCurrentModeMinutes()));
-        messages.send(sender, "session-started", placeholders);
+        Map<String, String> placeholders = Map.of("minutes", String.valueOf(sessionManager.getCurrentModeMinutes()));
+        notifySenderAndWorld(sender, worldOptional, "session-started", placeholders);
     }
 
     private void handleStop(CommandSender sender) {
@@ -98,7 +98,8 @@ public class LsCommand implements CommandExecutor, TabCompleter {
             messages.send(sender, "session-not-running");
             return;
         }
-        messages.send(sender, "session-stopped");
+        Optional<World> worldOptional = plugin.getGameWorld();
+        notifySenderAndWorld(sender, worldOptional, "session-stopped", null);
     }
 
     private void handleReset(CommandSender sender) {
@@ -108,8 +109,7 @@ public class LsCommand implements CommandExecutor, TabCompleter {
             return;
         }
         int removed = plugin.getWipeService().performHardWipe();
-        Map<String, String> placeholders = new HashMap<>();
-        placeholders.put("count", String.valueOf(removed));
+        Map<String, String> placeholders = Map.of("count", String.valueOf(removed));
         messages.send(sender, "hard-wipe-done", placeholders);
     }
 
@@ -120,8 +120,7 @@ public class LsCommand implements CommandExecutor, TabCompleter {
             return;
         }
         int removed = plugin.getWipeService().performSoftWipe();
-        Map<String, String> placeholders = new HashMap<>();
-        placeholders.put("count", String.valueOf(removed));
+        Map<String, String> placeholders = Map.of("count", String.valueOf(removed));
         messages.send(sender, "soft-wipe-done", placeholders);
     }
 
@@ -159,9 +158,10 @@ public class LsCommand implements CommandExecutor, TabCompleter {
             return;
         }
         World world = worldOptional.get();
+        Location center = plugin.getPlatformBuilder().getPlatformCenter(world);
         for (Player player : world.getPlayers()) {
-            player.setBedSpawnLocation(plugin.getPlatformBuilder().getPlatformCenter(world), true);
-            player.teleport(plugin.getPlatformBuilder().getPlatformCenter(world));
+            player.setBedSpawnLocation(center, true);
+            player.teleport(center);
         }
         messages.send(sender, "bind-done");
     }
@@ -171,8 +171,7 @@ public class LsCommand implements CommandExecutor, TabCompleter {
             messages.send(sender, "invalid-mode");
             return;
         }
-        Map<String, String> placeholders = new HashMap<>();
-        placeholders.put("minutes", String.valueOf(minutes));
+        Map<String, String> placeholders = Map.of("minutes", String.valueOf(minutes));
         messages.send(sender, "mode-set", placeholders);
     }
 
@@ -189,9 +188,10 @@ public class LsCommand implements CommandExecutor, TabCompleter {
             messages.send(sender, "wither-already-active");
             return;
         }
+        Optional<World> worldOptional = plugin.getGameWorld();
         boolean spawned = plugin.getWitherService().spawnWither();
         if (spawned) {
-            messages.send(sender, "wither-spawned");
+            notifySenderAndWorld(sender, worldOptional, "wither-spawned", null);
         } else {
             messages.send(sender, "wither-spawn-failed");
         }
@@ -210,11 +210,26 @@ public class LsCommand implements CommandExecutor, TabCompleter {
     }
 
     private void handleSign(CommandSender sender) {
-        if (plugin.getGameWorld().isEmpty()) {
+        Optional<World> worldOptional = plugin.getGameWorld();
+        if (worldOptional.isEmpty()) {
             messages.send(sender, "world-missing");
             return;
         }
         plugin.getPlatformBuilder().placeInfoSign();
         messages.send(sender, "sign-placed");
+    }
+
+    private void notifySenderAndWorld(CommandSender sender, Optional<World> worldOptional, String messageKey, Map<String, String> placeholders) {
+        World world = worldOptional.orElse(null);
+        Player playerSender = sender instanceof Player ? (Player) sender : null;
+
+        if (world != null) {
+            Player excluded = (playerSender != null && playerSender.getWorld().equals(world)) ? playerSender : null;
+            messages.broadcast(world, messageKey, placeholders, excluded);
+        }
+
+        if (playerSender == null || world == null || !playerSender.getWorld().equals(world)) {
+            messages.send(sender, messageKey, placeholders);
+        }
     }
 }

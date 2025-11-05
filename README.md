@@ -2,6 +2,8 @@
 
 Paper plugin providing the core LuckySky minigame controls for Opalium Haven.
 
+> **Status:** ✅ READY – v0.2.0 Core with functional session control, safe-platform tooling, wipes, Wither events, taunts, and optional info sign.
+
 ## Requirements
 - Paper 1.21.1 (tested on 1.21.10 runtime)
 - Java 21 (Temurin recommended)
@@ -54,4 +56,4 @@ gradle build
 The build produces `build/libs/LuckySky-Opalium-0.2.0.jar`.
 
 ## Status & Roadmap
-The v0.2.0 core release provides working commands, session handling, platform utilities, and Wither management. Upcoming work (GUI, scoreboard integration, Multiverse teleports) is tracked in [`docs/plugin-status.md`](docs/plugin-status.md).
+The v0.2.0 core release provides working commands, session handling, platform utilities, and Wither management. Upcoming work (GUI, scoreboard integration, Multiverse teleports) and the manual acceptance checklist are tracked in [`docs/plugin-status.md`](docs/plugin-status.md).

@@ -6,6 +6,7 @@ import de.opalium.luckysky.core.PlatformBuilder;
 import de.opalium.luckysky.core.SessionManager;
 import de.opalium.luckysky.core.WipeService;
 import de.opalium.luckysky.core.WitherService;
+import de.opalium.luckysky.util.ConfigKeys;
 import de.opalium.luckysky.util.Messages;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -89,7 +90,7 @@ public class LuckySkyPlugin extends JavaPlugin {
     }
 
     public Optional<World> getGameWorld() {
-        String worldName = getConfig().getString("world");
+        String worldName = getConfig().getString(ConfigKeys.WORLD);
         if (worldName == null || worldName.isEmpty()) {
             getLogger().severe("Configured world name is empty.");
             return Optional.empty();

@@ -2,10 +2,12 @@ package de.opalium.luckysky.util;
 
 import de.opalium.luckysky.LuckySkyPlugin;
 import org.bukkit.ChatColor;
+import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,5 +52,19 @@ public class Messages {
 
     public void send(CommandSender sender, String key, Map<String, String> placeholders) {
         sender.sendMessage(format(key, placeholders));
+    }
+
+    public void broadcast(World world, String key, Map<String, String> placeholders) {
+        broadcast(world, key, placeholders, null);
+    }
+
+    public void broadcast(World world, String key, Map<String, String> placeholders, Player exclude) {
+        String message = format(key, placeholders);
+        for (Player player : world.getPlayers()) {
+            if (exclude != null && player.getUniqueId().equals(exclude.getUniqueId())) {
+                continue;
+            }
+            player.sendMessage(message);
+        }
     }
 }
