@@ -1,2 +1,0 @@
-      - name: Build with Gradle (wrapper)
-        run: bash gradlew clean build
