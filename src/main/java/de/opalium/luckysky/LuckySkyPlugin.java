@@ -1,58 +1,108 @@
 package de.opalium.luckysky;
 
-import org.bukkit.ChatColor;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
+import de.opalium.luckysky.commands.LsCommand;
+import de.opalium.luckysky.core.CorridorCleaner;
+import de.opalium.luckysky.core.PlatformBuilder;
+import de.opalium.luckysky.core.SessionManager;
+import de.opalium.luckysky.core.WipeService;
+import de.opalium.luckysky.core.WitherService;
+import de.opalium.luckysky.util.Messages;
+import org.bukkit.Bukkit;
+import org.bukkit.World;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public final class LuckySkyPlugin extends JavaPlugin {
+import java.util.Optional;
+import java.util.logging.Level;
+
+public class LuckySkyPlugin extends JavaPlugin {
+    private Messages messages;
+    private SessionManager sessionManager;
+    private PlatformBuilder platformBuilder;
+    private CorridorCleaner corridorCleaner;
+    private WipeService wipeService;
+    private WitherService witherService;
 
     @Override
     public void onEnable() {
-        getLogger().info("LuckySky-Opalium enabled.");
+        saveDefaultConfig();
+        saveResource("messages.yml", false);
+
+        this.messages = new Messages(this);
+        try {
+            this.messages.load();
+        } catch (Exception ex) {
+            getLogger().log(Level.SEVERE, "Failed to load messages.yml", ex);
+        }
+
+        this.platformBuilder = new PlatformBuilder(this);
+        this.corridorCleaner = new CorridorCleaner(this);
+        this.wipeService = new WipeService(this);
+        this.witherService = new WitherService(this);
+        Bukkit.getPluginManager().registerEvents(this.witherService, this);
+        this.sessionManager = new SessionManager(this);
+
+        LsCommand lsCommand = new LsCommand(this);
+        if (getCommand("ls") != null) {
+            getCommand("ls").setExecutor(lsCommand);
+            getCommand("ls").setTabCompleter(lsCommand);
+        } else {
+            getLogger().severe("Command 'ls' is not defined in plugin.yml");
+        }
+
+        getLogger().info("LuckySky-Opalium v" + getDescription().getVersion() + " enabled.");
     }
 
     @Override
     public void onDisable() {
+        if (this.sessionManager != null) {
+            this.sessionManager.shutdown();
+        }
+        if (this.witherService != null) {
+            this.witherService.shutdown();
+        }
         getLogger().info("LuckySky-Opalium disabled.");
     }
 
-    @Override
-    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        if (!cmd.getName().equalsIgnoreCase("ls")) return false;
-
-        if (!sender.hasPermission("luckysky.admin")) {
-            sender.sendMessage(ChatColor.RED + "Keine Rechte.");
-            return true;
-        }
-
-        if (args.length == 0) {
-            sender.sendMessage(ChatColor.AQUA + "⛯ LuckySky: /ls start • stop • reset • clean • rig_on • rig_off • plat • plat+ • corridor • sign • bind • mode5 • mode20 • mode60 • wither • taunt_on • taunt_off");
-            return true;
-        }
-
-        String sub = args[0].toLowerCase();
-
-        switch (sub) {
-            case "start" -> sender.sendMessage(ok("Start (Phase=1) – TODO implement"));
-            case "stop" -> sender.sendMessage(ok("Stop (Phase=0) – TODO implement"));
-            case "reset", "clean" -> sender.sendMessage(ok("Field clear / Hard wipe – TODO implement"));
-            case "rig_on" -> sender.sendMessage(ok("Build console rig – TODO implement"));
-            case "rig_off" -> sender.sendMessage(ok("Remove console rig – TODO implement"));
-            case "plat" -> sender.sendMessage(ok("Safe platform 3+1 – TODO implement"));
-            case "plat+" -> sender.sendMessage(ok("Safe platform 3×3 – TODO implement"));
-            case "corridor" -> sender.sendMessage(ok("Corridor clear – TODO implement"));
-            case "sign" -> sender.sendMessage(ok("Warp sign + setwarp – TODO implement"));
-            case "bind" -> sender.sendMessage(ok("Bind all spawnpoints – TODO implement"));
-            case "mode5", "mode20", "mode60" -> sender.sendMessage(ok("Set duration – TODO implement"));
-            case "wither" -> sender.sendMessage(ok("Summon Wither – TODO implement"));
-            case "taunt_on", "taunt_off" -> sender.sendMessage(ok("Wither taunts toggle – TODO implement"));
-            default -> sender.sendMessage(ChatColor.GRAY + "Unbekanntes Subcommand. /ls für Hilfe.");
-        }
-        return true;
+    public Messages getMessages() {
+        return messages;
     }
 
-    private String ok(String msg) {
-        return ChatColor.GREEN + "OK: " + ChatColor.WHITE + msg;
+    public SessionManager getSessionManager() {
+        return sessionManager;
+    }
+
+    public PlatformBuilder getPlatformBuilder() {
+        return platformBuilder;
+    }
+
+    public CorridorCleaner getCorridorCleaner() {
+        return corridorCleaner;
+    }
+
+    public WipeService getWipeService() {
+        return wipeService;
+    }
+
+    public WitherService getWitherService() {
+        return witherService;
+    }
+
+    public Optional<World> getGameWorld() {
+        String worldName = getConfig().getString("world");
+        if (worldName == null || worldName.isEmpty()) {
+            getLogger().severe("Configured world name is empty.");
+            return Optional.empty();
+        }
+        World world = Bukkit.getWorld(worldName);
+        if (world == null) {
+            getLogger().severe("LuckySky world '" + worldName + "' not loaded.");
+            return Optional.empty();
+        }
+        return Optional.of(world);
+    }
+
+    public FileConfiguration getConfigData() {
+        return getConfig();
     }
 }

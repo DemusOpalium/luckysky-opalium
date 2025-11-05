@@ -3,8 +3,8 @@ plugins {
 }
 
 group = "de.opalium"
-version = "0.1.0-SNAPSHOT"
-description = "Paper plugin for LuckySky (start/stop/reset, safe platform, wipes, wither, GUI)"
+version = "0.2.0"
+description = "LuckySky-Opalium core controls for Opalium Haven"
 
 java {
     toolchain {

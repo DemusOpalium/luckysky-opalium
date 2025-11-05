@@ -1,16 +1,18 @@
-name: LuckySkyOpalium
+name: LuckySky-Opalium
 main: de.opalium.luckysky.LuckySkyPlugin
-version: 0.1.0
-api-version: '1.21'
+version: ${version}
+api-version: "1.21"
 author: DemusOpalium
-description: LuckySky world tools and rig controller for Opalium Haven.
+description: ${description}
 
 commands:
   ls:
-    description: LuckySky control command
-    usage: /ls <start|stop|reset|clean|rig_on|rig_off|plat|plat+|corridor|sign|bind|mode5|mode20|mode60|wither|taunt_on|taunt_off>
+    description: LuckySky Verwaltungsbefehle
+    usage: /ls <start|stop|reset|clean|plat|plat+|corridor|sign|bind|mode5|mode20|mode60|wither|taunt_on|taunt_off>
     permission: luckysky.admin
+    aliases: [luckysky]
 
 permissions:
   luckysky.admin:
+    description: Zugriff auf alle LuckySky Verwaltungsbefehle
     default: op
