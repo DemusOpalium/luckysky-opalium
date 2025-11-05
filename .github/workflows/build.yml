@@ -9,79 +9,26 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          lfs: false
 
-      - name: Ensure wrapper properties exist
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p gradle/wrapper
-          if [ ! -f gradle/wrapper/gradle-wrapper.properties ]; then
-            cat > gradle/wrapper/gradle-wrapper.properties <<'EOF'
-distributionBase=GRADLE_USER_HOME
-distributionPath=wrapper/dists
-distributionUrl=https\://services.gradle.org/distributions/gradle-8.10.2-bin.zip
-zipStoreBase=GRADLE_USER_HOME
-zipStorePath=wrapper/dists
-EOF
-          fi
-
-      - name: Download Gradle distribution
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo "⬇️  Downloading Gradle 8.10.2 ..."
-          curl -L -o gradle-8.10.2-bin.zip https://services.gradle.org/distributions/gradle-8.10.2-bin.zip
-          echo "✅ Download complete (size: $(stat -c%s gradle-8.10.2-bin.zip) bytes)"
-
-      - name: DEBUG list ZIP contents (proof of internal path)
-        shell: bash
-        run: |
-          echo "Listing first 200 lines of ZIP contents to verify path:"
-          unzip -l gradle-8.10.2-bin.zip | head -n 200
-
-      - name: Prepare real Gradle wrapper JAR (extract from official ZIP)
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p gradle/wrapper
-          # Finde dynamisch den korrekten Pfad im ZIP (funktioniert bei allen Gradle-Versionen)
-          WRAPPER_PATH=$(unzip -l gradle-8.10.2-bin.zip | grep "gradle-wrapper-8.10.2.jar" | awk '{print $4}' | head -n1)
-          echo "Detected wrapper path in ZIP: $WRAPPER_PATH"
-          if [ -z "$WRAPPER_PATH" ]; then
-            echo "::error::gradle-wrapper.jar not found inside ZIP!"
-            exit 11
-          fi
-          unzip -p gradle-8.10.2-bin.zip "$WRAPPER_PATH" > gradle/wrapper/gradle-wrapper.jar
-          rm -f gradle-8.10.2-bin.zip
-          echo "Wrapper size: $(stat -c%s gradle/wrapper/gradle-wrapper.jar) bytes"
-          test $(stat -c%s gradle/wrapper/gradle-wrapper.jar) -gt 50000
-
-      - name: Setup Temurin JDK 21
+      - name: Setup Java 21
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
-          cache: gradle
 
-      - name: Make gradlew executable (normalize LF)
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [ ! -f ./gradlew ]; then
-            echo "::error file=gradlew::gradlew fehlt im Repo."
-            exit 1
-          fi
-          sed -i 's/\r$//' ./gradlew || true
-          chmod +x ./gradlew
+      # WICHTIG: First-Party Gradle Action – installiert Gradle 8.10.2,
+      # cached Gradle Home & Dependencies und setzt "gradle" in PATH.
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          gradle-version: 8.10.2
 
+      # Baue mit "gradle" (NICHT gradlew). Kein Wrapper mehr nötig.
       - name: Build
-        run: ./gradlew clean build --warning-mode all
+        run: gradle clean build --warning-mode all
 
       - name: Upload plugin jar
         uses: actions/upload-artifact@v4
