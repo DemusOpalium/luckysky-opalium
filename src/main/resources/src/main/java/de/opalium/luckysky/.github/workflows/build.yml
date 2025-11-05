@@ -1,0 +1,33 @@
+name: build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Temurin JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Set up Gradle 8.10
+        uses: gradle/gradle-build-action@v3
+        with:
+          gradle-version: "8.10"
+
+      - name: Build with Gradle
+        run: gradle build --stacktrace
+
+      - name: Upload plugin jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: LuckySky-Opalium-jar
+          path: build/libs/*.jar
