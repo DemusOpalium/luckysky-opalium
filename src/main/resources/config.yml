@@ -1,0 +1,49 @@
+world: "LuckySky"
+platform:
+  y: 201
+  center: [-2, 2]
+  material: "BARRIER"
+  size_base: 1
+  size_plus: 3
+corridor:
+  radius: 6
+  height: 8
+wipes:
+  soft:
+    kill:
+      - "minecraft:item"
+      - "minecraft:area_effect_cloud"
+      - "minecraft:armor_stand"
+    distance: 300
+  hard:
+    kill:
+      - "minecraft:item"
+      - "minecraft:area_effect_cloud"
+      - "minecraft:armor_stand"
+      - "minecraft:wither"
+    distance: 5000
+session:
+  default_mode_minutes: 20
+  allowed_modes: [5, 20, 60]
+wither:
+  enabled: true
+  spawn:
+    x: 0
+    y: 210
+    z: 0
+  taunts:
+    enabled: true
+    interval_seconds: 20
+    titles: true
+    actionbar: true
+    sounds: true
+logging:
+  debug: false
+sign:
+  enabled: true
+  offset: [0, 1, -2]
+  lines:
+    - "&5LuckySky"
+    - "&7Warp-Plattform"
+    - "&f/ls start"
+    - "&8Opalium Haven"
