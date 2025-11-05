@@ -27,7 +27,6 @@ public class LuckySkyPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         saveDefaultConfig();
-        saveResource("messages.yml", false);
 
         this.messages = new Messages(this);
         try {
