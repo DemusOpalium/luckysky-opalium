@@ -19,14 +19,11 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      # WICHTIG: First-Party Gradle Action – installiert Gradle 8.10.2,
-      # cached Gradle Home & Dependencies und setzt "gradle" in PATH.
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
         with:
           gradle-version: 8.10.2
 
-      # Baue mit "gradle" (NICHT gradlew). Kein Wrapper mehr nötig.
       - name: Build
         run: gradle clean build --warning-mode all
 
