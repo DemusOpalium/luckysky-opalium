@@ -1,0 +1,19 @@
+name: pr-autoupdate
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+permissions:
+  contents: write
+jobs:
+  update:
+    if: github.event.pull_request.base.ref == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - name: Update branch from main
+        uses: peter-evans/branch-update@v2
+        with:
+          base: main
+          head: ${{ github.event.pull_request.head.ref }}
