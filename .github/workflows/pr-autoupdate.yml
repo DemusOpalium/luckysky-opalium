@@ -1,0 +1,20 @@
+name: pr-autoupdate
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    # Nur PRs aus demselben Repo (keine Forks)
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fast-forward PR branch from base
+        uses: peter-evans/update-branch@v3
+        with:
+          merge-method: fast-forward
