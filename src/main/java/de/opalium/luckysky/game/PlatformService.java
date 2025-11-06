@@ -2,8 +2,10 @@ package de.opalium.luckysky.game;
 
 import de.opalium.luckysky.LuckySkyPlugin;
 import de.opalium.luckysky.model.Settings;
+import de.opalium.luckysky.model.Settings.CleanSpec;
 import de.opalium.luckysky.model.Settings.PlatformSpec;
 import de.opalium.luckysky.model.Settings.Vec3;
+import de.opalium.luckysky.model.Settings.WarpSignSpec;
 import de.opalium.luckysky.util.Worlds;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -20,25 +22,55 @@ public class PlatformService {
     }
 
     public void placeBase() {
-        PlatformBuilder builder = newBuilder();
         Settings settings = plugin.settings();
-        builder.placeBase(settings.platformHalfSize());
+        PlatformSpec spec = settings.platform();
+        World world = Worlds.require(settings.world);
+        clearArea(world, spec, settings.warpSign());
+        PlatformBuilder builder = new PlatformBuilder(world, spec.center().x(), spec.center().y(), spec.center().z());
+        builder.placeBase(spec.halfSize());
     }
 
     public void placeExtended() {
-        PlatformBuilder builder = newBuilder();
         Settings settings = plugin.settings();
-        int baseHalfSize = settings.platformHalfSize();
+        PlatformSpec spec = settings.platform();
+        World world = Worlds.require(settings.world);
+        clearArea(world, spec, settings.warpSign());
+        PlatformBuilder builder = new PlatformBuilder(world, spec.center().x(), spec.center().y(), spec.center().z());
+        int baseHalfSize = spec.halfSize();
         builder.placeBase(baseHalfSize);
         builder.extend(baseHalfSize + 1);
     }
 
-    private PlatformBuilder newBuilder() {
-        Settings settings = plugin.settings();
-        World world = Worlds.require(settings.world);
-        PlatformSpec spec = settings.platform();
+    private void clearArea(World world, PlatformSpec spec, WarpSignSpec warpSign) {
+        CleanSpec clean = spec.clean();
+        if (clean == null) {
+            return;
+        }
+        int radius = Math.max(0, clean.radius());
+        if (radius == 0) {
+            return;
+        }
+        int minY = Math.min(clean.yFrom(), clean.yTo());
+        int maxY = Math.max(clean.yFrom(), clean.yTo());
         Vec3 center = spec.center();
-        return new PlatformBuilder(world, center.x(), center.y(), center.z());
+        Vec3 warpPos = warpSign != null ? warpSign.position() : null;
+        boolean protect = warpSign != null && warpSign.protectArea();
+        for (int x = center.x() - radius; x <= center.x() + radius; x++) {
+            for (int z = center.z() - radius; z <= center.z() + radius; z++) {
+                for (int y = minY; y <= maxY; y++) {
+                    if (protect && warpPos != null
+                            && Math.abs(x - warpPos.x()) <= 1
+                            && Math.abs(y - warpPos.y()) <= 1
+                            && Math.abs(z - warpPos.z()) <= 1) {
+                        continue;
+                    }
+                    Block block = world.getBlockAt(x, y, z);
+                    if (block.getType() != Material.AIR) {
+                        block.setType(Material.AIR, false);
+                    }
+                }
+            }
+        }
     }
 
     private static final class PlatformBuilder {
