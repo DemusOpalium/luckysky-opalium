@@ -6,6 +6,7 @@ lucky:
   interval_ticks: 160
   require_air_at_target: true
   variant: "RANDOM"   # wird an LuckyBlock-Command/API übergeben
+  variants_available: ["RANDOM", "CLASSIC", "CHAOS"]
 
 platform:
   big_3x3: true
@@ -39,6 +40,7 @@ wipes:
     armorstand_radius: 5000
 
 rewards:
+  mode: "all"  # "all" oder "killer"
   on_boss_kill:
     commands:
       - "eco give %player% 5000"
@@ -46,6 +48,9 @@ rewards:
   on_fail:
     commands:
       - "tellraw %player% {\"text\":\"Schade! Nächstes Mal!\",\"color\":\"gray\"}"
+
+lives:
+  one_life: false
 
 messages:
   prefix: "&b⛯ LuckySky: &r"
