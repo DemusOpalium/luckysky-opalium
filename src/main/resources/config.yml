@@ -1,0 +1,51 @@
+world: "LuckySky"
+spawn: {x: 0, y: 101, z: 2, yaw: 180.0, pitch: 0.0}
+
+lucky:
+  pos: {x: 0, y: 102, z: 6}
+  interval_ticks: 160
+  require_air_at_target: true
+  variant: "RANDOM"   # wird an LuckyBlock-Command/API übergeben
+
+platform:
+  big_3x3: true
+  base:
+    blocks:
+      - {x: 0, y: 100, z: -1, type: "PRISMARINE_STAIRS", data: "facing=south,half=bottom,shape=straight"}
+      - {x: 0, y: 100, z:  0, type: "PRISMARINE_STAIRS", data: "facing=south,half=bottom,shape=straight"}
+      - {x: 0, y: 100, z:  1, type: "PRISMARINE_BRICKS"}
+      - {x: 0, y: 100, z:  2, type: "PRISMARINE_BRICKS"}
+
+durations:
+  minutes_default: 60
+  presets: [5, 20, 60]
+
+withers:
+  enable: true
+  spawn_after_minutes: 60
+  taunts:
+    enable: true
+    every_ticks: 1200
+    lines:
+      - "[WITHER] Ich bin die Leere zwischen euren Sternen…"
+      - "[WITHER] Eure Hoffnung zerbricht wie Glas."
+      - "[WITHER] Atmet Staub, Sterbliche."
+
+wipes:
+  entity_soft_every_ticks: 3600
+  radius: 300
+  hardwipe:
+    radius: 1500
+    armorstand_radius: 5000
+
+rewards:
+  on_boss_kill:
+    commands:
+      - "eco give %player% 5000"
+      - "broadcast &a%player% hat LuckySky gewonnen!"
+  on_fail:
+    commands:
+      - "tellraw %player% {\"text\":\"Schade! Nächstes Mal!\",\"color\":\"gray\"}"
+
+messages:
+  prefix: "&b⛯ LuckySky: &r"
