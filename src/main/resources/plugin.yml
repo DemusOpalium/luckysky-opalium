@@ -1,6 +1,6 @@
 name: LuckySky
 main: de.opalium.luckysky.LuckySkyPlugin
-version: 0.1.0
+version: 0.2.0
 api-version: '1.21'
 author: DemusOpalium
 softdepend: [Multiverse-Core, PlaceholderAPI, Essentials, ProtocolLib]
@@ -9,6 +9,7 @@ commands:
     description: LuckySky Admin
     usage: /ls help
     permission: luckysky.admin
+    aliases: [luckysky]
 permissions:
   luckysky.admin:
     default: op
