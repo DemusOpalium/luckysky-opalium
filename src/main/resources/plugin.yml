@@ -9,6 +9,26 @@ commands:
     description: LuckySky Admin
     usage: /ls help
     permission: luckysky.admin
+  luckysky:
+    description: LuckySky Verwaltung
+    usage: /luckysky <reload|duels>
+    permission: opalium.luckysky.base
+  duelsui:
+    description: Öffnet das LuckySky Duels-Menü
+    usage: /duelsui
+    permission: opalium.luckysky.duels.use
 permissions:
   luckysky.admin:
     default: op
+  opalium.luckysky.base:
+    default: false
+    description: Zugriff auf den LuckySky-Hauptbefehl
+  opalium.luckysky.duels.use:
+    default: false
+    description: Öffnet das LuckySky Duels-Menü
+  opalium.luckysky.admin:
+    default: op
+    description: Administrationsbefehle für LuckySky
+    children:
+      opalium.luckysky.base: true
+      opalium.luckysky.duels.use: true

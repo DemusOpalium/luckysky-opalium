@@ -30,7 +30,7 @@ public class LsCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!sender.hasPermission("luckysky.admin")) {
+        if (!sender.hasPermission("opalium.luckysky.admin") && !sender.hasPermission("luckysky.admin")) {
             Msg.to(sender, "&cNo permission.");
             return true;
         }

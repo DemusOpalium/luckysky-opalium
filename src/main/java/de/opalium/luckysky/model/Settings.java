@@ -2,6 +2,7 @@ package de.opalium.luckysky.model;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.bukkit.configuration.ConfigurationSection;
@@ -51,6 +52,8 @@ public class Settings {
     private final String rewardMode;
 
     private final boolean oneLife;
+
+    private final DuelsSettings duels;
 
     public Settings(FileConfiguration config) {
         world = config.getString("world", "LuckySky");
@@ -104,6 +107,8 @@ public class Settings {
         oneLife = config.getBoolean("lives.one_life", false);
 
         prefix = config.getString("messages.prefix", "&b⛯ LuckySky: &r");
+
+        duels = readDuels(config.getConfigurationSection("duels"));
     }
 
     private List<PBlock> readPlatformBlocks(FileConfiguration config) {
@@ -180,5 +185,69 @@ public class Settings {
 
     public List<String> luckyVariants() {
         return luckyVariants;
+    }
+
+    public DuelsSettings duels() {
+        return duels;
+    }
+
+    private DuelsSettings readDuels(ConfigurationSection section) {
+        if (section == null) {
+            return new DuelsSettings(false, "Duels", new DuelsMenuSettings("&8Duels", 27,
+                    null, Collections.emptyMap()));
+        }
+        boolean enabled = section.getBoolean("enabled", false);
+        String pluginName = section.getString("plugin", "Duels");
+        DuelsMenuSettings menu = readDuelsMenu(section.getConfigurationSection("menu"));
+        return new DuelsSettings(enabled, pluginName, menu);
+    }
+
+    private DuelsMenuSettings readDuelsMenu(ConfigurationSection section) {
+        if (section == null) {
+            return new DuelsMenuSettings("&8Duels", 27, null, Collections.emptyMap());
+        }
+        String title = section.getString("title", "&8Duels");
+        int size = section.getInt("size", 27);
+        DuelsMenuItem fill = readMenuItem(section.getConfigurationSection("fill"));
+        Map<Integer, DuelsMenuItem> items = new LinkedHashMap<>();
+        ConfigurationSection itemsSection = section.getConfigurationSection("items");
+        if (itemsSection != null) {
+            for (String key : itemsSection.getKeys(false)) {
+                try {
+                    int slot = Integer.parseInt(key);
+                    DuelsMenuItem item = readMenuItem(itemsSection.getConfigurationSection(key));
+                    if (item != null) {
+                        items.put(slot, item);
+                    }
+                } catch (NumberFormatException ignored) {
+                    // ignore invalid keys
+                }
+            }
+        }
+        return new DuelsMenuSettings(title, size, fill, Collections.unmodifiableMap(items));
+    }
+
+    private DuelsMenuItem readMenuItem(ConfigurationSection section) {
+        if (section == null) {
+            return null;
+        }
+        String material = section.getString("material", "AIR");
+        String name = section.getString("name", "");
+        List<String> lore = section.getStringList("lore");
+        List<String> commands = section.getStringList("commands");
+        boolean close = section.getBoolean("close", false);
+        return new DuelsMenuItem(material, name, Collections.unmodifiableList(new ArrayList<>(lore)),
+                Collections.unmodifiableList(new ArrayList<>(commands)), close);
+    }
+
+    public record DuelsSettings(boolean enabled, String pluginName, DuelsMenuSettings menu) {
+    }
+
+    public record DuelsMenuSettings(String title, int size, DuelsMenuItem fillItem,
+                                    Map<Integer, DuelsMenuItem> items) {
+    }
+
+    public record DuelsMenuItem(String material, String name, List<String> lore,
+                                List<String> commands, boolean close) {
     }
 }

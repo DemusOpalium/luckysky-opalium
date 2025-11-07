@@ -54,3 +54,39 @@ lives:
 
 messages:
   prefix: "&b⛯ LuckySky: &r"
+
+duels:
+  enabled: true
+  plugin: "Duels"
+  menu:
+    title: "&8LuckySky Duels"
+    size: 27
+    fill:
+      material: "GRAY_STAINED_GLASS_PANE"
+      name: "&0"
+      lore: []
+    items:
+      "10":
+        material: "IRON_SWORD"
+        name: "&aSolo Queue"
+        lore:
+          - "&7Tritt der Solo-Warteschlange bei."
+        commands:
+          - "duels queue solo {player}"
+        close: true
+      "13":
+        material: "DIAMOND_SWORD"
+        name: "&bRanked Queue"
+        lore:
+          - "&7Tritt der Ranked-Warteschlange bei."
+        commands:
+          - "duels queue ranked {player}"
+        close: true
+      "16":
+        material: "BARRIER"
+        name: "&cWarteschlange verlassen"
+        lore:
+          - "&7Verlasse alle Warteschlangen."
+        commands:
+          - "duels leave {player}"
+        close: true
