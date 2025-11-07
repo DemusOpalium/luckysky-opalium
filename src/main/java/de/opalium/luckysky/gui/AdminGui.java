@@ -1,7 +1,9 @@
 package de.opalium.luckysky.gui;
 
 import de.opalium.luckysky.LuckySkyPlugin;
-import de.opalium.luckysky.model.Settings;
+import de.opalium.luckysky.config.GameConfig;
+import de.opalium.luckysky.config.TrapsConfig;
+import de.opalium.luckysky.config.WorldsConfig;
 import de.opalium.luckysky.util.Msg;
 import de.opalium.luckysky.util.Worlds;
 import java.util.List;
@@ -67,7 +69,8 @@ public class AdminGui implements Listener {
     }
 
     private void populate(Inventory inventory) {
-        Settings settings = plugin.settings();
+        GameConfig game = plugin.configs().game();
+        TrapsConfig traps = plugin.configs().traps();
         boolean running = plugin.game().state() == de.opalium.luckysky.game.GameState.RUNNING;
         inventory.setItem(10, GuiItems.button(Material.LIME_DYE, "&aStart",
                 List.of("&7Startet das Spiel."), running));
@@ -79,12 +82,14 @@ public class AdminGui implements Listener {
                 List.of("&7Setzt Dauer auf 20 Minuten."), false));
         inventory.setItem(14, GuiItems.button(Material.CLOCK, "&eMode 60",
                 List.of("&7Setzt Dauer auf 60 Minuten."), false));
-        inventory.setItem(15, GuiItems.button(Material.GOAT_HORN, settings.tauntEnable ? "&aTaunts AN" : "&cTaunts AUS",
-                List.of("&7Schaltet Wither-Taunts um."), settings.tauntEnable));
-        inventory.setItem(16, GuiItems.button(Material.WITHER_SKELETON_SKULL, settings.witherEnable ? "&aWither AN" : "&cWither AUS",
-                List.of("&7Aktiviert/Deaktiviert Wither-Spawns."), settings.witherEnable));
+        boolean tauntsEnabled = traps.withers().taunts().enabled();
+        boolean witherEnabled = traps.withers().enabled();
+        inventory.setItem(15, GuiItems.button(Material.GOAT_HORN, tauntsEnabled ? "&aTaunts AN" : "&cTaunts AUS",
+                List.of("&7Schaltet Wither-Taunts um."), tauntsEnabled));
+        inventory.setItem(16, GuiItems.button(Material.WITHER_SKELETON_SKULL, witherEnabled ? "&aWither AN" : "&cWither AUS",
+                List.of("&7Aktiviert/Deaktiviert Wither-Spawns."), witherEnabled));
         inventory.setItem(19, GuiItems.button(Material.SPONGE, "&bLucky-Variante",
-                List.of("&7Aktuell: &f" + settings.luckyVariant), false));
+                List.of("&7Aktuell: &f" + game.lucky().variant()), false));
         inventory.setItem(20, GuiItems.button(Material.FEATHER, "&bSoft-Wipe",
                 List.of("&7Entfernt Effekte um Lucky."), false));
         inventory.setItem(21, GuiItems.button(Material.NETHERITE_SWORD, "&cHard-Wipe",
@@ -115,32 +120,31 @@ public class AdminGui implements Listener {
     }
 
     private void handleTauntToggle(Player player) {
-        boolean newValue = !plugin.settings().tauntEnable;
-        plugin.getConfig().set("withers.taunts.enable", newValue);
-        plugin.saveConfig();
+        TrapsConfig traps = plugin.configs().traps();
+        boolean newValue = !traps.withers().taunts().enabled();
+        plugin.configs().updateTraps(traps.withTauntsEnabled(newValue));
         plugin.reloadSettings();
         plugin.game().setTauntsEnabled(newValue);
         Msg.to(player, newValue ? "&aTaunts aktiviert." : "&cTaunts deaktiviert.");
     }
 
     private void handleWitherToggle(Player player) {
-        boolean newValue = !plugin.settings().witherEnable;
-        plugin.getConfig().set("withers.enable", newValue);
-        plugin.saveConfig();
+        TrapsConfig traps = plugin.configs().traps();
+        boolean newValue = !traps.withers().enabled();
+        plugin.configs().updateTraps(traps.withWithersEnabled(newValue));
         plugin.reloadSettings();
         plugin.game().setWitherEnabled(newValue);
         Msg.to(player, newValue ? "&aWither aktiviert." : "&cWither deaktiviert.");
     }
 
     private void handleLuckyVariant(Player player) {
-        Settings settings = plugin.settings();
-        List<String> variants = settings.luckyVariants();
-        String current = settings.luckyVariant;
+        GameConfig game = plugin.configs().game();
+        List<String> variants = game.lucky().variantsAvailable();
+        String current = game.lucky().variant();
         int index = variants.indexOf(current);
         int nextIndex = variants.isEmpty() ? 0 : (index + 1) % variants.size();
         String next = variants.isEmpty() ? current : variants.get(nextIndex);
-        plugin.getConfig().set("lucky.variant", next);
-        plugin.saveConfig();
+        plugin.configs().updateGame(game.withLuckyVariant(next));
         plugin.reloadSettings();
         Msg.to(player, "&bLucky-Variante jetzt: &f" + next);
     }
@@ -166,16 +170,16 @@ public class AdminGui implements Listener {
     }
 
     private void handleTeleport(Player player) {
-        Settings settings = plugin.settings();
-        World world = Worlds.require(settings.world);
-        Location location = new Location(world, settings.spawnX + 0.5, settings.spawnY, settings.spawnZ + 0.5, settings.spawnYaw,
-                settings.spawnPitch);
+        WorldsConfig.LuckyWorld worldConfig = plugin.configs().worlds().luckySky();
+        World world = Worlds.require(worldConfig.worldName());
+        WorldsConfig.Spawn spawn = worldConfig.spawn();
+        Location location = new Location(world, spawn.x(), spawn.y(), spawn.z(), spawn.yaw(), spawn.pitch());
         player.teleport(location);
         Msg.to(player, "&dTeleportiert.");
     }
 
     private void handleSave(Player player) {
-        plugin.saveConfig();
+        plugin.configs().saveAll();
         plugin.reloadSettings();
         Msg.to(player, "&aConfig gespeichert.");
     }

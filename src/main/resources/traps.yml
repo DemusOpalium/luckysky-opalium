@@ -1,0 +1,14 @@
+withers:
+  enabled: true
+  max_parallel: 1
+  announce: true
+  spawn_after_minutes: 60
+  taunts:
+    enabled: true
+    every_ticks: 1200
+    lines:
+      - "Niemand entkommt dem Abyssal Wither!"
+      - "Spürt die Leere!"
+      - "Ihr könnt nicht bestehen!"
+effects:
+  taunts_enabled: true

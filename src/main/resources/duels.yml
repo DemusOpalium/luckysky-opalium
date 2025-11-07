@@ -1,0 +1,147 @@
+active_arena: "crystal_default"
+gui:
+  size: 27
+  items:
+    start:
+      slot: 11
+      material: "LIME_WOOL"
+      name: "§aArena wechseln"
+      lore:
+        - "§7Wechselt zur nächsten Arena."
+      action: "arena:next"
+    reset:
+      slot: 13
+      material: "NETHER_STAR"
+      name: "§bReset Innenraum"
+      lore:
+        - "§7Wendet das Preset clear_interior an."
+      action: "reset:clear_interior"
+    frame:
+      slot: 15
+      material: "DEEPSLATE_BRICKS"
+      name: "§bVolle Hülle"
+      lore:
+        - "§7Setzt das frame_full Reset."
+      action: "reset:frame_full"
+    floor_gpt:
+      slot: 19
+      material: "AMETHYST_SHARD"
+      name: "§dBoden GPT"
+      lore:
+        - "§7Bodenmuster GPT anwenden."
+      action: "floor:gpt"
+    floor_storm:
+      slot: 20
+      material: "POLISHED_BLACKSTONE_BRICKS"
+      name: "§dBoden Storm"
+      lore:
+        - "§7Bodenmuster Storm anwenden."
+      action: "floor:storm"
+    lava_center:
+      slot: 21
+      material: "MAGMA_BLOCK"
+      name: "§cLava Zentrum"
+      lore:
+        - "§7Aktiviert Lava im Zentrum."
+      action: "lava:center"
+    lava_clear:
+      slot: 22
+      material: "BUCKET"
+      name: "§eLava Entfernen"
+      lore:
+        - "§7Entfernt alle Lava-Presets."
+      action: "lava:clear"
+    light_on:
+      slot: 23
+      material: "SEA_LANTERN"
+      name: "§fLicht an"
+      lore:
+        - "§7Aktiviert das Licht-Raster."
+      action: "light:on"
+    light_off:
+      slot: 24
+      material: "REDSTONE_TORCH"
+      name: "§cLicht aus"
+      lore:
+        - "§7Deaktiviert das Licht-Raster."
+      action: "light:off"
+arenas:
+  crystal_default:
+    world: "duels"
+    bounds:
+      min: { x: -49, y: -58, z: -49 }
+      max: { x: 49, y: -30, z: 49 }
+    walls:
+      inner:
+        min: { x: -48, y: -57, z: -48 }
+        max: { x: 48, y: -40, z: 48 }
+      thickness: 1
+      core_material: "reinforced_deepslate"
+      inner_material: "polished_deepslate"
+    ceiling:
+      y_glass: -39
+      y_crown: [-31, -30]
+      glass_material: "purple_stained_glass"
+      crown_material: "bedrock"
+      light_raster:
+        enabled: true
+        y: -40
+        step: 12
+        material: "sea_lantern"
+        extra_corners: true
+    floor:
+      y: -57
+      default_material: "deepslate_tiles"
+      presets:
+        gpt:
+          layers:
+            - { type: fill, from: [-48, -57, -48], to: [48, -57, 48], material: "polished_deepslate" }
+            - { type: fill, from: [-36, -57, -36], to: [36, -57, 36], material: "crying_obsidian" }
+            - { type: fill, from: [-28, -57, -28], to: [28, -57, 28], material: "amethyst_block" }
+            - { type: fill, from: [-20, -57, -20], to: [20, -57, 20], material: "obsidian" }
+            - { type: fill, from: [-12, -57, -12], to: [12, -57, 12], material: "smooth_basalt" }
+            - { type: fill, from: [-4, -57, -4], to: [4, -57, 4], material: "quartz_block" }
+        storm:
+          layers:
+            - { type: fill, from: [-48, -57, -48], to: [48, -57, 48], material: "deepslate_bricks" }
+            - { type: fill, from: [-48, -57, 0], to: [48, -57, 0], material: "polished_blackstone_bricks" }
+            - { type: fill, from: [0, -57, -48], to: [0, -57, 48], material: "polished_blackstone_bricks" }
+    hazards:
+      layer_y: -56
+      presets:
+        center: { min: {x:-4,y:-56,z:-4}, max: {x:4,y:-56,z:4} }
+        north:  { min: {x:-4,y:-56,z:-28}, max: {x:4,y:-56,z:-20} }
+        south:  { min: {x:-4,y:-56,z:20}, max: {x:4,y:-56,z:28} }
+        east:   { min: {x:20,y:-56,z:-4}, max: {x:28,y:-56,z:4} }
+        west:   { min: {x:-28,y:-56,z:-4}, max: {x:-20,y:-56,z:4} }
+    spawns:
+      lobby: { x: 0.5, y: 120.0, z: 0.5, yaw: 0.0, pitch: 0.0 }
+      p1:    { x: -24.5, y: -57.0, z: 0.5, yaw: 90.0, pitch: 0.0 }
+      p2:    { x:  24.5, y: -57.0, z: 0.5, yaw: -90.0, pitch: 0.0 }
+    rules:
+      keep_inventory: false
+      build_protect_radius: 48
+      allow_crystals: true
+      scoreboard_enabled: true
+    resets:
+      clear_interior:
+        steps:
+          - { type: slice_fill, from_y: -56, to_y: -38, from: [-48, *, -48], to: [48, *, 48], material: "AIR" }
+      frame_full:
+        steps:
+          - { type: fill, from: [-49, -58, -49], to: [49, -58, 49], material: "BEDROCK" }
+          - { type: fill, from: [-49, -58, -49], to: [-49, -40, 49], material: "REINFORCED_DEEPSLATE" }
+          - { type: fill, from: [49, -58, -49], to: [49, -40, 49], material: "REINFORCED_DEEPSLATE" }
+          - { type: fill, from: [-49, -58, -49], to: [49, -40, -49], material: "REINFORCED_DEEPSLATE" }
+          - { type: fill, from: [-49, -58, 49], to: [49, -40, 49], material: "REINFORCED_DEEPSLATE" }
+          - { type: fill, from: [-48, -57, -48], to: [48, -40, 48], material: "POLISHED_DEEPSLATE" }
+          - { type: fill, from: [-49, -31, -49], to: [49, -31, 49], material: "BEDROCK" }
+          - { type: fill, from: [-49, -30, -49], to: [49, -30, 49], material: "BEDROCK" }
+      ceiling_on:
+        steps:
+          - { type: light_raster, enabled: true }
+          - { type: fill, from: [-48, -39, -48], to: [48, -39, 48], material: "PURPLE_STAINED_GLASS" }
+      ceiling_off:
+        steps:
+          - { type: light_raster, enabled: false }
+          - { type: fill_replace, from: [-48, -39, -48], to: [48, -39, 48], find: "PURPLE_STAINED_GLASS", with: "AIR" }

@@ -1,13 +1,14 @@
 name: LuckySky
 main: de.opalium.luckysky.LuckySkyPlugin
-version: 1.2.0
+version: 1.2.1
 api-version: '1.21'
 author: DemusOpalium
 softdepend: [Multiverse-Core, PlaceholderAPI, Essentials, ProtocolLib]
 commands:
   ls:
     description: LuckySky base command
-    usage: /ls <reload|duels>
+    aliases: [luckysky]
+    usage: /ls <start|stop|reset|gui|reload|duels>
     permission: opalium.luckysky.base
   arena:
     description: Manage the LuckySky arena runtime

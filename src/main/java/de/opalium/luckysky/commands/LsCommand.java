@@ -71,15 +71,11 @@ public class LsCommand implements CommandExecutor, TabCompleter {
                     }
                     return true;
                 }
-                if (args.length >= 2) {
-                    duels.performMappedCommand(sender, args[1]);
-                } else {
-                    if (!(sender instanceof Player player)) {
-                        Msg.to(sender, "&cNutze &e/ls duels <Variante>&c von der Konsole aus.");
-                        return true;
-                    }
-                    duels.openMenu(player);
+                if (!(sender instanceof Player player)) {
+                    Msg.to(sender, "&cNur Spieler können die Duels-GUI öffnen.");
+                    return true;
                 }
+                duels.openMenu(player);
             }
             case "start" -> {
                 GameManager game = requireGame(sender);
@@ -172,8 +168,7 @@ public class LsCommand implements CommandExecutor, TabCompleter {
                 if (game == null || !requirePermission(sender, PERM_ADMIN)) {
                     return true;
                 }
-                plugin.getConfig().set("withers.taunts.enable", true);
-                plugin.saveConfig();
+                plugin.configs().updateTraps(plugin.configs().traps().withTauntsEnabled(true));
                 plugin.reloadSettings();
                 game.setTauntsEnabled(true);
                 Msg.to(sender, "&aTaunts aktiviert.");
@@ -183,8 +178,7 @@ public class LsCommand implements CommandExecutor, TabCompleter {
                 if (game == null || !requirePermission(sender, PERM_ADMIN)) {
                     return true;
                 }
-                plugin.getConfig().set("withers.taunts.enable", false);
-                plugin.saveConfig();
+                plugin.configs().updateTraps(plugin.configs().traps().withTauntsEnabled(false));
                 plugin.reloadSettings();
                 game.setTauntsEnabled(false);
                 Msg.to(sender, "&cTaunts deaktiviert.");

@@ -3,12 +3,12 @@ package de.opalium.luckysky;
 import de.opalium.luckysky.commands.ArenaCommand;
 import de.opalium.luckysky.commands.DuelsUiCommand;
 import de.opalium.luckysky.commands.LsCommand;
+import de.opalium.luckysky.config.ConfigService;
 import de.opalium.luckysky.duels.DuelsManager;
 import de.opalium.luckysky.game.GameManager;
 import de.opalium.luckysky.gui.AdminGui;
 import de.opalium.luckysky.listeners.BossListener;
 import de.opalium.luckysky.listeners.PlayerListener;
-import de.opalium.luckysky.model.Settings;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabCompleter;
@@ -17,7 +17,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public final class LuckySkyPlugin extends JavaPlugin {
     private static LuckySkyPlugin instance;
-    private Settings settings;
+    private ConfigService configs;
     private GameManager game;
     private AdminGui adminGui;
     private DuelsManager duels;
@@ -26,8 +26,8 @@ public final class LuckySkyPlugin extends JavaPlugin {
         return instance;
     }
 
-    public Settings settings() {
-        return settings;
+    public ConfigService configs() {
+        return configs;
     }
 
     public GameManager game() {
@@ -38,7 +38,7 @@ public final class LuckySkyPlugin extends JavaPlugin {
     public void onEnable() {
         instance = this;
         saveDefaultConfig();
-        this.settings = new Settings(getConfig());
+        this.configs = new ConfigService(this).ensureDefaults().loadAll();
         this.game = new GameManager(this);
         this.adminGui = new AdminGui(this);
         this.duels = new DuelsManager(this);
@@ -67,7 +67,7 @@ public final class LuckySkyPlugin extends JavaPlugin {
 
     public void reloadSettings() {
         reloadConfig();
-        this.settings = new Settings(getConfig());
+        this.configs.reloadAll();
         if (game != null) {
             game.reloadSettings();
         }

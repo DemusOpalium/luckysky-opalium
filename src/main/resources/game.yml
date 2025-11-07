@@ -1,0 +1,43 @@
+durations:
+  minutesDefault: 60
+  presets: [30, 45, 60]
+lucky:
+  position:
+    x: 0
+    y: 200
+    z: 0
+  interval_ticks: 160
+  require_air_at_target: true
+  variant: "RANDOM"
+  variants_available: ["RANDOM", "CLASSIC", "CHAOS"]
+platform:
+  big_3x3: true
+  base:
+    blocks:
+      - { x: -1, y: 200, z: -1, material: "PRISMARINE_BRICKS" }
+      - { x: -1, y: 200, z: 0, material: "PRISMARINE_BRICKS" }
+      - { x: -1, y: 200, z: 1, material: "PRISMARINE_BRICKS" }
+      - { x: 0, y: 200, z: -1, material: "PRISMARINE_BRICKS" }
+      - { x: 0, y: 200, z: 0, material: "PRISMARINE_BRICKS" }
+      - { x: 0, y: 200, z: 1, material: "PRISMARINE_BRICKS" }
+      - { x: 1, y: 200, z: -1, material: "PRISMARINE_BRICKS" }
+      - { x: 1, y: 200, z: 0, material: "PRISMARINE_BRICKS" }
+      - { x: 1, y: 200, z: 1, material: "PRISMARINE_BRICKS" }
+rig:
+  base_height: 201
+  corridor_clear: true
+wipes:
+  entity_soft_every_ticks: 3600
+  soft_radius: 30
+  hard_radius: 60
+  armorstand_radius: 100
+rewards:
+  mode: "balanced"
+  on_boss_kill:
+    commands:
+      - "say %player% besiegt den Wither!"
+  on_fail:
+    commands:
+      - "say LuckySky gescheitert."
+lives:
+  one_life: false

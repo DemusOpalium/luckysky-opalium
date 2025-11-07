@@ -9,7 +9,7 @@ public final class Msg {
     }
 
     private static String prefix() {
-        return ChatColor.translateAlternateColorCodes('&', LuckySkyPlugin.get().settings().prefix);
+        return ChatColor.translateAlternateColorCodes('&', LuckySkyPlugin.get().configs().messages().prefix());
     }
 
     public static void to(CommandSender sender, String text) {

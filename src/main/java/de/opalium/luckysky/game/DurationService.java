@@ -1,7 +1,6 @@
 package de.opalium.luckysky.game;
 
 import de.opalium.luckysky.LuckySkyPlugin;
-import de.opalium.luckysky.model.Settings;
 import de.opalium.luckysky.util.Msg;
 import org.bukkit.Bukkit;
 
@@ -15,7 +14,7 @@ public class DurationService {
     }
 
     public void startDefault() {
-        startMinutes(plugin.settings().minutesDefault);
+        startMinutes(plugin.configs().game().durations().minutesDefault());
     }
 
     public void startMinutes(int minutes) {

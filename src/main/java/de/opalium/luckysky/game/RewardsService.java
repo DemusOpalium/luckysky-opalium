@@ -1,7 +1,7 @@
 package de.opalium.luckysky.game;
 
 import de.opalium.luckysky.LuckySkyPlugin;
-import de.opalium.luckysky.model.Settings;
+import de.opalium.luckysky.config.GameConfig;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -17,12 +17,12 @@ public class RewardsService {
     }
 
     public void triggerWin(Player killer, Collection<UUID> aliveParticipants) {
-        Settings settings = plugin.settings();
-        List<String> commands = settings.rewardsBossCommands();
+        GameConfig.Rewards rewards = plugin.configs().game().rewards();
+        List<String> commands = rewards.onBossKill();
         if (commands.isEmpty()) {
             return;
         }
-        if ("killer".equalsIgnoreCase(settings.rewardMode()) && killer != null) {
+        if ("killer".equalsIgnoreCase(rewards.mode()) && killer != null) {
             executeCommands(commands, killer.getName());
         } else {
             executeForParticipants(commands, aliveParticipants);
@@ -30,8 +30,8 @@ public class RewardsService {
     }
 
     public void triggerFail(Collection<UUID> allParticipants) {
-        Settings settings = plugin.settings();
-        List<String> commands = settings.rewardsFailCommands();
+        GameConfig.Rewards rewards = plugin.configs().game().rewards();
+        List<String> commands = rewards.onFail();
         if (commands.isEmpty()) {
             return;
         }
