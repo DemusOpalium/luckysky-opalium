@@ -4,11 +4,14 @@ import de.opalium.luckysky.LuckySkyPlugin;
 import de.opalium.luckysky.duels.DuelsManager;
 import de.opalium.luckysky.util.Msg;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 
-public class DuelsUiCommand implements CommandExecutor {
+import java.util.Collections;
+import java.util.List;
+
+public class DuelsUiCommand implements TabExecutor {
     private final LuckySkyPlugin plugin;
 
     public DuelsUiCommand(LuckySkyPlugin plugin) {
@@ -35,5 +38,10 @@ public class DuelsUiCommand implements CommandExecutor {
 
         duels.openMenu(player);
         return true;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        return Collections.emptyList();
     }
 }

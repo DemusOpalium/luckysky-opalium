@@ -51,9 +51,11 @@ public final class LuckySkyPlugin extends JavaPlugin {
 
         PluginCommand duelsCommand = getCommand("duelsui");
         if (duelsCommand != null) {
-            duelsCommand.setExecutor(new DuelsUiCommand(this));
+            DuelsUiCommand executor = new DuelsUiCommand(this);
+            duelsCommand.setExecutor(executor);
+            duelsCommand.setTabCompleter(executor);
         } else {
-            getLogger().severe("[LuckySky] Failed to register /duelsui command - entry missing in plugin.yml");
+            getLogger().warning("[LuckySky] Failed to register /duelsui command - entry missing in plugin.yml");
         }
 
         PluginManager pm = getServer().getPluginManager();
