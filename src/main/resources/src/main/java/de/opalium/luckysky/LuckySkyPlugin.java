@@ -21,7 +21,7 @@ public final class LuckySkyPlugin extends JavaPlugin {
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (!cmd.getName().equalsIgnoreCase("ls")) return false;
 
-        if (!sender.hasPermission("luckysky.admin")) {
+        if (!sender.hasPermission("opalium.luckysky.admin")) {
             sender.sendMessage(ChatColor.RED + "Keine Rechte.");
             return true;
         }
