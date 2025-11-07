@@ -1,7 +1,7 @@
 package de.opalium.luckysky.game;
 
 import de.opalium.luckysky.LuckySkyPlugin;
-import de.opalium.luckysky.model.Settings;
+import de.opalium.luckysky.config.GameConfig;
 import de.opalium.luckysky.util.Worlds;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
@@ -15,12 +15,14 @@ public class WipeService {
     }
 
     public int fieldClearSoft() {
-        Settings settings = plugin.settings();
-        World world = Worlds.require(settings.world);
+        GameConfig game = plugin.configs().game();
+        World world = Worlds.require(plugin.configs().worlds().luckySky().worldName());
         int removed = 0;
+        GameConfig.Position center = game.lucky().position();
+        org.bukkit.util.Vector centerVector = center.toVector();
         for (Entity entity : world.getEntities()) {
             if (isSoftTarget(entity.getType())
-                    && entity.getLocation().toVector().distanceSquared(settings.luckyCenter()) <= square(settings.wipeRadius)) {
+                    && entity.getLocation().toVector().distanceSquared(centerVector) <= square(game.wipes().softRadius())) {
                 entity.remove();
                 removed++;
             }
@@ -29,19 +31,21 @@ public class WipeService {
     }
 
     public int hardWipe() {
-        Settings settings = plugin.settings();
-        World world = Worlds.require(settings.world);
+        GameConfig game = plugin.configs().game();
+        World world = Worlds.require(plugin.configs().worlds().luckySky().worldName());
         int removed = 0;
+        GameConfig.Position center = game.lucky().position();
+        org.bukkit.util.Vector centerVector = center.toVector();
         for (Entity entity : world.getEntities()) {
             if (!isHardTarget(entity.getType())) {
                 continue;
             }
-            double distance = entity.getLocation().toVector().distanceSquared(settings.luckyCenter());
+            double distance = entity.getLocation().toVector().distanceSquared(centerVector);
             if (entity.getType() == EntityType.ARMOR_STAND
-                    && distance > square(settings.armorstandRadius)) {
+                    && distance > square(game.wipes().armorstandRadius())) {
                 continue;
             }
-            if (distance <= square(settings.hardRadius)) {
+            if (distance <= square(game.wipes().hardRadius())) {
                 entity.remove();
                 removed++;
             }

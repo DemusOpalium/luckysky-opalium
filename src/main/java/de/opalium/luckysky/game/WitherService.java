@@ -1,9 +1,13 @@
 package de.opalium.luckysky.game;
 
 import de.opalium.luckysky.LuckySkyPlugin;
-import de.opalium.luckysky.model.Settings;
+import de.opalium.luckysky.config.GameConfig;
+import de.opalium.luckysky.config.MessagesConfig;
+import de.opalium.luckysky.config.TrapsConfig;
+import de.opalium.luckysky.config.WorldsConfig;
 import de.opalium.luckysky.util.Msg;
 import de.opalium.luckysky.util.Worlds;
+import java.util.List;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -21,24 +25,24 @@ public class WitherService {
 
     public WitherService(LuckySkyPlugin plugin) {
         this.plugin = plugin;
-        Settings settings = plugin.settings();
-        this.witherEnabled = settings.witherEnable;
-        this.tauntsEnabled = settings.tauntEnable;
+        TrapsConfig traps = traps();
+        this.witherEnabled = traps.withers().enabled();
+        this.tauntsEnabled = traps.withers().taunts().enabled();
     }
 
     public void start() {
         stop();
-        Settings settings = plugin.settings();
-        witherEnabled = settings.witherEnable;
-        tauntsEnabled = settings.tauntEnable;
+        TrapsConfig traps = traps();
+        witherEnabled = traps.withers().enabled();
+        tauntsEnabled = traps.withers().taunts().enabled();
         if (!witherEnabled) {
             return;
         }
         spawnTimer = Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, this::spawn,
-                settings.witherAfterMinutes * 60L * 20L);
+                traps.withers().spawnAfterMinutes() * 60L * 20L);
         if (tauntsEnabled) {
             tauntTimer = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, this::taunt,
-                    settings.tauntEveryTicks, settings.tauntEveryTicks);
+                    traps.withers().taunts().everyTicks(), traps.withers().taunts().everyTicks());
         }
     }
 
@@ -57,9 +61,9 @@ public class WitherService {
         if (plugin.game().state() == GameState.RUNNING) {
             start();
         } else {
-            Settings settings = plugin.settings();
-            witherEnabled = settings.witherEnable;
-            tauntsEnabled = settings.tauntEnable;
+            TrapsConfig traps = traps();
+            witherEnabled = traps.withers().enabled();
+            tauntsEnabled = traps.withers().taunts().enabled();
         }
     }
 
@@ -86,12 +90,12 @@ public class WitherService {
             Bukkit.getScheduler().cancelTask(tauntTimer);
             tauntTimer = -1;
         } else if (enabled && plugin.game().state() == GameState.RUNNING) {
-            Settings settings = plugin.settings();
+            TrapsConfig traps = traps();
             if (tauntTimer != -1) {
                 Bukkit.getScheduler().cancelTask(tauntTimer);
             }
             tauntTimer = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, this::taunt,
-                    settings.tauntEveryTicks, settings.tauntEveryTicks);
+                    traps.withers().taunts().everyTicks(), traps.withers().taunts().everyTicks());
         }
     }
 
@@ -99,29 +103,40 @@ public class WitherService {
         if (!witherEnabled || plugin.game().state() != GameState.RUNNING) {
             return;
         }
-        Settings settings = plugin.settings();
-        World world = Worlds.require(settings.world);
-        Location location = new Location(world, settings.luckyX, settings.luckyY, settings.luckyZ - 6);
+        GameConfig.Position position = plugin.configs().game().lucky().position();
+        World world = Worlds.require(worldConfig().worldName());
+        Location location = new Location(world, position.x(), position.y(), position.z() - 6);
         Wither wither = (Wither) world.spawnEntity(location, EntityType.WITHER);
         wither.setCustomNameVisible(true);
         wither.customName(Component.text("Abyssal Wither", NamedTextColor.DARK_PURPLE));
-        Bukkit.broadcastMessage(Msg.color(settings.prefix + "&c☠ Abyssal Wither ist erwacht!"));
+        Bukkit.broadcastMessage(Msg.color(messages().prefix() + "&c☠ Abyssal Wither ist erwacht!"));
     }
 
     private void taunt() {
         if (!tauntsEnabled || plugin.game().state() != GameState.RUNNING) {
             return;
         }
-        Settings settings = plugin.settings();
-        World world = Worlds.require(settings.world);
+        World world = Worlds.require(worldConfig().worldName());
         if (world.getEntitiesByClass(Wither.class).isEmpty()) {
             return;
         }
-        String[] lines = settings.witherTaunts();
-        if (lines.length == 0) {
+        List<String> taunts = traps().withers().taunts().lines();
+        if (taunts.isEmpty()) {
             return;
         }
-        String line = lines[(int) (Math.random() * lines.length)];
-        Bukkit.broadcastMessage(Msg.color(settings.prefix + "&c" + line));
+        String line = taunts.get((int) (Math.random() * taunts.size()));
+        Bukkit.broadcastMessage(Msg.color(messages().prefix() + "&c" + line));
+    }
+
+    private TrapsConfig traps() {
+        return plugin.configs().traps();
+    }
+
+    private WorldsConfig.LuckyWorld worldConfig() {
+        return plugin.configs().worlds().luckySky();
+    }
+
+    private MessagesConfig messages() {
+        return plugin.configs().messages();
     }
 }

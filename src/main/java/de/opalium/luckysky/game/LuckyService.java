@@ -1,7 +1,7 @@
 package de.opalium.luckysky.game;
 
 import de.opalium.luckysky.LuckySkyPlugin;
-import de.opalium.luckysky.model.Settings;
+import de.opalium.luckysky.config.GameConfig;
 import de.opalium.luckysky.util.Worlds;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -18,8 +18,8 @@ public class LuckyService {
 
     public void start() {
         stop();
-        Settings settings = plugin.settings();
-        int interval = Math.max(1, settings.luckyInterval);
+        GameConfig game = plugin.configs().game();
+        int interval = Math.max(1, game.lucky().intervalTicks());
         taskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, this::tick,
                 interval, interval);
     }
@@ -41,14 +41,16 @@ public class LuckyService {
         if (plugin.game().state() != GameState.RUNNING) {
             return;
         }
-        Settings settings = plugin.settings();
-        World world = Worlds.require(settings.world);
-        Location location = new Location(world, settings.luckyX, settings.luckyY, settings.luckyZ);
-        if (settings.luckyRequireAir && location.getBlock().getType() != Material.AIR) {
+        GameConfig game = plugin.configs().game();
+        GameConfig.Position position = game.lucky().position();
+        World world = Worlds.require(plugin.configs().worlds().luckySky().worldName());
+        Location location = new Location(world, position.x(), position.y(), position.z());
+        if (game.lucky().requireAirAtTarget() && location.getBlock().getType() != Material.AIR) {
             return;
         }
         String command = String.format("ntdluckyblock place %s %d %d %d %s -s",
-                settings.world, settings.luckyX, settings.luckyY, settings.luckyZ, settings.luckyVariant);
+                plugin.configs().worlds().luckySky().worldName(), position.x(), position.y(), position.z(),
+                game.lucky().variant());
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
     }
 }

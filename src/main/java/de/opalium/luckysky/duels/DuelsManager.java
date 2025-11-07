@@ -1,14 +1,11 @@
 package de.opalium.luckysky.duels;
 
 import de.opalium.luckysky.LuckySkyPlugin;
-import de.opalium.luckysky.gui.GuiItems;
-import de.opalium.luckysky.model.Settings;
+import de.opalium.luckysky.config.DuelsConfig;
 import de.opalium.luckysky.util.Msg;
-import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -16,62 +13,28 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 
 public class DuelsManager implements Listener {
     private final LuckySkyPlugin plugin;
-
+    private final ArenaService arenaService;
+    private final DuelsGui gui;
     private boolean enabled;
     private boolean dependencyMissing;
-    private String menuTitle;
-    private int menuSize;
-    private ItemStack[] menuTemplate = new ItemStack[0];
-    private Map<Integer, Settings.DuelsSettings.GuiItem> menuItems = Map.of();
 
     public DuelsManager(LuckySkyPlugin plugin) {
         this.plugin = plugin;
+        this.arenaService = new ArenaService(plugin);
+        this.gui = new DuelsGui(plugin);
         reload();
     }
 
     public void reload() {
-        Settings settings = plugin.settings();
-        Settings.DuelsSettings duels = settings.duels();
+        DuelsConfig config = plugin.configs().duels();
         Plugin dependency = Bukkit.getPluginManager().getPlugin("Duels");
-        boolean dependencyEnabled = dependency != null && dependency.isEnabled();
-
-        dependencyMissing = duels.requirePlugin() && !dependencyEnabled;
-        enabled = duels.enabled() && !dependencyMissing;
-
-        Settings.DuelsSettings.GuiSettings gui = duels.gui();
-        menuSize = Math.max(9, Math.min(54, gui.rows() * 9));
-        menuTitle = Msg.color(gui.title());
-
-        LinkedHashMap<Integer, Settings.DuelsSettings.GuiItem> items = new LinkedHashMap<>();
-        ItemStack[] template = new ItemStack[menuSize];
-
-        for (Settings.DuelsSettings.GuiItem item : gui.items().values()) {
-            int slot = item.slot();
-            if (slot < 0 || slot >= menuSize) {
-                continue;
-            }
-
-            Material material = Material.matchMaterial(item.material());
-            if (material == null) {
-                material = Material.BARRIER;
-            }
-
-            ItemStack stack = GuiItems.button(material, item.name(), item.lore(), false);
-            template[slot] = stack;
-            items.put(slot, item);
-        }
-
-        menuTemplate = template;
-        menuItems = items;
-
-        if (enabled && menuItems.isEmpty()) {
-            enabled = false;
-        }
+        dependencyMissing = dependency == null || !dependency.isEnabled();
+        enabled = !config.arenas().isEmpty();
+        gui.reload();
     }
 
     public boolean isEnabled() {
@@ -85,85 +48,93 @@ public class DuelsManager implements Listener {
     public void openMenu(Player player) {
         if (!enabled) {
             if (dependencyMissing) {
-                Msg.to(player, "&cLuckySky-Duels ist nicht verfügbar (Duels-Plugin fehlt).");
+                Msg.to(player, "&cLuckySky-Duels benötigt das Duels-Plugin.");
             } else {
-                Msg.to(player, "&cDie LuckySky-Duels-GUI ist deaktiviert.");
+                Msg.to(player, "&cKeine Duels-Arena konfiguriert.");
             }
             return;
         }
-
-        Inventory inventory = Bukkit.createInventory(player, menuSize, menuTitle);
-        inventory.setContents(menuTemplate.clone());
-        player.openInventory(inventory);
+        gui.open(player);
     }
 
-    public boolean performMappedCommand(CommandSender sender, String variant) {
-        Settings.DuelsSettings duels = plugin.settings().duels();
-        String mapped = duels.kitMappings().get(variant.toUpperCase(Locale.ROOT));
-        if (mapped == null) {
-            Msg.to(sender, "&cUnbekannte LuckySky-Variante: &f" + variant);
+    public boolean selectArena(String id, CommandSender sender) {
+        if (!arenaService.selectArena(id)) {
+            Msg.to(sender, "&cUnbekannte Arena: &f" + id);
             return false;
         }
-        if (!enabled && !sender.hasPermission("opalium.luckysky.admin")) {
-            if (dependencyMissing) {
-                Msg.to(sender, "&cLuckySky-Duels ist nicht verfügbar (Duels-Plugin fehlt).");
-            } else {
-                Msg.to(sender, "&cDie LuckySky-Duels-GUI ist deaktiviert.");
-            }
-            return false;
-        }
-
-        String command = "duels kit " + mapped;
-        if (sender instanceof Player player) {
-            Bukkit.getScheduler().runTask(plugin, () -> {
-                player.closeInventory();
-                player.performCommand(command);
-            });
-        } else {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
-        }
-        Msg.to(sender, "&aDuels-Kit &f" + mapped + " &aausgeführt.");
+        Msg.to(sender, "&aAktive Arena: &f" + id);
         return true;
+    }
+
+    public boolean reset(String preset, CommandSender sender) {
+        return arenaService.applyReset(preset, sender);
+    }
+
+    public boolean floor(String preset, CommandSender sender) {
+        return arenaService.applyFloorPreset(preset, sender);
+    }
+
+    public boolean lava(String preset, CommandSender sender) {
+        return arenaService.applyHazardPreset(preset, sender);
+    }
+
+    public void light(boolean enabled, CommandSender sender) {
+        arenaService.setLight(enabled, sender);
     }
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        if (!enabled) {
-            return;
-        }
         if (!(event.getWhoClicked() instanceof Player player)) {
             return;
         }
-        if (!menuTitle.equals(event.getView().getTitle())) {
+        if (!event.getView().getTitle().equals(gui.title())) {
             return;
         }
-        if (event.getRawSlot() >= menuSize) {
+        if (event.getRawSlot() >= gui.size()) {
             return;
         }
-
         event.setCancelled(true);
-        Settings.DuelsSettings.GuiItem item = menuItems.get(event.getRawSlot());
-        if (item == null) {
-            return;
-        }
-
-        String command = item.command();
-        Bukkit.getScheduler().runTask(plugin, () -> {
-            player.closeInventory();
-            if (command != null && !command.isBlank()) {
-                player.performCommand(command);
-            }
-        });
+        gui.actionForSlot(event.getRawSlot()).ifPresent(action -> handleGuiAction(player, action));
     }
 
     @EventHandler
     public void onInventoryDrag(InventoryDragEvent event) {
-        if (!enabled) {
-            return;
+        if (event.getView().getTitle().equals(gui.title())) {
+            event.setCancelled(true);
         }
-        if (!menuTitle.equals(event.getView().getTitle())) {
-            return;
+    }
+
+    private void handleGuiAction(Player player, String action) {
+        String[] parts = action.split(":", 2);
+        String type = parts[0].toLowerCase(Locale.ROOT);
+        String argument = parts.length > 1 ? parts[1] : "";
+        switch (type) {
+            case "arena" -> {
+                if (argument.equalsIgnoreCase("next")) {
+                    String next = arenaService.cycleArena();
+                    Msg.to(player, next == null ? "&cKeine Arena verfügbar." : "&aArena gewechselt zu &f" + next);
+                } else if (!argument.isBlank()) {
+                    selectArena(argument, player);
+                }
+            }
+            case "reset" -> reset(argument, player);
+            case "floor" -> floor(argument, player);
+            case "lava" -> lava(argument, player);
+            case "light" -> light(!argument.equalsIgnoreCase("off"), player);
+            case "command" -> {
+                if (!argument.isBlank()) {
+                    String command = argument.replace("%player%", player.getName());
+                    player.closeInventory();
+                    Bukkit.dispatchCommand(player, command);
+                }
+            }
+            case "console" -> {
+                if (!argument.isBlank()) {
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), argument);
+                    Msg.to(player, "&aBefehl ausgeführt: &f" + argument);
+                }
+            }
+            default -> Msg.to(player, "&7Keine Aktion für &f" + action);
         }
-        event.setCancelled(true);
     }
 }
