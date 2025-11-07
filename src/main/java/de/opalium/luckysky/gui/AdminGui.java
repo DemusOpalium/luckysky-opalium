@@ -18,7 +18,7 @@ import org.bukkit.inventory.Inventory;
 
 public class AdminGui implements Listener {
     private static final String TITLE = ChatColor.DARK_AQUA + "LuckySky Admin";
-    private static final int SIZE = 27;
+    private static final int SIZE = 36;
 
     private final LuckySkyPlugin plugin;
 
@@ -60,6 +60,15 @@ public class AdminGui implements Listener {
             case 23 -> handlePlatform(player);
             case 24 -> handleTeleport(player);
             case 25 -> handleSave(player);
+            case 27 -> handleArenaBuild(player);
+            case 28 -> handleArenaClear(player);
+            case 29 -> handleArenaLight(player);
+            case 30 -> handleArenaFloor(player);
+            case 31 -> handleArenaCeiling(player);
+            case 32 -> handleTrapEnable(player);
+            case 33 -> handleTrapDisable(player);
+            case 34 -> handleTrapCycle(player);
+            case 35 -> handleTrapClear(player);
             default -> {
             }
         }
@@ -97,6 +106,24 @@ public class AdminGui implements Listener {
                 List.of("&7Teleportiert dich zum Spawn."), false));
         inventory.setItem(25, GuiItems.button(Material.NAME_TAG, "&aSave Config",
                 List.of("&7Speichert & läd Config neu."), false));
+        inventory.setItem(27, GuiItems.button(Material.GRASS_BLOCK, "&aArena Build",
+                List.of("&7Baut die Standard-Arena."), false));
+        inventory.setItem(28, GuiItems.button(Material.BARRIER, "&cArena Clear",
+                List.of("&7Entfernt Arena-Blöcke."), false));
+        inventory.setItem(29, GuiItems.button(Material.LANTERN, "&eArena Light",
+                List.of("&7Setzt Licht in der Arena."), false));
+        inventory.setItem(30, GuiItems.button(Material.SMOOTH_STONE, "&fArena Floor",
+                List.of("&7Aktualisiert den Arenaboden."), false));
+        inventory.setItem(31, GuiItems.button(Material.GLASS, "&fArena Ceiling",
+                List.of("&7Aktualisiert die Decke."), false));
+        inventory.setItem(32, GuiItems.button(Material.CHAIN, "&aTraps Enable",
+                List.of("&7Aktiviert Standard-Fallen."), false));
+        inventory.setItem(33, GuiItems.button(Material.STRING, "&cTraps Disable",
+                List.of("&7Deaktiviert Fallen."), false));
+        inventory.setItem(34, GuiItems.button(Material.LEVER, "&eTraps Cycle",
+                List.of("&7Nächste Fallen-Stufe."), false));
+        inventory.setItem(35, GuiItems.button(Material.FEATHER, "&fTraps Clear",
+                List.of("&7Setzt Fallen zurück."), false));
     }
 
     private void handleStart(Player player) {
@@ -178,5 +205,62 @@ public class AdminGui implements Listener {
         plugin.saveConfig();
         plugin.reloadSettings();
         Msg.to(player, "&aConfig gespeichert.");
+    }
+
+    private void handleArenaBuild(Player player) {
+        plugin.game().buildArena();
+        Msg.to(player, "&aArena aufgebaut.");
+    }
+
+    private void handleArenaClear(Player player) {
+        plugin.game().clearArena();
+        Msg.to(player, "&cArena entfernt.");
+    }
+
+    private void handleArenaLight(Player player) {
+        plugin.game().lightArena();
+        Msg.to(player, "&eArena beleuchtet.");
+    }
+
+    private void handleArenaFloor(Player player) {
+        plugin.game().floorArena();
+        Msg.to(player, "&fArenaboden aktualisiert.");
+    }
+
+    private void handleArenaCeiling(Player player) {
+        plugin.game().ceilingArena();
+        Msg.to(player, "&fArenadecke aktualisiert.");
+    }
+
+    private void handleTrapEnable(Player player) {
+        if (plugin.game().enableTraps()) {
+            Msg.to(player, "&aFallen aktiviert.");
+        } else {
+            Msg.to(player, "&cFallen konnten nicht aktiviert werden.");
+        }
+    }
+
+    private void handleTrapDisable(Player player) {
+        if (plugin.game().disableTraps()) {
+            Msg.to(player, "&cFallen deaktiviert.");
+        } else {
+            Msg.to(player, "&cKeine Fallen aktiv.");
+        }
+    }
+
+    private void handleTrapCycle(Player player) {
+        if (plugin.game().cycleTraps()) {
+            Msg.to(player, "&eFallen weitergeschaltet.");
+        } else {
+            Msg.to(player, "&cFallen konnten nicht weitergeschaltet werden.");
+        }
+    }
+
+    private void handleTrapClear(Player player) {
+        if (plugin.game().clearTraps()) {
+            Msg.to(player, "&7Fallen zurückgesetzt.");
+        } else {
+            Msg.to(player, "&cKeine Fallen aktiv.");
+        }
     }
 }

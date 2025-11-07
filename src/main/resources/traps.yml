@@ -1,0 +1,27 @@
+rotations:
+  standard:
+    name: "Standard Trap Rotation"
+    world: "LuckySky"
+    origin: {x: 10, y: 95, z: 10}
+    stages:
+      - blocks:
+          - {x: 0, y: 0, z: 0, type: "TRIPWIRE_HOOK"}
+          - {x: 1, y: 0, z: 0, type: "TRIPWIRE_HOOK"}
+      - blocks:
+          - {x: 0, y: 0, z: 0, type: "AIR"}
+          - {x: 1, y: 0, z: 0, type: "AIR"}
+    clear:
+      - {x: 0, y: 0, z: 0, type: "AIR"}
+      - {x: 1, y: 0, z: 0, type: "AIR"}
+  chaos:
+    name: "Chaos Trap Rotation"
+    world: "LuckySky"
+    origin: {x: -10, y: 95, z: -10}
+    stages:
+      - blocks:
+          - {x: 0, y: 0, z: 0, type: "MAGMA_BLOCK"}
+      - blocks:
+          - {x: 0, y: 1, z: 0, type: "FIRE"}
+    clear:
+      - {x: 0, y: 0, z: 0, type: "AIR"}
+      - {x: 0, y: 1, z: 0, type: "AIR"}

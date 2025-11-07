@@ -19,7 +19,8 @@ public class LsCommand implements CommandExecutor, TabCompleter {
     private static final List<String> SUBCOMMANDS = List.of(
             "reload", "duels", "start", "stop", "plat", "plat+", "bind",
             "clean", "hardwipe", "mode5", "mode20", "mode60",
-            "wither", "taunt_on", "taunt_off", "gui"
+            "wither", "taunt_on", "taunt_off", "build", "clear", "light",
+            "floor", "ceiling", "traps", "gui"
     );
 
     private static final String PERM_BASE = "opalium.luckysky.base";
@@ -167,6 +168,93 @@ public class LsCommand implements CommandExecutor, TabCompleter {
                 game.spawnWitherNow();
                 Msg.to(sender, "&dWither gespawnt.");
             }
+            case "build" -> {
+                GameManager game = requireGame(sender);
+                if (game == null || !requirePermission(sender, PERM_ADMIN)) {
+                    return true;
+                }
+                game.buildArena();
+                Msg.to(sender, "&aArena aufgebaut.");
+            }
+            case "clear" -> {
+                GameManager game = requireGame(sender);
+                if (game == null || !requirePermission(sender, PERM_ADMIN)) {
+                    return true;
+                }
+                game.clearArena();
+                Msg.to(sender, "&cArena entfernt.");
+            }
+            case "light" -> {
+                GameManager game = requireGame(sender);
+                if (game == null || !requirePermission(sender, PERM_ADMIN)) {
+                    return true;
+                }
+                game.lightArena();
+                Msg.to(sender, "&eArena beleuchtet.");
+            }
+            case "floor" -> {
+                GameManager game = requireGame(sender);
+                if (game == null || !requirePermission(sender, PERM_ADMIN)) {
+                    return true;
+                }
+                game.floorArena();
+                Msg.to(sender, "&fArenaboden aktualisiert.");
+            }
+            case "ceiling" -> {
+                GameManager game = requireGame(sender);
+                if (game == null || !requirePermission(sender, PERM_ADMIN)) {
+                    return true;
+                }
+                game.ceilingArena();
+                Msg.to(sender, "&fArenadecke aktualisiert.");
+            }
+            case "traps" -> {
+                GameManager game = requireGame(sender);
+                if (game == null || !requirePermission(sender, PERM_ADMIN)) {
+                    return true;
+                }
+                if (args.length < 2) {
+                    Msg.to(sender, "&cNutze: /ls traps <enable|disable|cycle|clear>");
+                    return true;
+                }
+                String action = args[1].toLowerCase(Locale.ROOT);
+                boolean success = false;
+                switch (action) {
+                    case "enable" -> {
+                        success = args.length >= 3
+                                ? plugin.trapService().enable(args[2])
+                                : game.enableTraps();
+                        if (success) {
+                            Msg.to(sender, "&aFallen aktiviert.");
+                        }
+                    }
+                    case "disable" -> {
+                        success = game.disableTraps();
+                        if (success) {
+                            Msg.to(sender, "&cFallen deaktiviert.");
+                        }
+                    }
+                    case "cycle" -> {
+                        success = game.cycleTraps();
+                        if (success) {
+                            Msg.to(sender, "&eFallen weitergeschaltet.");
+                        }
+                    }
+                    case "clear" -> {
+                        success = game.clearTraps();
+                        if (success) {
+                            Msg.to(sender, "&7Fallen zurückgesetzt.");
+                        }
+                    }
+                    default -> {
+                        Msg.to(sender, "&cUnbekannte Trap-Aktion: " + action);
+                        return true;
+                    }
+                }
+                if (!success) {
+                    Msg.to(sender, "&cFallen-Aktion fehlgeschlagen.");
+                }
+            }
             case "taunt_on" -> {
                 GameManager game = requireGame(sender);
                 if (game == null || !requirePermission(sender, PERM_ADMIN)) {
@@ -216,6 +304,8 @@ public class LsCommand implements CommandExecutor, TabCompleter {
             Msg.to(sender, "&7/ls hardwipe &8– Hard-Wipe (inkl. ArmorStands)");
             Msg.to(sender, "&7/ls mode5|mode20|mode60 &8– Zeitvorgabe");
             Msg.to(sender, "&7/ls wither &8– Wither sofort spawnen");
+            Msg.to(sender, "&7/ls build|clear|light|floor|ceiling &8– Arena-Steuerung");
+            Msg.to(sender, "&7/ls traps <aktion> &8– Fallen verwalten");
             Msg.to(sender, "&7/ls taunt_on/off &8– Taunts toggeln");
             Msg.to(sender, "&7/ls gui &8– Öffnet das Admin-Menü");
         }
@@ -247,6 +337,14 @@ public class LsCommand implements CommandExecutor, TabCompleter {
             return SUBCOMMANDS.stream()
                     .filter(sub -> sub.startsWith(current))
                     .collect(Collectors.toCollection(ArrayList::new));
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("traps")) {
+            return List.of("enable", "disable", "cycle", "clear").stream()
+                    .filter(opt -> opt.startsWith(args[1].toLowerCase(Locale.ROOT)))
+                    .collect(Collectors.toCollection(ArrayList::new));
+        }
+        if (args.length == 3 && args[0].equalsIgnoreCase("traps") && args[1].equalsIgnoreCase("enable")) {
+            return new ArrayList<>(plugin.trapService().rotations().keySet());
         }
         return Collections.emptyList();
     }

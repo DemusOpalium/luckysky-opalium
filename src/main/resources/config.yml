@@ -8,6 +8,12 @@ lucky:
   variant: "RANDOM"   # wird an LuckyBlock-Command/API übergeben
   variants_available: ["RANDOM", "CLASSIC", "CHAOS"]
 
+arena:
+  default: "default"
+  variant: "sunrise"
+  editor:
+    autosave: true
+
 platform:
   big_3x3: true
   base:
@@ -38,6 +44,9 @@ wipes:
   hardwipe:
     radius: 1500
     armorstand_radius: 5000
+
+traps:
+  default: "standard"
 
 rewards:
   mode: "all"  # "all" oder "killer"

@@ -14,6 +14,10 @@ commands:
     description: Opens the LuckySky duels interface
     usage: /duelsui
     permission: opalium.luckysky.duels.mod
+  arena:
+    description: Manages LuckySky arenas and traps
+    usage: /arena <subcommand>
+    permission: opalium.luckysky.arena
 permissions:
   opalium.luckysky.base:
     description: Allows using the /luckysky command
@@ -23,6 +27,7 @@ permissions:
     default: op
     children:
       opalium.luckysky.base: true
+      opalium.luckysky.arena: true
   opalium.luckysky.duels.use:
     description: Allows /ls duels to interact with LuckySky duels
     default: true
@@ -33,3 +38,8 @@ permissions:
     default: op
     children:
       opalium.luckysky.duels.use: true
+  opalium.luckysky.arena:
+    description: Allows managing LuckySky arenas and traps
+    default: op
+    children:
+      opalium.luckysky.base: true

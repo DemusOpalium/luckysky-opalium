@@ -1,7 +1,9 @@
 package de.opalium.luckysky.game;
 
 import de.opalium.luckysky.LuckySkyPlugin;
+import de.opalium.luckysky.arena.ArenaService;
 import de.opalium.luckysky.model.Settings;
+import de.opalium.luckysky.trap.TrapService;
 import de.opalium.luckysky.util.Msg;
 import de.opalium.luckysky.util.Worlds;
 import java.util.Collections;
@@ -22,6 +24,8 @@ public class GameManager {
     private final DurationService durationService;
     private final WitherService witherService;
     private final RewardsService rewardsService;
+    private final ArenaService arenaService;
+    private final TrapService trapService;
 
     private GameState state = GameState.IDLE;
 
@@ -29,8 +33,10 @@ public class GameManager {
     private final Set<UUID> allParticipants = new HashSet<>();
     private final Set<UUID> disconnectedParticipants = new HashSet<>();
 
-    public GameManager(LuckySkyPlugin plugin) {
+    public GameManager(LuckySkyPlugin plugin, ArenaService arenaService, TrapService trapService) {
         this.plugin = plugin;
+        this.arenaService = arenaService;
+        this.trapService = trapService;
         this.platformService = new PlatformService(plugin);
         this.wipeService = new WipeService(plugin);
         this.luckyService = new LuckyService(plugin);
@@ -43,6 +49,7 @@ public class GameManager {
         luckyService.stop();
         durationService.stop();
         witherService.stop();
+        trapService.disable();
     }
 
     public GameState state() {
@@ -54,6 +61,7 @@ public class GameManager {
             return;
         }
         ensureWorldLoaded();
+        arenaService.buildDefaultArena();
         activeParticipants.clear();
         allParticipants.clear();
         disconnectedParticipants.clear();
@@ -63,6 +71,7 @@ public class GameManager {
         luckyService.start();
         durationService.startDefault();
         witherService.start();
+        trapService.enableDefault();
         state = GameState.RUNNING;
         broadcast("&a▶ LUCKYSKY START &7(Lucky @ " + plugin.settings().luckyX + "," + plugin.settings().luckyY + "," + plugin.settings().luckyZ + ")");
         Bukkit.getScheduler().runTaskLater(plugin,
@@ -77,6 +86,8 @@ public class GameManager {
         luckyService.stop();
         durationService.stop();
         witherService.stop();
+        trapService.disable();
+        arenaService.clearDefaultArena();
         state = GameState.STOPPED;
         broadcast("&f■ STOP &7(Timer aus • Safe-Blöcke bleiben)");
     }
@@ -85,6 +96,46 @@ public class GameManager {
         ensureWorldLoaded();
         platformService.placeBase();
         Msg.to(Bukkit.getConsoleSender(), "&bSafe-Plattform gesetzt.");
+    }
+
+    public void buildArena() {
+        arenaService.buildDefaultArena();
+    }
+
+    public void clearArena() {
+        arenaService.clearDefaultArena();
+    }
+
+    public void lightArena() {
+        arenaService.lightDefaultArena();
+    }
+
+    public void crownArena() {
+        arenaService.crownDefaultArena();
+    }
+
+    public void floorArena() {
+        arenaService.floorDefaultArena();
+    }
+
+    public void ceilingArena() {
+        arenaService.ceilingDefaultArena();
+    }
+
+    public boolean enableTraps() {
+        return trapService.enableDefault();
+    }
+
+    public boolean disableTraps() {
+        return trapService.disable();
+    }
+
+    public boolean cycleTraps() {
+        return trapService.cycle();
+    }
+
+    public boolean clearTraps() {
+        return trapService.clear();
     }
 
     public void placePlatformExtended() {

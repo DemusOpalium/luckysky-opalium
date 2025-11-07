@@ -29,6 +29,10 @@ public class Settings {
     public final String luckyVariant;
     private final List<String> luckyVariants;
 
+    private final String arenaDefaultId;
+    private final String arenaDefaultVariant;
+    private final boolean arenaEditorAutosave;
+
     public final boolean platformBig;
     private final List<PBlock> platformBlocks;
 
@@ -45,6 +49,8 @@ public class Settings {
     public final int wipeRadius;
     public final int hardRadius;
     public final int armorstandRadius;
+
+    private final String trapDefaultRotation;
 
     public final String prefix;
 
@@ -76,6 +82,18 @@ public class Settings {
         }
         luckyVariants = Collections.unmodifiableList(new ArrayList<>(variants));
 
+        ConfigurationSection arenaSection = config.getConfigurationSection("arena");
+        if (arenaSection != null) {
+            arenaDefaultId = arenaSection.getString("default", "default");
+            arenaDefaultVariant = arenaSection.getString("variant", "sunrise");
+            ConfigurationSection editor = arenaSection.getConfigurationSection("editor");
+            arenaEditorAutosave = editor == null || editor.getBoolean("autosave", true);
+        } else {
+            arenaDefaultId = "default";
+            arenaDefaultVariant = "sunrise";
+            arenaEditorAutosave = true;
+        }
+
         platformBig = config.getBoolean("platform.big_3x3", true);
         platformBlocks = readPlatformBlocks(config);
 
@@ -93,6 +111,13 @@ public class Settings {
         wipeRadius = config.getInt("wipes.radius", 300);
         hardRadius = config.getInt("wipes.hardwipe.radius", 1500);
         armorstandRadius = config.getInt("wipes.hardwipe.armorstand_radius", 5000);
+
+        ConfigurationSection trapSection = config.getConfigurationSection("traps");
+        if (trapSection != null) {
+            trapDefaultRotation = trapSection.getString("default", "standard");
+        } else {
+            trapDefaultRotation = "standard";
+        }
 
         ConfigurationSection rewards = config.getConfigurationSection("rewards");
         if (rewards != null) {
@@ -165,6 +190,18 @@ public class Settings {
         return platformBlocks.isEmpty() ? 100 : platformBlocks.get(0).y();
     }
 
+    public String arenaDefaultId() {
+        return arenaDefaultId;
+    }
+
+    public String arenaDefaultVariant() {
+        return arenaDefaultVariant;
+    }
+
+    public boolean arenaEditorAutosave() {
+        return arenaEditorAutosave;
+    }
+
     public Vector luckyCenter() {
         return new Vector(luckyX, luckyY, luckyZ);
     }
@@ -187,6 +224,10 @@ public class Settings {
 
     public boolean oneLife() {
         return oneLife;
+    }
+
+    public String trapDefaultRotation() {
+        return trapDefaultRotation;
     }
 
     public List<String> luckyVariants() {
