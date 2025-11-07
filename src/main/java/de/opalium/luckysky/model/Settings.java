@@ -2,7 +2,9 @@ package de.opalium.luckysky.model;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -51,6 +53,8 @@ public class Settings {
     private final String rewardMode;
 
     private final boolean oneLife;
+
+    private final DuelsSettings duelsSettings;
 
     public Settings(FileConfiguration config) {
         world = config.getString("world", "LuckySky");
@@ -104,6 +108,13 @@ public class Settings {
         oneLife = config.getBoolean("lives.one_life", false);
 
         prefix = config.getString("messages.prefix", "&b⛯ LuckySky: &r");
+
+        ConfigurationSection duels = config.getConfigurationSection("duels");
+        if (duels != null) {
+            duelsSettings = new DuelsSettings(duels);
+        } else {
+            duelsSettings = DuelsSettings.disabled();
+        }
     }
 
     private List<PBlock> readPlatformBlocks(FileConfiguration config) {
@@ -180,5 +191,159 @@ public class Settings {
 
     public List<String> luckyVariants() {
         return luckyVariants;
+    }
+
+    public DuelsSettings duels() {
+        return duelsSettings;
+    }
+
+    public static final class DuelsSettings {
+        private final boolean enabled;
+        private final boolean requirePlugin;
+        private final GuiSettings gui;
+        private final Map<String, String> kitMappings;
+
+        private DuelsSettings(boolean enabled, boolean requirePlugin, GuiSettings gui, Map<String, String> kitMappings) {
+            this.enabled = enabled;
+            this.requirePlugin = requirePlugin;
+            this.gui = gui;
+            this.kitMappings = kitMappings;
+        }
+
+        public DuelsSettings(ConfigurationSection section) {
+            this(
+                    section.getBoolean("enabled", false),
+                    section.getBoolean("requirePlugin", true),
+                    GuiSettings.fromSection(section.getConfigurationSection("gui")),
+                    readKitMappings(section.getConfigurationSection("kitMappings"))
+            );
+        }
+
+        public static DuelsSettings disabled() {
+            return new DuelsSettings(false, true, GuiSettings.empty(), Map.of());
+        }
+
+        public boolean enabled() {
+            return enabled;
+        }
+
+        public boolean requirePlugin() {
+            return requirePlugin;
+        }
+
+        public GuiSettings gui() {
+            return gui;
+        }
+
+        public Map<String, String> kitMappings() {
+            return kitMappings;
+        }
+
+        private static Map<String, String> readKitMappings(ConfigurationSection section) {
+            if (section == null) {
+                return Map.of();
+            }
+            Map<String, String> map = new LinkedHashMap<>();
+            for (String key : section.getKeys(false)) {
+                String value = section.getString(key);
+                if (value != null && !value.isBlank()) {
+                    map.put(key.toUpperCase(Locale.ROOT), value);
+                }
+            }
+            return Collections.unmodifiableMap(map);
+        }
+
+        public static final class GuiSettings {
+            private final String title;
+            private final int rows;
+            private final Map<Integer, GuiItem> items;
+
+            private GuiSettings(String title, int rows, Map<Integer, GuiItem> items) {
+                this.title = title;
+                this.rows = rows;
+                this.items = items;
+            }
+
+            public static GuiSettings fromSection(ConfigurationSection section) {
+                if (section == null) {
+                    return empty();
+                }
+                String title = section.getString("title", "&8LuckySky &7• &eDuell-Kits");
+                int rows = Math.max(1, Math.min(6, section.getInt("rows", 3)));
+                Map<Integer, GuiItem> items = new LinkedHashMap<>();
+                ConfigurationSection itemsSection = section.getConfigurationSection("items");
+                if (itemsSection != null) {
+                    for (String key : itemsSection.getKeys(false)) {
+                        ConfigurationSection itemSection = itemsSection.getConfigurationSection(key);
+                        if (itemSection == null) {
+                            continue;
+                        }
+                        int slot = itemSection.getInt("slot", -1);
+                        if (slot < 0 || slot >= rows * 9) {
+                            continue;
+                        }
+                        String material = itemSection.getString("material", "BARRIER");
+                        String name = itemSection.getString("name", "&fKit");
+                        List<String> lore = itemSection.getStringList("lore");
+                        String command = itemSection.getString("command", "");
+                        items.put(slot, new GuiItem(slot, material, name,
+                                Collections.unmodifiableList(new ArrayList<>(lore)), command));
+                    }
+                }
+                return new GuiSettings(title, rows, Collections.unmodifiableMap(items));
+            }
+
+            public static GuiSettings empty() {
+                return new GuiSettings("&8LuckySky Duels", 1, Map.of());
+            }
+
+            public String title() {
+                return title;
+            }
+
+            public int rows() {
+                return rows;
+            }
+
+            public Map<Integer, GuiItem> items() {
+                return items;
+            }
+        }
+
+        public static final class GuiItem {
+            private final int slot;
+            private final String material;
+            private final String name;
+            private final List<String> lore;
+            private final String command;
+
+            public GuiItem(int slot, String material, String name, List<String> lore, String command) {
+                this.slot = slot;
+                this.material = material;
+                this.name = name;
+                this.lore = lore;
+                this.command = command;
+            }
+
+            public int slot() {
+                return slot;
+            }
+
+            public String material() {
+                return material;
+            }
+
+            public String name() {
+                return name;
+            }
+
+            public List<String> lore() {
+                return lore;
+            }
+
+            public String command() {
+                return command;
+            }
+        }
     }
 }
