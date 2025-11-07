@@ -1,3 +1,6 @@
+import org.gradle.api.GradleException
+import org.gradle.language.jvm.tasks.ProcessResources
+
 plugins {
     `java`
 }
@@ -23,7 +26,36 @@ dependencies {
     // TODO: später LuckPerms, Multiverse etc. als compileOnly hinzufügen
 }
 
-tasks.processResources {
+tasks.register("validateResources") {
+    doLast {
+        val resourcesDir = project.layout.projectDirectory.dir("src/main/resources").asFile
+        if (!resourcesDir.exists()) {
+            return@doLast
+        }
+
+        val forbiddenEntries = resourcesDir.walkTopDown()
+            .filter { file ->
+                if (file == resourcesDir) {
+                    false
+                } else {
+                    val relativePath = file.relativeTo(resourcesDir).invariantSeparatorsPath
+                    relativePath == "src" || relativePath.startsWith("src/")
+                }
+            }
+            .toList()
+
+        if (forbiddenEntries.isNotEmpty()) {
+            val details = forbiddenEntries.joinToString(separator = ", ") { entry ->
+                entry.relativeTo(resourcesDir).invariantSeparatorsPath
+            }
+            throw GradleException("Forbidden resources detected under src/main/resources: $details")
+        }
+    }
+}
+
+tasks.named<ProcessResources>("processResources") {
+    dependsOn("validateResources")
+
     filesMatching("plugin.yml") {
         expand(
             "version" to project.version,
