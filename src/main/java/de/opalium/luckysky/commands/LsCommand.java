@@ -5,7 +5,6 @@ import de.opalium.luckysky.duels.DuelsManager;
 import de.opalium.luckysky.game.GameManager;
 import de.opalium.luckysky.util.Msg;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -17,10 +16,10 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
 public class LsCommand implements CommandExecutor, TabCompleter {
-    private static final List<String> SUBCOMMANDS = Arrays.asList(
-            "start", "stop", "plat", "plat+", "bind",
+    private static final List<String> SUBCOMMANDS = List.of(
+            "reload", "duels", "start", "stop", "plat", "plat+", "bind",
             "clean", "hardwipe", "mode5", "mode20", "mode60",
-            "wither", "taunt_on", "taunt_off", "gui", "reload", "duels"
+            "wither", "taunt_on", "taunt_off", "gui"
     );
 
     private static final String PERM_BASE = "opalium.luckysky.base";
@@ -52,7 +51,7 @@ public class LsCommand implements CommandExecutor, TabCompleter {
                     return true;
                 }
                 plugin.reloadSettings();
-                Msg.to(sender, "&aKonfiguration neu geladen.");
+                Msg.to(sender, "&aLuckySky-Konfiguration erfolgreich neu geladen.");
             }
             case "duels" -> {
                 if (!requirePermission(sender, PERM_DUELS_USE)) {
@@ -61,6 +60,15 @@ public class LsCommand implements CommandExecutor, TabCompleter {
                 DuelsManager duels = plugin.duels();
                 if (duels == null) {
                     Msg.to(sender, "&cLuckySky-Duels ist nicht verfügbar.");
+                    return true;
+                }
+                boolean adminBypass = sender.hasPermission(PERM_ADMIN);
+                if (!duels.isEnabled() && !adminBypass) {
+                    if (duels.isDependencyMissing()) {
+                        Msg.to(sender, "&cLuckySky-Duels benötigt das Duels-Plugin.");
+                    } else {
+                        Msg.to(sender, "&cLuckySky-Duels ist momentan deaktiviert.");
+                    }
                     return true;
                 }
                 if (args.length >= 2) {
