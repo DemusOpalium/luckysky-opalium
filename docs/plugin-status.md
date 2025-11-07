@@ -6,7 +6,7 @@
 - **Java requirement:** Code uses only the Bukkit API and compiles under Java 21; no third-party dependencies.
 
 ## Implemented Functionality
-- Plugin currently registers the `/ls` command and checks the `luckysky.admin` permission.
+- Plugin currently registers the `/ls` command and checks the `opalium.luckysky.admin` permission.
 - Each subcommand responds with a localized "TODO implement" placeholder message.
 - No gameplay logic, world manipulation, timers, GUI, or Wither event systems are implemented yet.
 
