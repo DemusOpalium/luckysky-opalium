@@ -54,3 +54,36 @@ lives:
 
 messages:
   prefix: "&b⛯ LuckySky: &r"
+
+duels:
+  enabled: false            # LuckySky-Duels-Integration standardmäßig deaktiviert
+  requirePlugin: true       # true = LuckySky startet nur, wenn das Duels-Plugin vorhanden ist
+  gui:
+    title: "&8LuckySky &7• &eDuell-Kits"
+    rows: 3                 # Anzahl Zeilen im Auswahl-Inventar (3 Zeilen = 27 Slots)
+    items:
+      random:
+        slot: 11            # Slot-Index 0-53 (Inventory mit 3 Zeilen -> 0-26)
+        material: "ENDER_CHEST"
+        name: "&6🎲 Random"
+        lore:
+          - "&7Wähle das zufällige LuckySky-Duell-Kit."
+        command: "duels kit luckysky_random"
+      classic:
+        slot: 13
+        material: "DIAMOND_SWORD"
+        name: "&b⚔ Classic"
+        lore:
+          - "&7Spiele LuckySky mit dem klassischen Kit."
+        command: "duels kit luckysky_classic"
+      chaos:
+        slot: 15
+        material: "TOTEM_OF_UNDYING"
+        name: "&c☄ Chaos"
+        lore:
+          - "&7Für mutige Spieler – chaotisches Kit aktivieren."
+        command: "duels kit luckysky_chaos"
+  kitMappings:              # LuckySky-Variante -> Duels-Kitname
+    RANDOM: "luckysky_random"
+    CLASSIC: "luckysky_classic"
+    CHAOS: "luckysky_chaos"
