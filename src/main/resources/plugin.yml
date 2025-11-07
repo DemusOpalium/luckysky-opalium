@@ -1,14 +1,35 @@
 name: LuckySky
 main: de.opalium.luckysky.LuckySkyPlugin
-version: 0.2.0
+version: 1.2.0
 api-version: '1.21'
 author: DemusOpalium
 softdepend: [Multiverse-Core, PlaceholderAPI, Essentials, ProtocolLib]
 commands:
-  ls:
-    description: LuckySky Admin
-    usage: /ls help
-    permission: luckysky.admin
+  luckysky:
+    description: LuckySky base command
+    aliases: [ls]
+    usage: /ls <reload|duels>
+    permission: opalium.luckysky.base
+  duelsui:
+    description: Opens the LuckySky duels interface
+    usage: /duelsui
+    permission: opalium.luckysky.duels.mod
 permissions:
-  luckysky.admin:
+  opalium.luckysky.base:
+    description: Allows using the /luckysky command
+    default: true
+  opalium.luckysky.admin:
+    description: Allows administrative LuckySky actions such as /ls reload
     default: op
+    children:
+      opalium.luckysky.base: true
+  opalium.luckysky.duels.use:
+    description: Allows /ls duels to interact with LuckySky duels
+    default: true
+    children:
+      opalium.luckysky.base: true
+  opalium.luckysky.duels.mod:
+    description: Allows moderating LuckySky duels with /duelsui
+    default: op
+    children:
+      opalium.luckysky.duels.use: true
