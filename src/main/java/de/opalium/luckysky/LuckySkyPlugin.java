@@ -1,5 +1,6 @@
 package de.opalium.luckysky;
 
+import de.opalium.luckysky.commands.ArenaCommand;
 import de.opalium.luckysky.commands.DuelsUiCommand;
 import de.opalium.luckysky.commands.ArenaCommand;
 import de.opalium.luckysky.commands.LsCommand;
@@ -11,8 +12,9 @@ import de.opalium.luckysky.gui.AdminGui;
 import de.opalium.luckysky.listeners.BossListener;
 import de.opalium.luckysky.listeners.PlayerListener;
 import de.opalium.luckysky.model.Settings;
-import de.opalium.luckysky.trap.TrapService;
+import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -62,32 +64,9 @@ public final class LuckySkyPlugin extends JavaPlugin {
         this.arenaEditorGui = new ArenaEditorGui(this, arenaService);
         this.duels = new DuelsManager(this);
 
-        PluginCommand lsCommand = getCommand("ls");
-        if (lsCommand != null) {
-            LsCommand executor = new LsCommand(this);
-            lsCommand.setExecutor(executor);
-            lsCommand.setTabCompleter(executor);
-        } else {
-            getLogger().severe("[LuckySky] Failed to register /ls command - entry missing in plugin.yml");
-        }
-
-        PluginCommand arenaCommand = getCommand("arena");
-        if (arenaCommand != null) {
-            ArenaCommand executor = new ArenaCommand(this);
-            arenaCommand.setExecutor(executor);
-            arenaCommand.setTabCompleter(executor);
-        } else {
-            getLogger().severe("[LuckySky] Failed to register /arena command - entry missing in plugin.yml");
-        }
-
-        PluginCommand duelsCommand = getCommand("duelsui");
-        if (duelsCommand != null) {
-            DuelsUiCommand executor = new DuelsUiCommand(this);
-            duelsCommand.setExecutor(executor);
-            duelsCommand.setTabCompleter(executor);
-        } else {
-            getLogger().warning("[LuckySky] Failed to register /duelsui command - entry missing in plugin.yml");
-        }
+        registerCommand("ls", new LsCommand(this));
+        registerCommand("arena", new ArenaCommand(this));
+        registerCommand("duelsui", new DuelsUiCommand(this));
 
         PluginManager pm = getServer().getPluginManager();
         pm.registerEvents(new BossListener(this), this);
@@ -137,5 +116,16 @@ public final class LuckySkyPlugin extends JavaPlugin {
 
     public DuelsManager duels() {
         return duels;
+    }
+
+    private void registerCommand(String name, CommandExecutor executor) {
+        PluginCommand command = getCommand(name);
+        if (command == null) {
+            throw new IllegalStateException("Command '" + name + "' is not defined in plugin.yml");
+        }
+        command.setExecutor(executor);
+        if (executor instanceof TabCompleter completer) {
+            command.setTabCompleter(completer);
+        }
     }
 }
