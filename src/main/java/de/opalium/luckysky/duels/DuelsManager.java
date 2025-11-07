@@ -1,8 +1,8 @@
 package de.opalium.luckysky.duels;
 
 import de.opalium.luckysky.LuckySkyPlugin;
+import de.opalium.luckysky.config.model.DuelsConfig;
 import de.opalium.luckysky.gui.GuiItems;
-import de.opalium.luckysky.model.Settings;
 import de.opalium.luckysky.util.Msg;
 import java.util.LinkedHashMap;
 import java.util.Locale;
@@ -27,7 +27,7 @@ public class DuelsManager implements Listener {
     private String menuTitle;
     private int menuSize;
     private ItemStack[] menuTemplate = new ItemStack[0];
-    private Map<Integer, Settings.DuelsSettings.GuiItem> menuItems = Map.of();
+    private Map<Integer, DuelsConfig.GuiItem> menuItems = Map.of();
 
     public DuelsManager(LuckySkyPlugin plugin) {
         this.plugin = plugin;
@@ -35,22 +35,21 @@ public class DuelsManager implements Listener {
     }
 
     public void reload() {
-        Settings settings = plugin.settings();
-        Settings.DuelsSettings duels = settings.duels();
+        DuelsConfig duels = plugin.configs().duels();
         Plugin dependency = Bukkit.getPluginManager().getPlugin("Duels");
         boolean dependencyEnabled = dependency != null && dependency.isEnabled();
 
         dependencyMissing = duels.requirePlugin() && !dependencyEnabled;
         enabled = duels.enabled() && !dependencyMissing;
 
-        Settings.DuelsSettings.GuiSettings gui = duels.gui();
+        DuelsConfig.GuiConfig gui = duels.gui();
         menuSize = Math.max(9, Math.min(54, gui.rows() * 9));
         menuTitle = Msg.color(gui.title());
 
-        LinkedHashMap<Integer, Settings.DuelsSettings.GuiItem> items = new LinkedHashMap<>();
+        LinkedHashMap<Integer, DuelsConfig.GuiItem> items = new LinkedHashMap<>();
         ItemStack[] template = new ItemStack[menuSize];
 
-        for (Settings.DuelsSettings.GuiItem item : gui.items().values()) {
+        for (DuelsConfig.GuiItem item : gui.items().values()) {
             int slot = item.slot();
             if (slot < 0 || slot >= menuSize) {
                 continue;
@@ -98,7 +97,7 @@ public class DuelsManager implements Listener {
     }
 
     public boolean performMappedCommand(CommandSender sender, String variant) {
-        Settings.DuelsSettings duels = plugin.settings().duels();
+        DuelsConfig duels = plugin.configs().duels();
         String mapped = duels.kitMappings().get(variant.toUpperCase(Locale.ROOT));
         if (mapped == null) {
             Msg.to(sender, "&cUnbekannte LuckySky-Variante: &f" + variant);
@@ -142,7 +141,7 @@ public class DuelsManager implements Listener {
         }
 
         event.setCancelled(true);
-        Settings.DuelsSettings.GuiItem item = menuItems.get(event.getRawSlot());
+        DuelsConfig.GuiItem item = menuItems.get(event.getRawSlot());
         if (item == null) {
             return;
         }

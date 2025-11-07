@@ -1,7 +1,8 @@
 package de.opalium.luckysky.game;
 
 import de.opalium.luckysky.LuckySkyPlugin;
-import de.opalium.luckysky.model.Settings;
+import de.opalium.luckysky.config.model.WorldsCfg;
+import de.opalium.luckysky.config.model.WorldsCfg.WorldCfg;
 import de.opalium.luckysky.util.Msg;
 import de.opalium.luckysky.util.Worlds;
 import java.util.Collections;
@@ -64,7 +65,8 @@ public class GameManager {
         durationService.startDefault();
         witherService.start();
         state = GameState.RUNNING;
-        broadcast("&a▶ LUCKYSKY START &7(Lucky @ " + plugin.settings().luckyX + "," + plugin.settings().luckyY + "," + plugin.settings().luckyZ + ")");
+        WorldsCfg.Lucky lucky = worldConfig().lucky();
+        broadcast("&a▶ LUCKYSKY START &7(Lucky @ " + lucky.x() + "," + lucky.y() + "," + lucky.z() + ")");
         Bukkit.getScheduler().runTaskLater(plugin,
                 () -> Msg.to(Bukkit.getConsoleSender(), "&7Game is running."), 1L);
     }
@@ -103,9 +105,10 @@ public class GameManager {
     }
 
     public void bindAll() {
-        Settings settings = plugin.settings();
-        World world = Worlds.require(settings.world);
-        Location respawn = new Location(world, settings.spawnX + 0.5, settings.spawnY, settings.spawnZ + 0.5, settings.spawnYaw, settings.spawnPitch);
+        WorldCfg worldCfg = worldConfig();
+        WorldsCfg.Spawn spawn = worldCfg.spawn();
+        World world = Worlds.require(worldCfg.worldName());
+        Location respawn = new Location(world, spawn.x() + 0.5, spawn.y(), spawn.z() + 0.5, spawn.yaw(), spawn.pitch());
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (!player.getWorld().equals(world)) {
                 continue;
@@ -116,7 +119,7 @@ public class GameManager {
             allParticipants.add(id);
             disconnectedParticipants.remove(id);
         }
-        broadcast("&bSpawnpoint für alle = (&f" + settings.spawnX + "," + settings.spawnY + "," + settings.spawnZ + "&b).");
+        broadcast("&bSpawnpoint für alle = (&f" + spawn.x() + "," + spawn.y() + "," + spawn.z() + "&b).");
     }
 
     public void setDurationMinutes(int minutes) {
@@ -136,7 +139,7 @@ public class GameManager {
     }
 
     public void setAllSurvivalInWorld() {
-        World world = Worlds.require(plugin.settings().world);
+        World world = Worlds.require(worldConfig().worldName());
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (player.getWorld().equals(world)) {
                 player.setGameMode(GameMode.SURVIVAL);
@@ -159,7 +162,7 @@ public class GameManager {
         UUID id = player.getUniqueId();
         activeParticipants.remove(id);
         disconnectedParticipants.remove(id);
-        if (plugin.settings().oneLife()) {
+        if (plugin.configs().game().lives().oneLife()) {
             Bukkit.getScheduler().runTask(plugin, () -> player.setGameMode(GameMode.SPECTATOR));
             if (activeParticipants.isEmpty()) {
                 handleAllPlayersEliminated();
@@ -171,7 +174,7 @@ public class GameManager {
         if (!isParticipant(player)) {
             return;
         }
-        if (plugin.settings().oneLife()) {
+        if (plugin.configs().game().lives().oneLife()) {
             return;
         }
         activeParticipants.add(player.getUniqueId());
@@ -205,7 +208,7 @@ public class GameManager {
             disconnectedParticipants.remove(id);
             return;
         }
-        World world = Worlds.require(plugin.settings().world);
+        World world = Worlds.require(worldConfig().worldName());
         if (!player.getWorld().equals(world)) {
             return;
         }
@@ -255,16 +258,21 @@ public class GameManager {
     }
 
     public boolean oneLifeEnabled() {
-        return plugin.settings().oneLife();
+        return plugin.configs().game().lives().oneLife();
     }
 
     private void ensureWorldLoaded() {
-        Worlds.require(plugin.settings().world);
+        Worlds.require(worldConfig().worldName());
     }
 
     private void broadcast(String message) {
-        String colored = Msg.color(plugin.settings().prefix + message);
+        String colored = Msg.color(plugin.configs().messages().prefix() + message);
         Bukkit.getOnlinePlayers().forEach(p -> p.sendMessage(colored));
         Bukkit.getConsoleSender().sendMessage(colored);
     }
+
+    private WorldCfg worldConfig() {
+        return plugin.configs().worlds().primary();
+    }
+
 }

@@ -1,0 +1,9 @@
+traps:
+  lucky_strike:
+    name: "&cLucky Strike"
+    command: "say Lucky trap ausgelöst!"
+    cooldownSeconds: 30
+  freeze:
+    name: "&bFreeze"
+    command: "effect give %player% slowness 5 5"
+    cooldownSeconds: 45

@@ -1,0 +1,29 @@
+primary: "default"
+worlds:
+  default:
+    worldName: "LuckySky"
+    spawn:
+      x: 0
+      y: 101
+      z: 2
+      yaw: 180.0
+      pitch: 0.0
+    lucky:
+      x: 0
+      y: 102
+      z: 6
+      interval_ticks: 160
+      require_air_at_target: true
+      variant: "RANDOM"
+      variants_available:
+        - "RANDOM"
+        - "CLASSIC"
+        - "CHAOS"
+    platform:
+      big_3x3: true
+      base:
+        blocks:
+          - {x: 0, y: 100, z: -1, type: "PRISMARINE_STAIRS", data: "facing=south,half=bottom,shape=straight"}
+          - {x: 0, y: 100, z: 0, type: "PRISMARINE_STAIRS", data: "facing=south,half=bottom,shape=straight"}
+          - {x: 0, y: 100, z: 1, type: "PRISMARINE_BRICKS"}
+          - {x: 0, y: 100, z: 2, type: "PRISMARINE_BRICKS"}

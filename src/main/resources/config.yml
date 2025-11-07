@@ -1,22 +1,3 @@
-world: "LuckySky"
-spawn: {x: 0, y: 101, z: 2, yaw: 180.0, pitch: 0.0}
-
-lucky:
-  pos: {x: 0, y: 102, z: 6}
-  interval_ticks: 160
-  require_air_at_target: true
-  variant: "RANDOM"   # wird an LuckyBlock-Command/API übergeben
-  variants_available: ["RANDOM", "CLASSIC", "CHAOS"]
-
-platform:
-  big_3x3: true
-  base:
-    blocks:
-      - {x: 0, y: 100, z: -1, type: "PRISMARINE_STAIRS", data: "facing=south,half=bottom,shape=straight"}
-      - {x: 0, y: 100, z:  0, type: "PRISMARINE_STAIRS", data: "facing=south,half=bottom,shape=straight"}
-      - {x: 0, y: 100, z:  1, type: "PRISMARINE_BRICKS"}
-      - {x: 0, y: 100, z:  2, type: "PRISMARINE_BRICKS"}
-
 durations:
   minutes_default: 60
   presets: [5, 20, 60]
@@ -40,7 +21,7 @@ wipes:
     armorstand_radius: 5000
 
 rewards:
-  mode: "all"  # "all" oder "killer"
+  mode: "all"
   on_boss_kill:
     commands:
       - "eco give %player% 5000"
@@ -51,39 +32,3 @@ rewards:
 
 lives:
   one_life: false
-
-messages:
-  prefix: "&b⛯ LuckySky: &r"
-
-duels:
-  enabled: false            # LuckySky-Duels-Integration standardmäßig deaktiviert
-  requirePlugin: true       # true = LuckySky startet nur, wenn das Duels-Plugin vorhanden ist
-  gui:
-    title: "&8LuckySky &7• &eDuell-Kits"
-    rows: 3                 # Anzahl Zeilen im Auswahl-Inventar (3 Zeilen = 27 Slots)
-    items:
-      random:
-        slot: 11            # Slot-Index 0-53 (Inventory mit 3 Zeilen -> 0-26)
-        material: "ENDER_CHEST"
-        name: "&6🎲 Random"
-        lore:
-          - "&7Wähle das zufällige LuckySky-Duell-Kit."
-        command: "duels kit luckysky_random"
-      classic:
-        slot: 13
-        material: "DIAMOND_SWORD"
-        name: "&b⚔ Classic"
-        lore:
-          - "&7Spiele LuckySky mit dem klassischen Kit."
-        command: "duels kit luckysky_classic"
-      chaos:
-        slot: 15
-        material: "TOTEM_OF_UNDYING"
-        name: "&c☄ Chaos"
-        lore:
-          - "&7Für mutige Spieler – chaotisches Kit aktivieren."
-        command: "duels kit luckysky_chaos"
-  kitMappings:              # LuckySky-Variante -> Duels-Kitname
-    RANDOM: "luckysky_random"
-    CLASSIC: "luckysky_classic"
-    CHAOS: "luckysky_chaos"

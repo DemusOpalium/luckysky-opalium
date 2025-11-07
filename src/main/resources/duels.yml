@@ -1,0 +1,31 @@
+enabled: false
+requirePlugin: true
+gui:
+  title: "&8LuckySky &7• &eDuell-Kits"
+  rows: 3
+  items:
+    random:
+      slot: 11
+      material: "ENDER_CHEST"
+      name: "&6🎲 Random"
+      lore:
+        - "&7Wähle das zufällige LuckySky-Duell-Kit."
+      command: "duels kit luckysky_random"
+    classic:
+      slot: 13
+      material: "DIAMOND_SWORD"
+      name: "&b⚔ Classic"
+      lore:
+        - "&7Spiele LuckySky mit dem klassischen Kit."
+      command: "duels kit luckysky_classic"
+    chaos:
+      slot: 15
+      material: "TOTEM_OF_UNDYING"
+      name: "&c☄ Chaos"
+      lore:
+        - "&7Für mutige Spieler – chaotisches Kit aktivieren."
+      command: "duels kit luckysky_chaos"
+kitMappings:
+  RANDOM: "luckysky_random"
+  CLASSIC: "luckysky_classic"
+  CHAOS: "luckysky_chaos"

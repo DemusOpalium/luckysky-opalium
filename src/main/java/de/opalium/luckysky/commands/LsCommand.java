@@ -172,8 +172,7 @@ public class LsCommand implements CommandExecutor, TabCompleter {
                 if (game == null || !requirePermission(sender, PERM_ADMIN)) {
                     return true;
                 }
-                plugin.getConfig().set("withers.taunts.enable", true);
-                plugin.saveConfig();
+                plugin.configs().setTauntsEnabled(true);
                 plugin.reloadSettings();
                 game.setTauntsEnabled(true);
                 Msg.to(sender, "&aTaunts aktiviert.");
@@ -183,8 +182,7 @@ public class LsCommand implements CommandExecutor, TabCompleter {
                 if (game == null || !requirePermission(sender, PERM_ADMIN)) {
                     return true;
                 }
-                plugin.getConfig().set("withers.taunts.enable", false);
-                plugin.saveConfig();
+                plugin.configs().setTauntsEnabled(false);
                 plugin.reloadSettings();
                 game.setTauntsEnabled(false);
                 Msg.to(sender, "&cTaunts deaktiviert.");

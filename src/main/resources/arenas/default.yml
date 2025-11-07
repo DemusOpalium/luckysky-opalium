@@ -1,0 +1,7 @@
+id: "default"
+displayName: "Standard Arena"
+world: "LuckySky"
+safeRadius: 128
+description:
+  - "Standard LuckySky-Arena"
+  - "Konfiguriere eigene Dateien in arenas/"

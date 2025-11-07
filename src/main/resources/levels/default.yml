@@ -1,0 +1,6 @@
+id: "default"
+name: "Standard Level"
+unlockAt: 0
+rewards:
+  - "eco give %player% 1000"
+  - "title %player% subtitle {\"text\":\"Level geschafft!\",\"color\":\"gold\"}"

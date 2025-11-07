@@ -1,7 +1,8 @@
 package de.opalium.luckysky.game;
 
 import de.opalium.luckysky.LuckySkyPlugin;
-import de.opalium.luckysky.model.Settings;
+import de.opalium.luckysky.config.model.GameConfig;
+import de.opalium.luckysky.config.model.WorldsCfg;
 import de.opalium.luckysky.util.Msg;
 import de.opalium.luckysky.util.Worlds;
 import net.kyori.adventure.text.Component;
@@ -21,24 +22,24 @@ public class WitherService {
 
     public WitherService(LuckySkyPlugin plugin) {
         this.plugin = plugin;
-        Settings settings = plugin.settings();
-        this.witherEnabled = settings.witherEnable;
-        this.tauntsEnabled = settings.tauntEnable;
+        GameConfig.WitherConfig withers = plugin.configs().game().withers();
+        this.witherEnabled = withers.enabled();
+        this.tauntsEnabled = withers.taunts().enabled();
     }
 
     public void start() {
         stop();
-        Settings settings = plugin.settings();
-        witherEnabled = settings.witherEnable;
-        tauntsEnabled = settings.tauntEnable;
+        GameConfig.WitherConfig withers = plugin.configs().game().withers();
+        witherEnabled = withers.enabled();
+        tauntsEnabled = withers.taunts().enabled();
         if (!witherEnabled) {
             return;
         }
         spawnTimer = Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, this::spawn,
-                settings.witherAfterMinutes * 60L * 20L);
+                withers.spawnAfterMinutes() * 60L * 20L);
         if (tauntsEnabled) {
             tauntTimer = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, this::taunt,
-                    settings.tauntEveryTicks, settings.tauntEveryTicks);
+                    withers.taunts().everyTicks(), withers.taunts().everyTicks());
         }
     }
 
@@ -57,9 +58,9 @@ public class WitherService {
         if (plugin.game().state() == GameState.RUNNING) {
             start();
         } else {
-            Settings settings = plugin.settings();
-            witherEnabled = settings.witherEnable;
-            tauntsEnabled = settings.tauntEnable;
+            GameConfig.WitherConfig withers = plugin.configs().game().withers();
+            witherEnabled = withers.enabled();
+            tauntsEnabled = withers.taunts().enabled();
         }
     }
 
@@ -86,12 +87,12 @@ public class WitherService {
             Bukkit.getScheduler().cancelTask(tauntTimer);
             tauntTimer = -1;
         } else if (enabled && plugin.game().state() == GameState.RUNNING) {
-            Settings settings = plugin.settings();
             if (tauntTimer != -1) {
                 Bukkit.getScheduler().cancelTask(tauntTimer);
             }
             tauntTimer = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, this::taunt,
-                    settings.tauntEveryTicks, settings.tauntEveryTicks);
+                    plugin.configs().game().withers().taunts().everyTicks(),
+                    plugin.configs().game().withers().taunts().everyTicks());
         }
     }
 
@@ -99,29 +100,30 @@ public class WitherService {
         if (!witherEnabled || plugin.game().state() != GameState.RUNNING) {
             return;
         }
-        Settings settings = plugin.settings();
-        World world = Worlds.require(settings.world);
-        Location location = new Location(world, settings.luckyX, settings.luckyY, settings.luckyZ - 6);
+        WorldsCfg.WorldCfg worldCfg = plugin.configs().worlds().primary();
+        WorldsCfg.Lucky lucky = worldCfg.lucky();
+        World world = Worlds.require(worldCfg.worldName());
+        Location location = new Location(world, lucky.x(), lucky.y(), lucky.z() - 6);
         Wither wither = (Wither) world.spawnEntity(location, EntityType.WITHER);
         wither.setCustomNameVisible(true);
         wither.customName(Component.text("Abyssal Wither", NamedTextColor.DARK_PURPLE));
-        Bukkit.broadcastMessage(Msg.color(settings.prefix + "&c☠ Abyssal Wither ist erwacht!"));
+        Bukkit.broadcastMessage(Msg.color(plugin.configs().messages().prefix() + "&c☠ Abyssal Wither ist erwacht!"));
     }
 
     private void taunt() {
         if (!tauntsEnabled || plugin.game().state() != GameState.RUNNING) {
             return;
         }
-        Settings settings = plugin.settings();
-        World world = Worlds.require(settings.world);
+        WorldsCfg.WorldCfg worldCfg = plugin.configs().worlds().primary();
+        World world = Worlds.require(worldCfg.worldName());
         if (world.getEntitiesByClass(Wither.class).isEmpty()) {
             return;
         }
-        String[] lines = settings.witherTaunts();
-        if (lines.length == 0) {
+        java.util.List<String> lines = plugin.configs().game().withers().taunts().lines();
+        if (lines.isEmpty()) {
             return;
         }
-        String line = lines[(int) (Math.random() * lines.length)];
-        Bukkit.broadcastMessage(Msg.color(settings.prefix + "&c" + line));
+        String line = lines.get((int) (Math.random() * lines.size()));
+        Bukkit.broadcastMessage(Msg.color(plugin.configs().messages().prefix() + "&c" + line));
     }
 }
