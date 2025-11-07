@@ -33,7 +33,7 @@ public class DuelsManager implements Listener {
         DuelsConfig config = plugin.configs().duels();
         Plugin dependency = Bukkit.getPluginManager().getPlugin("Duels");
         dependencyMissing = dependency == null || !dependency.isEnabled();
-        enabled = !config.arenas().isEmpty();
+        enabled = !config.arenas().isEmpty() && !dependencyMissing;
         gui.reload();
     }
 
