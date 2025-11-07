@@ -27,6 +27,7 @@ public class GameManager {
 
     private final Set<UUID> activeParticipants = new HashSet<>();
     private final Set<UUID> allParticipants = new HashSet<>();
+    private final Set<UUID> disconnectedParticipants = new HashSet<>();
 
     public GameManager(LuckySkyPlugin plugin) {
         this.plugin = plugin;
@@ -55,6 +56,7 @@ public class GameManager {
         ensureWorldLoaded();
         activeParticipants.clear();
         allParticipants.clear();
+        disconnectedParticipants.clear();
         platformService.placeBase();
         bindAll();
         setAllSurvivalInWorld();
@@ -112,6 +114,7 @@ public class GameManager {
             UUID id = player.getUniqueId();
             activeParticipants.add(id);
             allParticipants.add(id);
+            disconnectedParticipants.remove(id);
         }
         broadcast("&bSpawnpoint für alle = (&f" + settings.spawnX + "," + settings.spawnY + "," + settings.spawnZ + "&b).");
     }
@@ -155,12 +158,11 @@ public class GameManager {
         }
         UUID id = player.getUniqueId();
         activeParticipants.remove(id);
+        disconnectedParticipants.remove(id);
         if (plugin.settings().oneLife()) {
             Bukkit.getScheduler().runTask(plugin, () -> player.setGameMode(GameMode.SPECTATOR));
             if (activeParticipants.isEmpty()) {
-                rewardsService.triggerFail(allParticipants);
-                broadcast("&cAlle Spieler ausgeschieden – Spiel beendet.");
-                stop();
+                handleAllPlayersEliminated();
             }
         }
     }
@@ -173,6 +175,45 @@ public class GameManager {
             return;
         }
         activeParticipants.add(player.getUniqueId());
+        disconnectedParticipants.remove(player.getUniqueId());
+    }
+
+    public void handleQuit(Player player) {
+        UUID id = player.getUniqueId();
+        if (!allParticipants.contains(id)) {
+            return;
+        }
+        boolean wasActive = activeParticipants.remove(id);
+        if (!wasActive) {
+            disconnectedParticipants.remove(id);
+            return;
+        }
+        if (state == GameState.RUNNING) {
+            disconnectedParticipants.add(id);
+            if (activeParticipants.isEmpty()) {
+                handleAllPlayersEliminated();
+            }
+        }
+    }
+
+    public void handleJoin(Player player) {
+        UUID id = player.getUniqueId();
+        if (!disconnectedParticipants.contains(id)) {
+            return;
+        }
+        if (state != GameState.RUNNING) {
+            disconnectedParticipants.remove(id);
+            return;
+        }
+        World world = Worlds.require(plugin.settings().world);
+        if (!player.getWorld().equals(world)) {
+            return;
+        }
+        disconnectedParticipants.remove(id);
+        activeParticipants.add(id);
+        if (state == GameState.RUNNING) {
+            Bukkit.getScheduler().runTask(plugin, () -> player.setGameMode(GameMode.SURVIVAL));
+        }
     }
 
     public void onDurationExpired() {
@@ -197,6 +238,12 @@ public class GameManager {
         luckyService.reload();
         durationService.reload();
         witherService.reload();
+    }
+
+    private void handleAllPlayersEliminated() {
+        rewardsService.triggerFail(allParticipants);
+        broadcast("&cAlle Spieler ausgeschieden – Spiel beendet.");
+        stop();
     }
 
     public Set<UUID> activeParticipants() {
