@@ -5,11 +5,14 @@ api-version: '1.21'
 author: DemusOpalium
 softdepend: [Multiverse-Core, PlaceholderAPI, Essentials, ProtocolLib]
 commands:
-  luckysky:
+  ls:
     description: LuckySky base command
-    aliases: [ls]
     usage: /ls <reload|duels>
     permission: opalium.luckysky.base
+  arena:
+    description: Manage the LuckySky arena runtime
+    usage: /arena
+    permission: opalium.luckysky.arena
   duelsui:
     description: Opens the LuckySky duels interface
     usage: /duelsui
@@ -20,6 +23,11 @@ permissions:
     default: true
   opalium.luckysky.admin:
     description: Allows administrative LuckySky actions such as /ls reload
+    default: op
+    children:
+      opalium.luckysky.base: true
+  opalium.luckysky.arena:
+    description: Allows managing the LuckySky arena runtime via /arena
     default: op
     children:
       opalium.luckysky.base: true
