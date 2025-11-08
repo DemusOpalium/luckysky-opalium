@@ -48,8 +48,8 @@ public class AdminGui implements Listener {
             return;
         }
         switch (slot) {
-            case 10 -> handleStart(player);
-            case 11 -> handleStop(player);
+            case 10 -> handleStartCountdown(player);
+            case 11 -> handleStopToLobby(player);
             case 12 -> handleDuration(player, 5);
             case 13 -> handleDuration(player, 20);
             case 14 -> handleDuration(player, 60);
@@ -72,10 +72,10 @@ public class AdminGui implements Listener {
         GameConfig game = plugin.configs().game();
         TrapsConfig traps = plugin.configs().traps();
         boolean running = plugin.game().state() == de.opalium.luckysky.game.GameState.RUNNING;
-        inventory.setItem(10, GuiItems.button(Material.LIME_DYE, "&aStart",
-                List.of("&7Startet das Spiel."), running));
-        inventory.setItem(11, GuiItems.button(Material.BARRIER, "&cStop",
-                List.of("&7Stoppt das Spiel."), false));
+        inventory.setItem(10, GuiItems.button(Material.LIME_DYE, "&aStart Countdown",
+                List.of("&7Startet das Spiel und teleportiert zur Plattform."), running));
+        inventory.setItem(11, GuiItems.button(Material.BARRIER, "&cStop & Lobby",
+                List.of("&7Stoppt das Spiel und sendet alle zur Lobby."), false));
         inventory.setItem(12, GuiItems.button(Material.CLOCK, "&eMode 5",
                 List.of("&7Setzt Dauer auf 5 Minuten."), false));
         inventory.setItem(13, GuiItems.button(Material.CLOCK, "&eMode 20",
@@ -104,14 +104,14 @@ public class AdminGui implements Listener {
                 List.of("&7Speichert & läd Config neu."), false));
     }
 
-    private void handleStart(Player player) {
+    private void handleStartCountdown(Player player) {
         plugin.game().start();
-        Msg.to(player, "&aGame started.");
+        Msg.to(player, "&aCountdown gestartet.");
     }
 
-    private void handleStop(Player player) {
+    private void handleStopToLobby(Player player) {
         plugin.game().stop();
-        Msg.to(player, "&eGame stopped.");
+        Msg.to(player, "&eGame gestoppt & Lobby.");
     }
 
     private void handleDuration(Player player, int minutes) {
