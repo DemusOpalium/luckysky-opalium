@@ -1,6 +1,7 @@
 package de.opalium.luckysky.listeners;
 
 import de.opalium.luckysky.LuckySkyPlugin;
+import de.opalium.luckysky.game.GameManager;
 import de.opalium.luckysky.game.GameState;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -34,12 +35,29 @@ public class PlayerListener implements Listener {
     @EventHandler
     public void onPlayerRespawn(PlayerRespawnEvent event) {
         Player player = event.getPlayer();
-        if (plugin.game().oneLifeEnabled()) {
-            if (plugin.game().isParticipant(player) && !plugin.game().isActiveParticipant(player)) {
+        GameManager game = plugin.game();
+        boolean running = game.state() == GameState.RUNNING;
+        boolean oneLife = game.oneLifeEnabled();
+        boolean eliminated = game.isParticipant(player) && !game.isActiveParticipant(player);
+
+        if (running) {
+            game.platformSpawnLocation().ifPresent(event::setRespawnLocation);
+            if (oneLife && eliminated) {
                 Bukkit.getScheduler().runTask(plugin, () -> player.setGameMode(org.bukkit.GameMode.SPECTATOR));
+                return;
             }
+            game.handleRespawn(player);
+            Bukkit.getScheduler().runTask(plugin, () -> player.setGameMode(org.bukkit.GameMode.SURVIVAL));
         } else {
-            plugin.game().handleRespawn(player);
+            game.lobbySpawnLocation().ifPresent(event::setRespawnLocation);
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                game.teleportPlayerToLobby(player);
+                if (oneLife && eliminated) {
+                    player.setGameMode(org.bukkit.GameMode.SPECTATOR);
+                } else if (!oneLife) {
+                    player.setGameMode(org.bukkit.GameMode.SURVIVAL);
+                }
+            });
         }
     }
 

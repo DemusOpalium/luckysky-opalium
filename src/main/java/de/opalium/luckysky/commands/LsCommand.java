@@ -17,7 +17,7 @@ import org.bukkit.entity.Player;
 
 public class LsCommand implements CommandExecutor, TabCompleter {
     private static final List<String> SUBCOMMANDS = List.of(
-            "reload", "duels", "start", "stop", "plat", "plat+", "bind",
+            "reload", "duels", "countdown", "start", "stop", "reset", "plat", "plat+", "bind",
             "clean", "hardwipe", "mode5", "mode20", "mode60",
             "wither", "taunt_on", "taunt_off", "gui"
     );
@@ -77,13 +77,17 @@ public class LsCommand implements CommandExecutor, TabCompleter {
                 }
                 duels.openMenu(player);
             }
-            case "start" -> {
+            case "start", "countdown" -> {
                 GameManager game = requireGame(sender);
                 if (game == null || !requirePermission(sender, PERM_ADMIN)) {
                     return true;
                 }
                 game.start();
-                Msg.to(sender, "&aGame started.");
+                if (sub.equals("countdown")) {
+                    Msg.to(sender, "&aCountdown gestartet.");
+                } else {
+                    Msg.to(sender, "&aGame started.");
+                }
             }
             case "stop" -> {
                 GameManager game = requireGame(sender);
@@ -92,6 +96,14 @@ public class LsCommand implements CommandExecutor, TabCompleter {
                 }
                 game.stop();
                 Msg.to(sender, "&eGame stopped.");
+            }
+            case "reset" -> {
+                GameManager game = requireGame(sender);
+                if (game == null || !requirePermission(sender, PERM_ADMIN)) {
+                    return true;
+                }
+                game.stop();
+                Msg.to(sender, "&eGame beendet – Spieler zur Lobby teleportiert.");
             }
             case "plat" -> {
                 GameManager game = requireGame(sender);
@@ -201,8 +213,10 @@ public class LsCommand implements CommandExecutor, TabCompleter {
     private void sendHelp(CommandSender sender) {
         if (sender.hasPermission(PERM_ADMIN)) {
             Msg.to(sender, "&7/ls reload &8– Lädt die LuckySky-Konfiguration neu");
+            Msg.to(sender, "&7/ls countdown &8– Startet das Spiel inkl. Countdown & Plattform-Teleport");
             Msg.to(sender, "&7/ls start &8– Startet das Spiel");
             Msg.to(sender, "&7/ls stop &8– Stoppt das Spiel");
+            Msg.to(sender, "&7/ls reset &8– Stoppt das Spiel & bringt alle zur Lobby");
             Msg.to(sender, "&7/ls plat &8– Setzt Safe-Plattform");
             Msg.to(sender, "&7/ls plat+ &8– 3x3 Erweiterung (falls aktiv)");
             Msg.to(sender, "&7/ls bind &8– Bindet alle an Respawn");
