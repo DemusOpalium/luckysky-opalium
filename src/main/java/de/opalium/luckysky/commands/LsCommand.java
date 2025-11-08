@@ -149,6 +149,7 @@ public class LsCommand implements CommandExecutor, TabCompleter {
                     return true;
                 }
                 game.setDurationMinutes(5);
+                handleOptionalReward(sender, game, args, 1);
                 Msg.to(sender, "&aDauer auf 5 Minuten gesetzt.");
             }
             case "mode20" -> {
@@ -157,6 +158,7 @@ public class LsCommand implements CommandExecutor, TabCompleter {
                     return true;
                 }
                 game.setDurationMinutes(20);
+                handleOptionalReward(sender, game, args, 1);
                 Msg.to(sender, "&aDauer auf 20 Minuten gesetzt.");
             }
             case "mode60" -> {
@@ -165,6 +167,7 @@ public class LsCommand implements CommandExecutor, TabCompleter {
                     return true;
                 }
                 game.setDurationMinutes(60);
+                handleOptionalReward(sender, game, args, 1);
                 Msg.to(sender, "&aDauer auf 60 Minuten gesetzt.");
             }
             case "wither" -> {
@@ -222,7 +225,7 @@ public class LsCommand implements CommandExecutor, TabCompleter {
             Msg.to(sender, "&7/ls bind &8– Bindet alle an Respawn");
             Msg.to(sender, "&7/ls clean &8– Soft-Wipe (Entities nahe Lucky)");
             Msg.to(sender, "&7/ls hardwipe &8– Hard-Wipe (inkl. ArmorStands)");
-            Msg.to(sender, "&7/ls mode5|mode20|mode60 &8– Zeitvorgabe");
+            Msg.to(sender, "&7/ls mode5|mode20|mode60 [win|fail] &8– Zeitvorgabe (optional Rewards)");
             Msg.to(sender, "&7/ls wither &8– Wither sofort spawnen");
             Msg.to(sender, "&7/ls taunt_on/off &8– Taunts toggeln");
             Msg.to(sender, "&7/ls gui &8– Öffnet das Admin-Menü");
@@ -238,6 +241,33 @@ public class LsCommand implements CommandExecutor, TabCompleter {
         }
         Msg.to(sender, "&cNo permission.");
         return false;
+    }
+
+    private void handleOptionalReward(CommandSender sender, GameManager game, String[] args, int startIndex) {
+        if (args.length <= startIndex) {
+            return;
+        }
+        for (int i = startIndex; i < args.length; i++) {
+            String token = args[i].toLowerCase(Locale.ROOT);
+            if (token.startsWith("reward=")) {
+                token = token.substring("reward=".length());
+            }
+            switch (token) {
+                case "win", "success" -> {
+                    Player player = sender instanceof Player ? (Player) sender : null;
+                    game.triggerRewardsWin(player);
+                    Msg.to(sender, "&aRewards (Win) ausgeführt.");
+                    return;
+                }
+                case "fail", "lose" -> {
+                    game.triggerRewardsFail();
+                    Msg.to(sender, "&cRewards (Fail) ausgeführt.");
+                    return;
+                }
+                default -> {
+                }
+            }
+        }
     }
 
     private GameManager requireGame(CommandSender sender) {

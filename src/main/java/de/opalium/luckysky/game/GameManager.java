@@ -26,6 +26,7 @@ public class GameManager {
     private final DurationService durationService;
     private final WitherService witherService;
     private final RewardsService rewardsService;
+    private final ScoreboardService scoreboardService;
 
     private GameState state = GameState.IDLE;
 
@@ -33,12 +34,13 @@ public class GameManager {
     private final Set<UUID> allParticipants = new HashSet<>();
     private final Set<UUID> disconnectedParticipants = new HashSet<>();
 
-    public GameManager(LuckySkyPlugin plugin) {
+    public GameManager(LuckySkyPlugin plugin, ScoreboardService scoreboardService) {
         this.plugin = plugin;
+        this.scoreboardService = scoreboardService;
         this.platformService = new PlatformService(plugin);
         this.wipeService = new WipeService(plugin);
         this.luckyService = new LuckyService(plugin);
-        this.durationService = new DurationService(plugin);
+        this.durationService = new DurationService(plugin, scoreboardService);
         this.witherService = new WitherService(plugin);
         this.rewardsService = new RewardsService(plugin);
     }
@@ -47,6 +49,7 @@ public class GameManager {
         luckyService.stop();
         durationService.stop();
         witherService.stop();
+        refreshScoreboard();
     }
 
     public GameState state() {
@@ -78,6 +81,7 @@ public class GameManager {
         durationService.startDefault();
         witherService.start();
         state = GameState.RUNNING;
+        refreshScoreboard();
         broadcast(messages().gamePrefix() + worldConfig().lucky().startBanner());
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (!platformService.isBaseIntact()) {
@@ -94,12 +98,14 @@ public class GameManager {
             teleportAllToLobby();
             clearParticipants();
             state = GameState.STOPPED;
+            refreshScoreboard();
             return;
         }
         luckyService.stop();
         durationService.stop();
         witherService.stop();
         state = GameState.STOPPED;
+        refreshScoreboard();
         broadcast(messages().gamePrefix() + plugin.configs().messages().stopBanner());
         teleportAllToLobby();
         clearParticipants();
@@ -150,22 +156,27 @@ public class GameManager {
         }
         broadcast(messages().gamePrefix() + String.format("&bSpawnpoint gesetzt (&f%.1f, %.1f, %.1f&b).",
                 spawn.x(), spawn.y(), spawn.z()));
+        refreshScoreboard();
     }
 
     public void setDurationMinutes(int minutes) {
         durationService.startMinutes(minutes);
+        refreshScoreboard();
     }
 
     public void setTauntsEnabled(boolean enabled) {
         witherService.setTauntsEnabled(enabled);
+        refreshScoreboard();
     }
 
     public void setWitherEnabled(boolean enabled) {
         witherService.setWitherEnabled(enabled);
+        refreshScoreboard();
     }
 
     public void spawnWitherNow() {
         witherService.spawnNow();
+        refreshScoreboard();
     }
 
     public void setAllSurvivalInWorld() {
@@ -249,6 +260,7 @@ public class GameManager {
                 handleAllPlayersEliminated();
             }
         }
+        refreshScoreboard();
     }
 
     public void handleRespawn(Player player) {
@@ -263,6 +275,7 @@ public class GameManager {
         }
         activeParticipants.add(player.getUniqueId());
         disconnectedParticipants.remove(player.getUniqueId());
+        refreshScoreboard();
     }
 
     public void handleQuit(Player player) {
@@ -281,6 +294,7 @@ public class GameManager {
                 handleAllPlayersEliminated();
             }
         }
+        refreshScoreboard();
     }
 
     public void handleJoin(Player player) {
@@ -304,6 +318,7 @@ public class GameManager {
                 platformSpawnLocation().ifPresent(player::teleport);
             });
         }
+        refreshScoreboard();
     }
 
     public void onDurationExpired() {
@@ -328,6 +343,7 @@ public class GameManager {
         luckyService.reload();
         durationService.reload();
         witherService.reload();
+        refreshScoreboard();
     }
 
     private void handleAllPlayersEliminated() {
@@ -342,6 +358,16 @@ public class GameManager {
 
     public Set<UUID> allParticipants() {
         return Collections.unmodifiableSet(allParticipants);
+    }
+
+    public void triggerRewardsWin(Player killer) {
+        rewardsService.triggerWin(killer, activeParticipants);
+        refreshScoreboard();
+    }
+
+    public void triggerRewardsFail() {
+        rewardsService.triggerFail(allParticipants);
+        refreshScoreboard();
     }
 
     public boolean oneLifeEnabled() {
@@ -390,5 +416,11 @@ public class GameManager {
         String colored = Msg.color(messages().prefix() + message);
         Bukkit.getOnlinePlayers().forEach(p -> p.sendMessage(colored));
         Bukkit.getConsoleSender().sendMessage(colored);
+    }
+
+    private void refreshScoreboard() {
+        if (scoreboardService != null) {
+            scoreboardService.refresh();
+        }
     }
 }

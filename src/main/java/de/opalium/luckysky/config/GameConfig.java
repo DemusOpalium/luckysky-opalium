@@ -15,7 +15,8 @@ public record GameConfig(
         Rig rig,
         Wipes wipes,
         Rewards rewards,
-        Lives lives
+        Lives lives,
+        Scoreboard scoreboard
 ) {
     public static GameConfig from(FileConfiguration config) {
         Durations durations = readDurations(config.getConfigurationSection("durations"));
@@ -25,7 +26,8 @@ public record GameConfig(
         Wipes wipes = readWipes(config.getConfigurationSection("wipes"));
         Rewards rewards = readRewards(config.getConfigurationSection("rewards"));
         Lives lives = new Lives(config.getBoolean("lives.one_life", false));
-        return new GameConfig(durations, lucky, platform, rig, wipes, rewards, lives);
+        Scoreboard scoreboard = readScoreboard(config.getConfigurationSection("scoreboard"));
+        return new GameConfig(durations, lucky, platform, rig, wipes, rewards, lives, scoreboard);
     }
 
     private static Durations readDurations(ConfigurationSection section) {
@@ -114,6 +116,30 @@ public record GameConfig(
                 Collections.unmodifiableList(new ArrayList<>(onFail)));
     }
 
+    private static Scoreboard readScoreboard(ConfigurationSection section) {
+        if (section == null) {
+            return new Scoreboard(false, "&bLuckySky", List.of(
+                    "&7Status: &f{state}",
+                    "&7Timer: &f{timer}",
+                    "&7Spieler: &f{players}",
+                    "&7Wither: &f{wither}"
+            ));
+        }
+        boolean enabled = section.getBoolean("enabled", section.getBoolean("active", true));
+        String title = section.getString("title", "&bLuckySky");
+        List<String> lines = section.getStringList("lines");
+        if (lines.isEmpty()) {
+            lines = List.of(
+                    "&7Status: &f{state}",
+                    "&7Timer: &f{timer}",
+                    "&7Spieler: &f{players}",
+                    "&7Wither: &f{wither}"
+            );
+        }
+        return new Scoreboard(enabled, title,
+                Collections.unmodifiableList(new ArrayList<>(lines)));
+    }
+
     private static int getInt(Map<?, ?> map, String key, int def) {
         Object value = map.get(key);
         if (value instanceof Number number) {
@@ -173,12 +199,17 @@ public record GameConfig(
 
         ConfigurationSection livesSection = config.createSection("lives");
         livesSection.set("one_life", lives.oneLife());
+
+        ConfigurationSection scoreboardSection = config.createSection("scoreboard");
+        scoreboardSection.set("enabled", scoreboard.enabled());
+        scoreboardSection.set("title", scoreboard.title());
+        scoreboardSection.set("lines", scoreboard.lines());
     }
 
     public GameConfig withLuckyVariant(String variant) {
         Lucky updated = new Lucky(lucky.position(), lucky.intervalTicks(), lucky.requireAirAtTarget(), variant,
                 lucky.variantsAvailable());
-        return new GameConfig(durations, updated, platform, rig, wipes, rewards, lives);
+        return new GameConfig(durations, updated, platform, rig, wipes, rewards, lives, scoreboard);
     }
 
     public record Durations(int minutesDefault, List<Integer> presets) {
@@ -210,5 +241,8 @@ public record GameConfig(
     }
 
     public record Lives(boolean oneLife) {
+    }
+
+    public record Scoreboard(boolean enabled, String title, List<String> lines) {
     }
 }

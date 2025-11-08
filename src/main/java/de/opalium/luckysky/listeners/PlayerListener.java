@@ -64,15 +64,18 @@ public class PlayerListener implements Listener {
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         plugin.game().handleQuit(event.getPlayer());
+        plugin.scoreboard().refresh();
     }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         plugin.game().handleJoin(event.getPlayer());
+        plugin.scoreboard().refresh();
     }
 
     @EventHandler
     public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
         plugin.game().handleJoin(event.getPlayer());
+        plugin.scoreboard().refresh();
     }
 }
