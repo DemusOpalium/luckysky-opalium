@@ -1,10 +1,10 @@
 luckySky:
   worldName: "LuckySky"
   spawn:
-    x: -2.0
-    y: 201.0
+    x: 0.0
+    y: 101.0
     z: 2.0
-    yaw: 0.0
+    yaw: 180.0
     pitch: 0.0
   lucky:
     startBanner: "§aLuckySky läuft – break the blocks!"
@@ -12,9 +12,9 @@ luckySky:
 duels:
   worldName: "duels"
   lobby:
-    x: 0.5
-    y: 120.0
-    z: 0.5
+    x: 1.0
+    y: -56.0
+    z: 0.0
     yaw: 0.0
     pitch: 0.0
   protection_radius: 24

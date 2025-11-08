@@ -12,10 +12,10 @@ public record WorldsConfig(LuckyWorld luckySky, DuelsWorld duels) {
 
     private static LuckyWorld readLuckyWorld(ConfigurationSection section) {
         if (section == null) {
-            return new LuckyWorld("LuckySky", new Spawn(-2.0, 201.0, 2.0, 0f, 0f), new Lucky("§aLuckySky läuft – break the blocks!", true));
+            return new LuckyWorld("LuckySky", new Spawn(0.0, 101.0, 2.0, 180f, 0f), new Lucky("§aLuckySky läuft – break the blocks!", true));
         }
         String worldName = section.getString("worldName", "LuckySky");
-        Spawn spawn = readSpawn(section.getConfigurationSection("spawn"), new Spawn(-2.0, 201.0, 2.0, 0f, 0f));
+        Spawn spawn = readSpawn(section.getConfigurationSection("spawn"), new Spawn(0.0, 101.0, 2.0, 180f, 0f));
         ConfigurationSection luckySection = section.getConfigurationSection("lucky");
         String startBanner = "§aLuckySky läuft – break the blocks!";
         boolean requireAirAtTarget = true;
@@ -28,10 +28,10 @@ public record WorldsConfig(LuckyWorld luckySky, DuelsWorld duels) {
 
     private static DuelsWorld readDuelsWorld(ConfigurationSection section) {
         if (section == null) {
-            return new DuelsWorld("duels", new Spawn(0.5, 120.0, 0.5, 0f, 0f), 24);
+            return new DuelsWorld("duels", new Spawn(1.0, -56.0, 0.0, 0f, 0f), 24);
         }
         String worldName = section.getString("worldName", "duels");
-        Spawn lobby = readSpawn(section.getConfigurationSection("lobby"), new Spawn(0.5, 120.0, 0.5, 0f, 0f));
+        Spawn lobby = readSpawn(section.getConfigurationSection("lobby"), new Spawn(1.0, -56.0, 0.0, 0f, 0f));
         int protectionRadius = section.getInt("protection_radius", 24);
         return new DuelsWorld(worldName, lobby, protectionRadius);
     }
