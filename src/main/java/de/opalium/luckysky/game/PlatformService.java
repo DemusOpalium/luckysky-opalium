@@ -28,6 +28,18 @@ public class PlatformService {
         placeBase();
     }
 
+    public boolean isBaseIntact() {
+        GameConfig game = plugin.configs().game();
+        World world = Worlds.require(plugin.configs().worlds().luckySky().worldName());
+        for (GameConfig.Block block : game.platform().baseBlocks()) {
+            Material expected = Material.valueOf(block.material().toUpperCase());
+            if (world.getBlockAt(block.x(), block.y(), block.z()).getType() != expected) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private void placeConfiguredBlocks(World world, List<GameConfig.Block> blocks) {
         for (GameConfig.Block block : blocks) {
             Material material = Material.valueOf(block.material().toUpperCase());

@@ -8,6 +8,7 @@ import de.opalium.luckysky.util.Msg;
 import de.opalium.luckysky.util.Worlds;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.bukkit.Bukkit;
@@ -71,18 +72,27 @@ public class GameManager {
         disconnectedParticipants.clear();
         platformService.placeBase();
         bindAll();
+        teleportAllToPlatform();
         setAllSurvivalInWorld();
         luckyService.start();
         durationService.startDefault();
         witherService.start();
         state = GameState.RUNNING;
         broadcast(messages().gamePrefix() + worldConfig().lucky().startBanner());
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (!platformService.isBaseIntact()) {
+                platformService.placeBase();
+                Msg.to(Bukkit.getConsoleSender(), messages().adminPrefix() + "Plattformkern wiederhergestellt.");
+            }
+        }, 100L);
         Bukkit.getScheduler().runTaskLater(plugin,
                 () -> Msg.to(Bukkit.getConsoleSender(), messages().adminPrefix() + "Game is running."), 1L);
     }
 
     public void stop() {
         if (state != GameState.RUNNING) {
+            teleportAllToLobby();
+            clearParticipants();
             state = GameState.STOPPED;
             return;
         }
@@ -91,6 +101,8 @@ public class GameManager {
         witherService.stop();
         state = GameState.STOPPED;
         broadcast(messages().gamePrefix() + plugin.configs().messages().stopBanner());
+        teleportAllToLobby();
+        clearParticipants();
     }
 
     public void placePlatform() {
@@ -115,9 +127,17 @@ public class GameManager {
     }
 
     public void bindAll() {
+        Optional<Location> respawnOpt = platformSpawnLocation();
+        if (respawnOpt.isEmpty()) {
+            Msg.to(Bukkit.getConsoleSender(), messages().adminPrefix() + "Kein LuckySky-Spawn definiert.");
+            return;
+        }
+        Location respawn = respawnOpt.get();
+        World world = respawn.getWorld();
+        if (world == null) {
+            return;
+        }
         WorldsConfig.Spawn spawn = worldConfig().spawn();
-        World world = Worlds.require(worldConfig().worldName());
-        Location respawn = new Location(world, spawn.x(), spawn.y(), spawn.z(), spawn.yaw(), spawn.pitch());
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (!player.getWorld().equals(world)) {
                 continue;
@@ -157,6 +177,57 @@ public class GameManager {
         }
     }
 
+    public void teleportAllToPlatform() {
+        Optional<Location> locationOpt = platformSpawnLocation();
+        if (locationOpt.isEmpty()) {
+            return;
+        }
+        Location location = locationOpt.get();
+        World world = location.getWorld();
+        if (world == null) {
+            return;
+        }
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (!player.getWorld().equals(world)) {
+                continue;
+            }
+            player.teleport(location);
+        }
+    }
+
+    public void teleportAllToLobby() {
+        Optional<Location> lobbyOpt = lobbySpawnLocation();
+        if (lobbyOpt.isEmpty()) {
+            Msg.to(Bukkit.getConsoleSender(), messages().adminPrefix() + "Kein LuckySky-Lobby-Spawn definiert.");
+            return;
+        }
+        Location lobby = lobbyOpt.get();
+        World world = lobby.getWorld();
+        if (world == null) {
+            return;
+        }
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (!player.getWorld().getName().equalsIgnoreCase(worldConfig().worldName())) {
+                continue;
+            }
+            player.teleport(lobby);
+            player.setBedSpawnLocation(lobby, true);
+            if (state != GameState.RUNNING && !gameConfig().lives().oneLife()) {
+                player.setGameMode(GameMode.SURVIVAL);
+            }
+        }
+    }
+
+    public void teleportPlayerToLobby(Player player) {
+        Optional<Location> lobbyOpt = lobbySpawnLocation();
+        if (lobbyOpt.isEmpty()) {
+            return;
+        }
+        Location location = lobbyOpt.get();
+        player.teleport(location);
+        player.setBedSpawnLocation(location, true);
+    }
+
     public boolean isParticipant(Player player) {
         return allParticipants.contains(player.getUniqueId());
     }
@@ -181,6 +252,9 @@ public class GameManager {
     }
 
     public void handleRespawn(Player player) {
+        if (state != GameState.RUNNING) {
+            return;
+        }
         if (!isParticipant(player)) {
             return;
         }
@@ -225,7 +299,10 @@ public class GameManager {
         disconnectedParticipants.remove(id);
         activeParticipants.add(id);
         if (state == GameState.RUNNING) {
-            Bukkit.getScheduler().runTask(plugin, () -> player.setGameMode(GameMode.SURVIVAL));
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                player.setGameMode(GameMode.SURVIVAL);
+                platformSpawnLocation().ifPresent(player::teleport);
+            });
         }
     }
 
@@ -271,8 +348,24 @@ public class GameManager {
         return gameConfig().lives().oneLife();
     }
 
+    public Optional<Location> platformSpawnLocation() {
+        return locationForSpawn(worldConfig().spawn());
+    }
+
+    public Optional<Location> lobbySpawnLocation() {
+        return locationForSpawn(worldConfig().lobby());
+    }
+
     private World ensureWorldLoaded() {
         return Worlds.require(worldConfig().worldName());
+    }
+
+    private Optional<Location> locationForSpawn(WorldsConfig.Spawn spawn) {
+        if (spawn == null) {
+            return Optional.empty();
+        }
+        World world = Worlds.require(worldConfig().worldName());
+        return Optional.of(new Location(world, spawn.x(), spawn.y(), spawn.z(), spawn.yaw(), spawn.pitch()));
     }
 
     private GameConfig gameConfig() {
@@ -285,6 +378,12 @@ public class GameManager {
 
     private MessagesConfig messages() {
         return plugin.configs().messages();
+    }
+
+    private void clearParticipants() {
+        activeParticipants.clear();
+        allParticipants.clear();
+        disconnectedParticipants.clear();
     }
 
     private void broadcast(String message) {

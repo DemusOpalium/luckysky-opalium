@@ -1,5 +1,6 @@
 package de.opalium.luckysky.config;
 
+import java.util.Optional;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 
@@ -12,10 +13,16 @@ public record WorldsConfig(LuckyWorld luckySky, DuelsWorld duels) {
 
     private static LuckyWorld readLuckyWorld(ConfigurationSection section) {
         if (section == null) {
-            return new LuckyWorld("LuckySky", new Spawn(0.0, 101.0, 2.0, 180f, 0f), new Lucky("§aLuckySky läuft – break the blocks!", true));
+            return new LuckyWorld(
+                    "LuckySky",
+                    new Spawn(0.0, 101.0, 2.0, 180f, 0f),
+                    null,
+                    new Lucky("§aLuckySky läuft – break the blocks!", true)
+            );
         }
         String worldName = section.getString("worldName", "LuckySky");
         Spawn spawn = readSpawn(section.getConfigurationSection("spawn"), new Spawn(0.0, 101.0, 2.0, 180f, 0f));
+        Spawn lobby = readOptionalSpawn(section.getConfigurationSection("lobby"));
         ConfigurationSection luckySection = section.getConfigurationSection("lucky");
         String startBanner = "§aLuckySky läuft – break the blocks!";
         boolean requireAirAtTarget = true;
@@ -23,7 +30,7 @@ public record WorldsConfig(LuckyWorld luckySky, DuelsWorld duels) {
             startBanner = luckySection.getString("startBanner", startBanner);
             requireAirAtTarget = luckySection.getBoolean("require_air_at_target", requireAirAtTarget);
         }
-        return new LuckyWorld(worldName, spawn, new Lucky(startBanner, requireAirAtTarget));
+        return new LuckyWorld(worldName, spawn, lobby, new Lucky(startBanner, requireAirAtTarget));
     }
 
     private static DuelsWorld readDuelsWorld(ConfigurationSection section) {
@@ -48,6 +55,18 @@ public record WorldsConfig(LuckyWorld luckySky, DuelsWorld duels) {
         return new Spawn(x, y, z, yaw, pitch);
     }
 
+    private static Spawn readOptionalSpawn(ConfigurationSection section) {
+        if (section == null) {
+            return null;
+        }
+        double x = section.getDouble("x", 0.0);
+        double y = section.getDouble("y", 0.0);
+        double z = section.getDouble("z", 0.0);
+        float yaw = (float) section.getDouble("yaw", 0.0);
+        float pitch = (float) section.getDouble("pitch", 0.0);
+        return new Spawn(x, y, z, yaw, pitch);
+    }
+
     public void writeTo(FileConfiguration config) {
         writeLuckyWorld(config.createSection("luckySky"), luckySky);
         writeDuelsWorld(config.createSection("duels"), duels);
@@ -56,6 +75,8 @@ public record WorldsConfig(LuckyWorld luckySky, DuelsWorld duels) {
     private void writeLuckyWorld(ConfigurationSection section, LuckyWorld world) {
         section.set("worldName", world.worldName());
         writeSpawn(section.createSection("spawn"), world.spawn());
+        Optional.ofNullable(world.lobby())
+                .ifPresent(lobby -> writeSpawn(section.createSection("lobby"), lobby));
         ConfigurationSection luckySection = section.createSection("lucky");
         luckySection.set("startBanner", world.lucky().startBanner());
         luckySection.set("require_air_at_target", world.lucky().requireAirAtTarget());
@@ -75,7 +96,7 @@ public record WorldsConfig(LuckyWorld luckySky, DuelsWorld duels) {
         section.set("pitch", spawn.pitch());
     }
 
-    public record LuckyWorld(String worldName, Spawn spawn, Lucky lucky) {
+    public record LuckyWorld(String worldName, Spawn spawn, Spawn lobby, Lucky lucky) {
     }
 
     public record Lucky(String startBanner, boolean requireAirAtTarget) {
