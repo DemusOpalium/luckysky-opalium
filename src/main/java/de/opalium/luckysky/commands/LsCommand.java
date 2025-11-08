@@ -18,7 +18,7 @@ import org.bukkit.entity.Player;
 public class LsCommand implements CommandExecutor, TabCompleter {
     private static final List<String> SUBCOMMANDS = List.of(
             "reload", "duels", "start", "stop", "plat", "plat+", "bind",
-            "clean", "hardwipe", "mode5", "mode20", "mode60",
+            "clean", "hardwipe", "reset", "mode5", "mode20", "mode60",
             "wither", "taunt_on", "taunt_off", "gui"
     );
 
@@ -131,6 +131,13 @@ public class LsCommand implements CommandExecutor, TabCompleter {
                 }
                 Msg.to(sender, "&7Hard-Wipe entfernt: &f" + game.hardClear());
             }
+            case "reset" -> {
+                GameManager game = requireGame(sender);
+                if (game == null || !requirePermission(sender, PERM_ADMIN)) {
+                    return true;
+                }
+                game.resetField(sender);
+            }
             case "mode5" -> {
                 GameManager game = requireGame(sender);
                 if (game == null || !requirePermission(sender, PERM_ADMIN)) {
@@ -208,6 +215,7 @@ public class LsCommand implements CommandExecutor, TabCompleter {
             Msg.to(sender, "&7/ls bind &8– Bindet alle an Respawn");
             Msg.to(sender, "&7/ls clean &8– Soft-Wipe (Entities nahe Lucky)");
             Msg.to(sender, "&7/ls hardwipe &8– Hard-Wipe (inkl. ArmorStands)");
+            Msg.to(sender, "&7/ls reset &8– Setzt den Reset-Bereich zurück");
             Msg.to(sender, "&7/ls mode5|mode20|mode60 &8– Zeitvorgabe");
             Msg.to(sender, "&7/ls wither &8– Wither sofort spawnen");
             Msg.to(sender, "&7/ls taunt_on/off &8– Taunts toggeln");

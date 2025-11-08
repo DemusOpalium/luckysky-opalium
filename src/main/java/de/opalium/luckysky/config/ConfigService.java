@@ -114,6 +114,11 @@ public final class ConfigService {
         save("duels.yml", duels::writeTo);
     }
 
+    public void updateWorlds(WorldsConfig worlds) {
+        this.worlds = worlds;
+        save("worlds.yml", worlds::writeTo);
+    }
+
     @FunctionalInterface
     private interface Loader<T> {
         T load(FileConfiguration configuration);

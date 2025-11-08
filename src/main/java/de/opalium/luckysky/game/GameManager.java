@@ -16,6 +16,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.bukkit.command.CommandSender;
 
 public class GameManager {
     private final LuckySkyPlugin plugin;
@@ -25,6 +26,7 @@ public class GameManager {
     private final DurationService durationService;
     private final WitherService witherService;
     private final RewardsService rewardsService;
+    private final BlockResetService blockResetService;
 
     private GameState state = GameState.IDLE;
 
@@ -40,12 +42,14 @@ public class GameManager {
         this.durationService = new DurationService(plugin);
         this.witherService = new WitherService(plugin);
         this.rewardsService = new RewardsService(plugin);
+        this.blockResetService = new BlockResetService(plugin);
     }
 
     public void shutdown() {
         luckyService.stop();
         durationService.stop();
         witherService.stop();
+        blockResetService.shutdown();
     }
 
     public GameState state() {
@@ -57,7 +61,7 @@ public class GameManager {
             Msg.to(Bukkit.getConsoleSender(), "&cLuckySky läuft bereits.");
             return;
         }
-        World world = ensureWorldLoaded();
+        ensureWorldLoaded();
         GameConfig game = gameConfig();
         GameConfig.Position position = game.lucky().position();
         if (game.lucky().requireAirAtTarget()
@@ -146,6 +150,43 @@ public class GameManager {
 
     public void spawnWitherNow() {
         witherService.spawnNow();
+    }
+
+    public void resetField(CommandSender initiator) {
+        ensureWorldLoaded();
+        BlockResetService.ResetResult result = blockResetService.resetArea(() -> {
+            platformService.placeBase();
+            String done = messages().adminPrefix() + "&aReset abgeschlossen – Plattform neu aufgebaut.";
+            Msg.to(Bukkit.getConsoleSender(), done);
+            if (initiator != null && initiator != Bukkit.getConsoleSender()) {
+                Msg.to(initiator, done);
+            }
+        });
+        switch (result) {
+            case STARTED -> {
+                String message = messages().adminPrefix() + "&7Reset wird ausgeführt …";
+                Msg.to(Bukkit.getConsoleSender(), message);
+                if (initiator != null && initiator != Bukkit.getConsoleSender()) {
+                    Msg.to(initiator, message);
+                }
+            }
+            case ALREADY_RUNNING -> {
+                String message = messages().adminPrefix() + "&cEin Reset läuft bereits.";
+                if (initiator != null) {
+                    Msg.to(initiator, message);
+                } else {
+                    Msg.to(Bukkit.getConsoleSender(), message);
+                }
+            }
+            case NO_CONFIGURATION -> {
+                String message = messages().adminPrefix() + "&cReset-Bereich ist nicht konfiguriert.";
+                if (initiator != null) {
+                    Msg.to(initiator, message);
+                } else {
+                    Msg.to(Bukkit.getConsoleSender(), message);
+                }
+            }
+        }
     }
 
     public void setAllSurvivalInWorld() {

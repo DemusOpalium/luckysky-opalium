@@ -55,6 +55,7 @@ public class AdminGui implements Listener {
             case 14 -> handleDuration(player, 60);
             case 15 -> handleTauntToggle(player);
             case 16 -> handleWitherToggle(player);
+            case 17 -> handleReset(player);
             case 19 -> handleLuckyVariant(player);
             case 20 -> handleSoftWipe(player);
             case 21 -> handleHardWipe(player);
@@ -88,6 +89,8 @@ public class AdminGui implements Listener {
                 List.of("&7Schaltet Wither-Taunts um."), tauntsEnabled));
         inventory.setItem(16, GuiItems.button(Material.WITHER_SKELETON_SKULL, witherEnabled ? "&aWither AN" : "&cWither AUS",
                 List.of("&7Aktiviert/Deaktiviert Wither-Spawns."), witherEnabled));
+        inventory.setItem(17, GuiItems.button(Material.STRUCTURE_BLOCK, "&cReset", 
+                List.of("&7Leert den Reset-Bereich.", "&7Baut Plattform neu."), false));
         inventory.setItem(19, GuiItems.button(Material.SPONGE, "&bLucky-Variante",
                 List.of("&7Aktuell: &f" + game.lucky().variant()), false));
         inventory.setItem(20, GuiItems.button(Material.FEATHER, "&bSoft-Wipe",
@@ -157,6 +160,10 @@ public class AdminGui implements Listener {
     private void handleHardWipe(Player player) {
         int removed = plugin.game().hardClear();
         Msg.to(player, "&7Hard-Wipe entfernt: &f" + removed);
+    }
+
+    private void handleReset(Player player) {
+        plugin.game().resetField(player);
     }
 
     private void handleBind(Player player) {

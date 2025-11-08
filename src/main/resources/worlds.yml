@@ -9,6 +9,20 @@ luckySky:
   lucky:
     startBanner: "§aLuckySky läuft – break the blocks!"
     require_air_at_target: true
+  reset:
+    area:
+      min:
+        x: -64
+        y: -120
+        z: -64
+      max:
+        x: 64
+        y: 320
+        z: 64
+    remove_lava: true
+    base_layers:
+      - y: 100
+        material: "STONE"
 duels:
   worldName: "duels"
   lobby:
