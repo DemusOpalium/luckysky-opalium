@@ -8,9 +8,11 @@ public class DurationService {
     private final LuckySkyPlugin plugin;
     private int ticksRemaining;
     private int taskId = -1;
+    private final ScoreboardService scoreboardService;
 
-    public DurationService(LuckySkyPlugin plugin) {
+    public DurationService(LuckySkyPlugin plugin, ScoreboardService scoreboardService) {
         this.plugin = plugin;
+        this.scoreboardService = scoreboardService;
     }
 
     public void startDefault() {
@@ -24,11 +26,17 @@ public class DurationService {
     private void startTicks(int ticks) {
         stop();
         ticksRemaining = Math.max(ticks, 20);
+        if (scoreboardService != null) {
+            scoreboardService.onTimerStart(ticksRemaining);
+        }
         taskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
             if (plugin.game().state() != GameState.RUNNING) {
                 return;
             }
             ticksRemaining -= 20;
+            if (scoreboardService != null) {
+                scoreboardService.onTimerTick(Math.max(ticksRemaining, 0));
+            }
             if (ticksRemaining <= 0) {
                 plugin.game().onDurationExpired();
                 Msg.to(Bukkit.getConsoleSender(), "&eZeit abgelaufen – Spiel gestoppt.");
@@ -42,11 +50,16 @@ public class DurationService {
             Bukkit.getScheduler().cancelTask(taskId);
             taskId = -1;
         }
+        if (scoreboardService != null) {
+            scoreboardService.onTimerStop();
+        }
     }
 
     public void reload() {
         if (taskId != -1) {
             startTicks(ticksRemaining);
+        } else if (scoreboardService != null) {
+            scoreboardService.onTimerStop();
         }
     }
 }

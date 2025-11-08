@@ -6,6 +6,7 @@ import de.opalium.luckysky.commands.LsCommand;
 import de.opalium.luckysky.config.ConfigService;
 import de.opalium.luckysky.duels.DuelsManager;
 import de.opalium.luckysky.game.GameManager;
+import de.opalium.luckysky.game.ScoreboardService;
 import de.opalium.luckysky.gui.AdminGui;
 import de.opalium.luckysky.listeners.BossListener;
 import de.opalium.luckysky.listeners.PlayerListener;
@@ -21,6 +22,7 @@ public final class LuckySkyPlugin extends JavaPlugin {
     private GameManager game;
     private AdminGui adminGui;
     private DuelsManager duels;
+    private ScoreboardService scoreboard;
 
     public static LuckySkyPlugin get() {
         return instance;
@@ -34,12 +36,17 @@ public final class LuckySkyPlugin extends JavaPlugin {
         return game;
     }
 
+    public ScoreboardService scoreboard() {
+        return scoreboard;
+    }
+
     @Override
     public void onEnable() {
         instance = this;
         saveDefaultConfig();
         this.configs = new ConfigService(this).ensureDefaults().loadAll();
-        this.game = new GameManager(this);
+        this.scoreboard = new ScoreboardService(this);
+        this.game = new GameManager(this, scoreboard);
         this.adminGui = new AdminGui(this);
         this.duels = new DuelsManager(this);
 
@@ -61,6 +68,10 @@ public final class LuckySkyPlugin extends JavaPlugin {
         if (game != null) {
             game.shutdown();
         }
+        if (scoreboard != null) {
+            scoreboard.shutdown();
+            scoreboard = null;
+        }
         instance = null;
         getLogger().info("[LuckySky] disabled.");
     }
@@ -68,6 +79,9 @@ public final class LuckySkyPlugin extends JavaPlugin {
     public void reloadSettings() {
         reloadConfig();
         this.configs.reloadAll();
+        if (scoreboard != null) {
+            scoreboard.reload();
+        }
         if (game != null) {
             game.reloadSettings();
         }

@@ -34,3 +34,11 @@ rewards:
       - "say LuckySky gescheitert."
 lives:
   one_life: false
+scoreboard:
+  enabled: true
+  title: "&bLuckySky"
+  lines:
+    - "&7Status: &f{state}"
+    - "&7Timer: &f{timer}"
+    - "&7Spieler: &f{players}"
+    - "&7Wither: &f{wither}"

@@ -55,6 +55,8 @@ public class AdminGui implements Listener {
             case 14 -> handleDuration(player, 60);
             case 15 -> handleTauntToggle(player);
             case 16 -> handleWitherToggle(player);
+            case 17 -> handleScoreboardToggle(player);
+            case 18 -> handleTimerToggle(player);
             case 19 -> handleLuckyVariant(player);
             case 20 -> handleSoftWipe(player);
             case 21 -> handleHardWipe(player);
@@ -88,6 +90,12 @@ public class AdminGui implements Listener {
                 List.of("&7Schaltet Wither-Taunts um."), tauntsEnabled));
         inventory.setItem(16, GuiItems.button(Material.WITHER_SKELETON_SKULL, witherEnabled ? "&aWither AN" : "&cWither AUS",
                 List.of("&7Aktiviert/Deaktiviert Wither-Spawns."), witherEnabled));
+        boolean scoreboardEnabled = plugin.scoreboard().isEnabled();
+        boolean timerVisible = plugin.scoreboard().isTimerVisible();
+        inventory.setItem(17, GuiItems.button(Material.OAK_SIGN, scoreboardEnabled ? "&aScoreboard AN" : "&cScoreboard AUS",
+                List.of("&7Schaltet das LuckySky-Scoreboard."), scoreboardEnabled));
+        inventory.setItem(18, GuiItems.button(Material.COMPASS, timerVisible ? "&aTimer sichtbar" : "&cTimer versteckt",
+                List.of("&7Blendt den Timer im Scoreboard ein/aus."), timerVisible));
         inventory.setItem(19, GuiItems.button(Material.SPONGE, "&bLucky-Variante",
                 List.of("&7Aktuell: &f" + game.lucky().variant()), false));
         inventory.setItem(20, GuiItems.button(Material.FEATHER, "&bSoft-Wipe",
@@ -147,6 +155,18 @@ public class AdminGui implements Listener {
         plugin.configs().updateGame(game.withLuckyVariant(next));
         plugin.reloadSettings();
         Msg.to(player, "&bLucky-Variante jetzt: &f" + next);
+    }
+
+    private void handleScoreboardToggle(Player player) {
+        boolean enabled = plugin.scoreboard().isEnabled();
+        plugin.scoreboard().setEnabled(!enabled);
+        Msg.to(player, !enabled ? "&aScoreboard aktiviert." : "&cScoreboard deaktiviert.");
+    }
+
+    private void handleTimerToggle(Player player) {
+        boolean visible = plugin.scoreboard().isTimerVisible();
+        plugin.scoreboard().setTimerVisible(!visible);
+        Msg.to(player, !visible ? "&aTimer eingeblendet." : "&cTimer ausgeblendet.");
     }
 
     private void handleSoftWipe(Player player) {
