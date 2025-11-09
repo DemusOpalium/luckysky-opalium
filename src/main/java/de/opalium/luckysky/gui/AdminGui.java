@@ -6,7 +6,6 @@ import de.opalium.luckysky.config.TrapsConfig;
 import de.opalium.luckysky.config.WorldsConfig;
 import de.opalium.luckysky.util.Msg;
 import de.opalium.luckysky.util.Worlds;
-import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -17,15 +16,18 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+
+import java.util.List;
 
 public class AdminGui implements Listener {
+
     private static final String TITLE = ChatColor.DARK_AQUA + "LuckySky Admin";
     private static final int SIZE = 27;
 
-    // Neue Buttons
-    private static final int SLOT_CLEAR_PLANE_Y101 = 8;  // TNT
-    private static final int SLOT_CLEAR_FIELD_FULL = 9;  // GUNPOWDER
-    private static final String LUCKY_WORLD_NAME = "LuckySky";
+    // Reset-Button Slots
+    private static final int SLOT_CLEAR_Y101 = 8;   // TNT
+    private static final int SLOT_CLEAR_FULL = 9;   // GUNPOWDER
 
     private final LuckySkyPlugin plugin;
 
@@ -34,311 +36,239 @@ public class AdminGui implements Listener {
     }
 
     public void open(Player player) {
-        Inventory inventory = Bukkit.createInventory(player, SIZE, TITLE);
-        populate(inventory);
-        player.openInventory(inventory);
+        Inventory inv = Bukkit.createInventory(null, SIZE, TITLE);
+        populate(inv);
+        player.openInventory(inv);
     }
 
     @EventHandler
-    public void onInventoryClick(InventoryClickEvent event) {
-        if (!TITLE.equals(event.getView().getTitle())) return;
-        event.setCancelled(true);
-        if (!(event.getWhoClicked() instanceof Player player)) return;
-
-        int slot = event.getRawSlot();
+    public void onClick(InventoryClickEvent e) {
+        if (!TITLE.equals(e.getView().getTitle())) return;
+        e.setCancelled(true);
+        if (!(e.getWhoClicked() instanceof Player player)) return;
+        int slot = e.getRawSlot();
         if (slot < 0 || slot >= SIZE) return;
 
         switch (slot) {
-            case SLOT_CLEAR_PLANE_Y101 -> handleClearPlaneY101(player);
-            case SLOT_CLEAR_FIELD_FULL -> handleClearField300(player);
-
-            case 10 -> handleStartCountdown(player);
-            case 11 -> handleStopToLobby(player);
-            case 12 -> handleDuration(player, 5);
-            case 13 -> handleDuration(player, 20);
-            case 14 -> handleDuration(player, 60);
-            case 15 -> handleTauntToggle(player);
-            case 16 -> handleWitherToggle(player);
-            case 17 -> handleScoreboardToggle(player);
-            case 18 -> handleTimerToggle(player);
-            case 19 -> handleLuckyVariant(player);
-            case 20 -> handleSoftWipe(player);
-            case 21 -> handleHardWipe(player);
-            case 22 -> handleBind(player);
-            case 23 -> handlePlatform(player);
-            case 24 -> handleTeleport(player);
-            case 25 -> handleSave(player);
-            default -> { }
+            case SLOT_CLEAR_Y101 -> clearY101(player);
+            case SLOT_CLEAR_FULL -> clearFullField(player);
+            case 10 -> startGame(player);
+            case 11 -> stopToLobby(player);
+            case 12 -> setDuration(player, 5);
+            case 13 -> setDuration(player, 20);
+            case 14 -> setDuration(player, 60);
+            case 15 -> toggleTaunts(player);
+            case 16 -> toggleWither(player);
+            case 17 -> toggleScoreboard(player);
+            case 18 -> toggleTimer(player);
+            case 19 -> cycleLuckyVariant(player);
+            case 20 -> softWipe(player);
+            case 21 -> hardWipe(player);
+            case 22 -> bindAll(player);
+            case 23 -> placePlatform(player);
+            case 24 -> teleportToSpawn(player);
+            case 25 -> saveConfig(player);
         }
-
         Bukkit.getScheduler().runTask(plugin, () -> open(player));
     }
 
-    private void populate(Inventory inventory) {
+    private void populate(Inventory inv) {
         GameConfig game = plugin.configs().game();
         TrapsConfig traps = plugin.configs().traps();
         boolean running = plugin.game().state() == de.opalium.luckysky.game.GameState.RUNNING;
 
-        // unsere beiden Buttons
-        inventory.setItem(SLOT_CLEAR_PLANE_Y101, GuiItems.tntClearPlaneY101());
-        inventory.setItem(SLOT_CLEAR_FIELD_FULL, GuiItems.fullClear0to319());
+        inv.setItem(SLOT_CLEAR_Y101, GuiItems.tntClearPlaneY101());
+        inv.setItem(SLOT_CLEAR_FULL, GuiItems.fullClear0to319());
 
-        inventory.setItem(10, GuiItems.button(Material.LIME_DYE, "&aStart Countdown",
+        inv.setItem(10, GuiItems.button(Material.LIME_DYE, "&aStart Countdown",
                 List.of("&7Startet das Spiel und teleportiert zur Plattform."), running));
-        inventory.setItem(11, GuiItems.button(Material.BARRIER, "&cStop & Lobby",
+        inv.setItem(11, GuiItems.button(Material.BARRIER, "&cStop & Lobby",
                 List.of("&7Stoppt das Spiel und sendet alle zur Lobby."), false));
-        inventory.setItem(12, GuiItems.button(Material.CLOCK, "&eMode 5",
-                List.of("&7Setzt Dauer auf 5 Minuten."), false));
-        inventory.setItem(13, GuiItems.button(Material.CLOCK, "&eMode 20",
-                List.of("&7Setzt Dauer auf 20 Minuten."), false));
-        inventory.setItem(14, GuiItems.button(Material.CLOCK, "&eMode 60",
-                List.of("&7Setzt Dauer auf 60 Minuten."), false));
+        inv.setItem(12, GuiItems.button(Material.CLOCK, "&eMode 5", List.of("&7Setzt Dauer auf 5 Minuten."), false));
+        inv.setItem(13, GuiItems.button(Material.CLOCK, "&eMode 20", List.of("&7Setzt Dauer auf 20 Minuten."), false));
+        inv.setItem(14, GuiItems.button(Material.CLOCK, "&eMode 60", List.of("&7Setzt Dauer auf 60 Minuten."), false));
 
-        boolean tauntsEnabled = traps.withers().taunts().enabled();
-        boolean witherEnabled = traps.withers().enabled();
-        inventory.setItem(15, GuiItems.button(Material.GOAT_HORN, tauntsEnabled ? "&aTaunts AN" : "&cTaunts AUS",
-                List.of("&7Schaltet Wither-Taunts um."), tauntsEnabled));
-        inventory.setItem(16, GuiItems.button(Material.WITHER_SKELETON_SKULL, witherEnabled ? "&aWither AN" : "&cWither AUS",
-                List.of("&7Aktiviert/Deaktiviert Wither-Spawns."), witherEnabled));
+        boolean taunts = traps.withers().taunts().enabled();
+        boolean wither = traps.withers().enabled();
+        inv.setItem(15, GuiItems.button(Material.GOAT_HORN, taunts ? "&aTaunts AN" : "&cTaunts AUS",
+                List.of("&7Schaltet Wither-Taunts um."), taunts));
+        inv.setItem(16, GuiItems.button(Material.WITHER_SKELETON_SKULL, wither ? "&aWither AN" : "&cWither AUS",
+                List.of("&7Aktiviert/Deaktiviert Wither-Spawns."), wither));
 
-        boolean scoreboardEnabled = plugin.scoreboard().isEnabled();
-        boolean timerVisible = plugin.scoreboard().isTimerVisible();
-        inventory.setItem(17, GuiItems.button(Material.OAK_SIGN, scoreboardEnabled ? "&aScoreboard AN" : "&cScoreboard AUS",
-                List.of("&7Schaltet das LuckySky-Scoreboard."), scoreboardEnabled));
-        inventory.setItem(18, GuiItems.button(Material.COMPASS, timerVisible ? "&aTimer sichtbar" : "&cTimer versteckt",
-                List.of("&7Blendt den Timer im Scoreboard ein/aus."), timerVisible));
-        inventory.setItem(19, GuiItems.button(Material.SPONGE, "&bLucky-Variante",
+        boolean sb = plugin.scoreboard().isEnabled();
+        boolean timer = plugin.scoreboard().isTimerVisible();
+        inv.setItem(17, GuiItems.button(Material.OAK_SIGN, sb ? "&aScoreboard AN" : "&cScoreboard AUS",
+                List.of("&7Schaltet das LuckySky-Scoreboard."), sb));
+        inv.setItem(18, GuiItems.button(Material.COMPASS, timer ? "&aTimer sichtbar" : "&cTimer versteckt",
+                List.of("&7Blendt den Timer im Scoreboard ein/aus."), timer));
+
+        inv.setItem(19, GuiItems.button(Material.SPONGE, "&bLucky-Variante",
                 List.of("&7Aktuell: &f" + game.lucky().variant()), false));
-        inventory.setItem(20, GuiItems.button(Material.FEATHER, "&bSoft-Wipe",
-                List.of("&7Entfernt Effekte um Lucky."), false));
-        inventory.setItem(21, GuiItems.button(Material.NETHERITE_SWORD, "&cHard-Wipe",
-                List.of("&7Entfernt Entities großflächig."), false));
-        inventory.setItem(22, GuiItems.button(Material.RESPAWN_ANCHOR, "&bBind",
-                List.of("&7Setzt Spawn für alle."), false));
-        inventory.setItem(23, GuiItems.button(Material.PRISMARINE_BRICKS, "&bPlattform",
-                List.of("&7Baut Safe-Plattform."), false));
-        inventory.setItem(24, GuiItems.button(Material.ENDER_PEARL, "&dTeleport",
-                List.of("&7Teleportiert dich zum Spawn."), false));
-        inventory.setItem(25, GuiItems.button(Material.NAME_TAG, "&aSave Config",
-                List.of("&7Speichert & läd Config neu."), false));
+        inv.setItem(20, GuiItems.button(Material.FEATHER, "&bSoft-Wipe", List.of("&7Entfernt Effekte um Lucky."), false));
+        inv.setItem(21, GuiItems.button(Material.NETHERITE_SWORD, "&cHard-Wipe", List.of("&7Entfernt Entities großflächig."), false));
+        inv.setItem(22, GuiItems.button(Material.RESPAWN_ANCHOR, "&bBind", List.of("&7Setzt Spawn für alle."), false));
+        inv.setItem(23, GuiItems.button(Material.PRISMARINE_BRICKS, "&bPlattform", List.of("&7Baut Safe-Plattform."), false));
+        inv.setItem(24, GuiItems.button(Material.ENDER_PEARL, "&dTeleport", List.of("&7Teleportiert dich zum Spawn."), false));
+        inv.setItem(25, GuiItems.button(Material.NAME_TAG, "&aSave Config", List.of("&7Speichert & läd Config neu."), false));
     }
 
-    // ───────── die ZWEI neuen, funktionsfähigen Handler ─────────
-
-    /** Ebene y=101 im ±300-Quadrat per Fill-Chunks leeren; danach Podest setzen. */
-    private void handleClearPlaneY101(Player player) {
-        World world = Bukkit.getWorld(LUCKY_WORLD_NAME);
-        if (world == null) {
-            Msg.to(player, "&cWelt '" + LUCKY_WORLD_NAME + "' nicht gefunden!");
+    // ====== CLEAR Y=101 (±300) ======
+    private void clearY101(Player p) {
+        World w = Bukkit.getWorld("LuckySky");
+        if (w == null) {
+            Msg.to(p, "&cWelt 'LuckySky' nicht gefunden!");
             return;
         }
 
-        Msg.to(player, "&aBereinige Ebene &ey=101 &7(±300) ...");
-        dispatch("tellraw @a {\"text\":\"Ebene y=101 wird gereinigt ...\",\"color\":\"yellow\"}");
+        Msg.to(p, "&aLösche y=101 (±300)...");
+        tellAll("Ebene y=101 wird bereinigt...", "yellow");
 
-        // Asynchron planen, kleine Fill-Chunks synchron ausführen (Limit < 32k Blöcke)
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            final int y = 101;
-            final int minX = -300, maxX = 300;
-            final int minZ = -300, maxZ = 300;
-            final int chunk = 50; // 50x50x1 = 2.500 Blöcke
-
-            for (int x = minX; x <= maxX; x += chunk) {
-                for (int z = minZ; z <= maxZ; z += chunk) {
-                    final int fx = x;
-                    final int fz = z;
-                    final int tx = Math.min(x + chunk - 1, maxX);
-                    final int tz = Math.min(z + chunk - 1, maxZ);
-
-                    String cmd = String.format(
-                            "fill %d %d %d %d %d %d minecraft:air replace #minecraft:all_blocks",
-                            fx, y, fz, tx, y, tz
-                    );
-                    Bukkit.getScheduler().runTask(plugin, () ->
-                            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd)
-                    );
-
-                    try { Thread.sleep(40); } catch (InterruptedException ignored) {}
+            int size = 48;
+            for (int x = -300; x <= 300; x += size) {
+                for (int z = -300; z <= 300; z += size) {
+                    int x1 = x, x2 = Math.min(x + size - 1, 300);
+                    int z1 = z, z2 = Math.min(z + size - 1, 300);
+                    String cmd = String.format("fill %d 101 %d %d 101 %d air", x1, z1, x2, z2);
+                    runCommand(cmd);
+                    sleep(30);
                 }
             }
-
-            // Podest wiederherstellen
-            Bukkit.getScheduler().runTask(plugin, () -> {
-                restorePlatform();
-                dispatch("tellraw @a {\"text\":\"✔ Ebene y=101 gereinigt & Podest wiederhergestellt.\",\"color\":\"green\"}");
-                Msg.to(player, "&aFertig.");
+            runSync(() -> {
+                rebuildPlatform();
+                tellAll("Ebene y=101 sauber!", "green");
+                Msg.to(p, "&aFertig!");
             });
         });
     }
 
-    /** 0..319 im ±300-Quadrat per Fill-Chunks leeren; danach Podest setzen (mit Fortschritt). */
-    private void handleClearField300(Player player) {
-        World world = Bukkit.getWorld(LUCKY_WORLD_NAME);
-        if (world == null) {
-            Msg.to(player, "&cWelt '" + LUCKY_WORLD_NAME + "' nicht gefunden!");
+    // ====== CLEAR 0–319 (±300) ======
+    private void clearFullField(Player p) {
+        World w = Bukkit.getWorld("LuckySky");
+        if (w == null) {
+            Msg.to(p, "&cWelt 'LuckySky' nicht gefunden!");
             return;
         }
 
-        Msg.to(player, "&aVollbereinigung &70–319 &7(±300) gestartet …");
-        dispatch("tellraw @a {\"text\":\"Vollbereinigung des Spielfelds läuft ...\",\"color\":\"red\"}");
+        Msg.to(p, "&aStarte Vollbereinigung 0–319...");
+        tellAll("Vollbereinigung läuft...", "red");
 
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            final int minX = -300, maxX = 300;
-            final int minZ = -300, maxZ = 300;
-            final int minY = 0,     maxY = 319;
+            int size = 48, height = 16;
+            int total = 13 * 13 * 20; // ca. 3380 Chunks
+            int done = 0;
 
-            final int chunkXZ = 48;  // 48×48×14 = 32.256 Blöcke < 32k
-            final int chunkY  = 14;
-
-            int total =
-                ((maxX - minX) / chunkXZ + 1) *
-                ((maxZ - minZ) / chunkXZ + 1) *
-                ((maxY - minY) / chunkY + 1);
-
-            int processed = 0;
-
-            for (int x = minX; x <= maxX; x += chunkXZ) {
-                for (int z = minZ; z <= maxZ; z += chunkXZ) {
-                    for (int y = minY; y <= maxY; y += chunkY) {
-
-                        final int fx = x, fz = z, fy = y;
-                        final int tx = Math.min(x + chunkXZ - 1, maxX);
-                        final int tz = Math.min(z + chunkXZ - 1, maxZ);
-                        final int ty = Math.min(y + chunkY  - 1, maxY);
-
-                        String cmd = String.format(
-                                "fill %d %d %d %d %d %d minecraft:air replace #minecraft:all_blocks",
-                                fx, fy, fz, tx, ty, tz
-                        );
-
-                        Bukkit.getScheduler().runTask(plugin, () ->
-                                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd)
-                        );
-
-                        processed++;
-                        if (processed % 15 == 0) {
-                            final int prog = Math.max(0, Math.min(100, processed * 100 / total));
-                            Bukkit.getScheduler().runTask(plugin, () ->
-                                    dispatch("tellraw @a [\"\",{\"text\":\"Bereinigung: \"},{\"text\":\"" + prog + "%\",\"color\":\"gold\"}]")
-                            );
+            for (int x = -300; x <= 300; x += size) {
+                for (int z = -300; z <= 300; z += size) {
+                    for (int y = 0; y <= 319; y += height) {
+                        int x1 = x, x2 = Math.min(x + size - 1, 300);
+                        int z1 = z, z2 = Math.min(z + size - 1, 300);
+                        int y1 = y, y2 = Math.min(y + height - 1, 319);
+                        String cmd = String.format("fill %d %d %d %d %d %d air", x1, y1, z1, x2, y2, z2);
+                        runCommand(cmd);
+                        done++;
+                        if (done % 30 == 0) {
+                            int pct = done * 100 / total;
+                            runSync(() -> tellAll("Wipe: " + pct + "%", "gold"));
                         }
-
-                        try { Thread.sleep(80); } catch (InterruptedException ignored) {}
+                        sleep(50);
                     }
                 }
             }
-
-            Bukkit.getScheduler().runTask(plugin, () -> {
-                restorePlatform();
-                dispatch("tellraw @a {\"text\":\"✔ Spielfeld vollständig gereinigt (0–319, ±300).\",\"color\":\"green\"}");
-                Msg.to(player, "&aVollbereinigung abgeschlossen!");
+            runSync(() -> {
+                rebuildPlatform();
+                tellAll("Spielfeld 100% sauber!", "dark_green");
+                Msg.to(p, "&aVollbereinigung abgeschlossen!");
             });
         });
     }
 
-    /** Podest 0 100 (-1..2) wiederherstellen. */
-    private void restorePlatform() {
-        dispatch("setblock 0 100 -1 minecraft:prismarine_stairs[facing=south,half=bottom,shape=straight] replace");
-        dispatch("setblock 0 100 0 minecraft:prismarine_stairs[facing=south,half=bottom,shape=straight] replace");
-        dispatch("setblock 0 100 1 minecraft:prismarine_bricks replace");
-        dispatch("setblock 0 100 2 minecraft:prismarine_bricks replace");
+    // ====== POD EST WIEDERHERSTELLEN ======
+    private void rebuildPlatform() {
+        String[] blocks = {
+            "setblock 0 100 -1 prismarine_stairs[facing=south,half=bottom,shape=straight]",
+            "setblock 0 100 0 prismarine_stairs[facing=south,half=bottom,shape=straight]",
+            "setblock 0 100 1 prismarine_bricks",
+            "setblock 0 100 2 prismarine_bricks"
+        };
+        for (String cmd : blocks) {
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
+        }
     }
 
-    private void dispatch(String cmd) {
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
+    // ====== HELFER-METHODEN ======
+    private void runCommand(String cmd) {
+        Bukkit.getScheduler().runTask(plugin, () ->
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd)
+        );
     }
 
-    // ───────── bestehende Handler unverändert ─────────
-
-    private void handleStartCountdown(Player player) {
-        plugin.game().start();
-        Msg.to(player, "&aCountdown gestartet.");
+    private void runSync(Runnable task) {
+        Bukkit.getScheduler().runTask(plugin, task);
     }
 
-    private void handleStopToLobby(Player player) {
-        plugin.game().stop();
-        Msg.to(player, "&eGame gestoppt & Lobby.");
+    private void sleep(long ms) {
+        try { Thread.sleep(ms); } catch (InterruptedException ignored) {}
     }
 
-    private void handleDuration(Player player, int minutes) {
-        plugin.game().setDurationMinutes(minutes);
-        Msg.to(player, "&aDauer auf " + minutes + " Minuten gesetzt.");
+    private void tellAll(String text, String color) {
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
+            "tellraw @a {\"text\":\"" + text + "\",\"color\":\"" + color + "\"}"
+        );
     }
 
-    private void handleTauntToggle(Player player) {
-        TrapsConfig traps = plugin.configs().traps();
-        boolean newValue = !traps.withers().taunts().enabled();
-        plugin.configs().updateTraps(traps.withTauntsEnabled(newValue));
+    // ====== BESTEHENDE FUNKTIONEN (unverändert) ======
+    private void startGame(Player p) { plugin.game().start(); Msg.to(p, "&aCountdown gestartet."); }
+    private void stopToLobby(Player p) { plugin.game().stop(); Msg.to(p, "&eGame gestoppt & Lobby."); }
+    private void setDuration(Player p, int m) { plugin.game().setDurationMinutes(m); Msg.to(p, "&aDauer: " + m + " Min."); }
+    private void toggleTaunts(Player p) {
+        TrapsConfig t = plugin.configs().traps();
+        boolean v = !t.withers().taunts().enabled();
+        plugin.configs().updateTraps(t.withTauntsEnabled(v));
+        plugin.reloadSettings(); plugin.game().setTauntsEnabled(v);
+        Msg.to(p, v ? "&aTaunts AN" : "&cTaunts AUS");
+    }
+    private void toggleWither(Player p) {
+        TrapsConfig t = plugin.configs().traps();
+        boolean v = !t.withers().enabled();
+        plugin.configs().updateTraps(t.withWithersEnabled(v));
+        plugin.reloadSettings(); plugin.game().setWitherEnabled(v);
+        Msg.to(p, v ? "&aWither AN" : "&cWither AUS");
+    }
+    private void cycleLuckyVariant(Player p) {
+        GameConfig g = plugin.configs().game();
+        List<String> vars = g.lucky().variantsAvailable();
+        String cur = g.lucky().variant();
+        int i = vars.indexOf(cur), nextI = vars.isEmpty() ? 0 : (i + 1) % vars.size();
+        String next = vars.isEmpty() ? cur : vars.get(nextI);
+        plugin.configs().updateGame(g.withLuckyVariant(next));
         plugin.reloadSettings();
-        plugin.game().setTauntsEnabled(newValue);
-        Msg.to(player, newValue ? "&aTaunts aktiviert." : "&cTaunts deaktiviert.");
+        Msg.to(p, "&bLucky-Variante: &f" + next);
     }
-
-    private void handleWitherToggle(Player player) {
-        TrapsConfig traps = plugin.configs().traps();
-        boolean newValue = !traps.withers().enabled();
-        plugin.configs().updateTraps(traps.withWithersEnabled(newValue));
-        plugin.reloadSettings();
-        plugin.game().setWitherEnabled(newValue);
-        Msg.to(player, newValue ? "&aWither aktiviert." : "&cWither deaktiviert.");
+    private void toggleScoreboard(Player p) {
+        boolean v = !plugin.scoreboard().isEnabled();
+        plugin.scoreboard().setEnabled(v);
+        Msg.to(p, v ? "&aScoreboard AN" : "&cScoreboard AUS");
     }
-
-    private void handleLuckyVariant(Player player) {
-        GameConfig game = plugin.configs().game();
-        List<String> variants = game.lucky().variantsAvailable();
-        String current = game.lucky().variant();
-        int index = variants.indexOf(current);
-        int nextIndex = variants.isEmpty() ? 0 : (index + 1) % variants.size();
-        String next = variants.isEmpty() ? current : variants.get(nextIndex);
-        plugin.configs().updateGame(game.withLuckyVariant(next));
-        plugin.reloadSettings();
-        Msg.to(player, "&bLucky-Variante jetzt: &f" + next);
+    private void toggleTimer(Player p) {
+        boolean v = !plugin.scoreboard().isTimerVisible();
+        plugin.scoreboard().setTimerVisible(v);
+        Msg.to(p, v ? "&aTimer sichtbar" : "&cTimer versteckt");
     }
-
-    private void handleScoreboardToggle(Player player) {
-        boolean enabled = plugin.scoreboard().isEnabled();
-        plugin.scoreboard().setEnabled(!enabled);
-        Msg.to(player, !enabled ? "&aScoreboard aktiviert." : "&cScoreboard deaktiviert.");
+    private void softWipe(Player p) { Msg.to(p, "&7Soft-Wipe: &f" + plugin.game().softClear()); }
+    private void hardWipe(Player p) { Msg.to(p, "&7Hard-Wipe: &f" + plugin.game().hardClear()); }
+    private void bindAll(Player p) { plugin.game().bindAll(); Msg.to(p, "&bAlle gebunden."); }
+    private void placePlatform(Player p) { plugin.game().placePlatform(); Msg.to(p, "&bPlattform gesetzt."); }
+    private void teleportToSpawn(Player p) {
+        WorldsConfig.LuckyWorld cfg = plugin.configs().worlds().luckySky();
+        World w = Worlds.require(cfg.worldName());
+        WorldsConfig.Spawn spawn = cfg.spawn();
+        p.teleport(new Location(w, spawn.x(), spawn.y(), spawn.z(), spawn.yaw(), spawn.pitch()));
+        Msg.to(p, "&dTeleportiert.");
     }
-
-    private void handleTimerToggle(Player player) {
-        boolean visible = plugin.scoreboard().isTimerVisible();
-        plugin.scoreboard().setTimerVisible(!visible);
-        Msg.to(player, !visible ? "&aTimer eingeblendet." : "&cTimer ausgeblendet.");
-    }
-
-    private void handleSoftWipe(Player player) {
-        int removed = plugin.game().softClear();
-        Msg.to(player, "&7Soft-Wipe entfernt: &f" + removed);
-    }
-
-    private void handleHardWipe(Player player) {
-        int removed = plugin.game().hardClear();
-        Msg.to(player, "&7Hard-Wipe entfernt: &f" + removed);
-    }
-
-    private void handleBind(Player player) {
-        plugin.game().bindAll();
-        Msg.to(player, "&bAlle gebunden.");
-    }
-
-    private void handlePlatform(Player player) {
-        plugin.game().placePlatform();
-        Msg.to(player, "&bPlattform gesetzt.");
-    }
-
-    private void handleTeleport(Player player) {
-        WorldsConfig.LuckyWorld worldConfig = plugin.configs().worlds().luckySky();
-        World world = Worlds.require(worldConfig.worldName());
-        WorldsConfig.Spawn spawn = worldConfig.spawn();
-        Location location = new Location(world, spawn.x(), spawn.y(), spawn.z(), spawn.yaw(), spawn.pitch());
-        player.teleport(location);
-        Msg.to(player, "&dTeleportiert.");
-    }
-
-    private void handleSave(Player player) {
+    private void saveConfig(Player p) {
         plugin.configs().saveAll();
         plugin.reloadSettings();
-        Msg.to(player, "&aConfig gespeichert.");
+        Msg.to(p, "&aConfig gespeichert.");
     }
 }
