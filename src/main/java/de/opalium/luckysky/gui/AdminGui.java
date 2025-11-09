@@ -22,6 +22,10 @@ public class AdminGui implements Listener {
     private static final String TITLE = ChatColor.DARK_AQUA + "LuckySky Admin";
     private static final int SIZE = 27;
 
+    // NEU: Slots für die beiden Reset-Buttons (freie Plätze im 27er-Inventar)
+    private static final int SLOT_CLEAR_PLANE_Y101 = 8;   // TNT
+    private static final int SLOT_CLEAR_FIELD_FULL = 9;   // GUNPOWDER
+
     private final LuckySkyPlugin plugin;
 
     public AdminGui(LuckySkyPlugin plugin) {
@@ -48,6 +52,10 @@ public class AdminGui implements Listener {
             return;
         }
         switch (slot) {
+            // NEU: unsere beiden Buttons
+            case SLOT_CLEAR_PLANE_Y101 -> handleClearPlaneY101(player);
+            case SLOT_CLEAR_FIELD_FULL -> handleClearField300(player);
+
             case 10 -> handleStartCountdown(player);
             case 11 -> handleStopToLobby(player);
             case 12 -> handleDuration(player, 5);
@@ -64,8 +72,7 @@ public class AdminGui implements Listener {
             case 23 -> handlePlatform(player);
             case 24 -> handleTeleport(player);
             case 25 -> handleSave(player);
-            default -> {
-            }
+            default -> { }
         }
         Bukkit.getScheduler().runTask(plugin, () -> open(player));
     }
@@ -74,6 +81,12 @@ public class AdminGui implements Listener {
         GameConfig game = plugin.configs().game();
         TrapsConfig traps = plugin.configs().traps();
         boolean running = plugin.game().state() == de.opalium.luckysky.game.GameState.RUNNING;
+
+        // NEU: Reset-Buttons vorne links (Slots 8 & 9)
+        // nutzt deine GuiItems-Factories; falls die nicht existieren, nimm die button(...)-Variante.
+        inventory.setItem(SLOT_CLEAR_PLANE_Y101, GuiItems.tntClearPlaneY101());
+        inventory.setItem(SLOT_CLEAR_FIELD_FULL, GuiItems.fullClear0to319());
+
         inventory.setItem(10, GuiItems.button(Material.LIME_DYE, "&aStart Countdown",
                 List.of("&7Startet das Spiel und teleportiert zur Plattform."), running));
         inventory.setItem(11, GuiItems.button(Material.BARRIER, "&cStop & Lobby",
@@ -84,12 +97,14 @@ public class AdminGui implements Listener {
                 List.of("&7Setzt Dauer auf 20 Minuten."), false));
         inventory.setItem(14, GuiItems.button(Material.CLOCK, "&eMode 60",
                 List.of("&7Setzt Dauer auf 60 Minuten."), false));
+
         boolean tauntsEnabled = traps.withers().taunts().enabled();
         boolean witherEnabled = traps.withers().enabled();
         inventory.setItem(15, GuiItems.button(Material.GOAT_HORN, tauntsEnabled ? "&aTaunts AN" : "&cTaunts AUS",
                 List.of("&7Schaltet Wither-Taunts um."), tauntsEnabled));
         inventory.setItem(16, GuiItems.button(Material.WITHER_SKELETON_SKULL, witherEnabled ? "&aWither AN" : "&cWither AUS",
                 List.of("&7Aktiviert/Deaktiviert Wither-Spawns."), witherEnabled));
+
         boolean scoreboardEnabled = plugin.scoreboard().isEnabled();
         boolean timerVisible = plugin.scoreboard().isTimerVisible();
         inventory.setItem(17, GuiItems.button(Material.OAK_SIGN, scoreboardEnabled ? "&aScoreboard AN" : "&cScoreboard AUS",
@@ -111,6 +126,39 @@ public class AdminGui implements Listener {
         inventory.setItem(25, GuiItems.button(Material.NAME_TAG, "&aSave Config",
                 List.of("&7Speichert & läd Config neu."), false));
     }
+
+    // ====== NEU: Handler für die beiden Reset-Buttons ======
+
+    /** Ebene y=101 im ±300-Umkreis auf AIR, danach Podest wiederherstellen. */
+    private void handleClearPlaneY101(Player player) {
+        // Welt: LuckySky
+        dispatch("execute in LuckySky run fill -300 101 -300 300 101 300 minecraft:air");
+        // Podest neu
+        dispatch("execute in LuckySky run setblock 0 100 -1 minecraft:prismarine_stairs[facing=south,half=bottom,shape=straight]");
+        dispatch("execute in LuckySky run setblock 0 100 0  minecraft:prismarine_stairs[facing=south,half=bottom,shape=straight]");
+        dispatch("execute in LuckySky run setblock 0 100 1  minecraft:prismarine_bricks");
+        dispatch("execute in LuckySky run setblock 0 100 2  minecraft:prismarine_bricks");
+        // Feedback
+        dispatch("tellraw @a {\"text\":\"✔ Ebene y=101 im Radius ±300 gereinigt.\",\"color\":\"green\"}");
+        Msg.to(player, "&aReset ausgeführt (y=101, ±300).");
+    }
+
+    /** 0..319 im ±300-Umkreis auf AIR, danach Podest wiederherstellen. */
+    private void handleClearField300(Player player) {
+        dispatch("execute in LuckySky run fill -300 0 -300 300 319 300 minecraft:air");
+        dispatch("execute in LuckySky run setblock 0 100 -1 minecraft:prismarine_stairs[facing=south,half=bottom,shape=straight]");
+        dispatch("execute in LuckySky run setblock 0 100 0  minecraft:prismarine_stairs[facing=south,half=bottom,shape=straight]");
+        dispatch("execute in LuckySky run setblock 0 100 1  minecraft:prismarine_bricks");
+        dispatch("execute in LuckySky run setblock 0 100 2  minecraft:prismarine_bricks");
+        dispatch("tellraw @a {\"text\":\"✔ Bereich ±300 (0..319) gereinigt. Plattform wiederhergestellt.\",\"color\":\"green\"}");
+        Msg.to(player, "&aVollwipe ausgeführt (0..319, ±300).");
+    }
+
+    private void dispatch(String cmd) {
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
+    }
+
+    // ====== Bestehende Handler bleiben unverändert ======
 
     private void handleStartCountdown(Player player) {
         plugin.game().start();
