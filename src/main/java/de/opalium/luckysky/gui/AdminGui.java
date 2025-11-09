@@ -1,254 +1,481 @@
-package de.opalium.luckysky.gui;
+package de.opalium.luckysky.game;
 
 import de.opalium.luckysky.LuckySkyPlugin;
 import de.opalium.luckysky.config.GameConfig;
-import de.opalium.luckysky.config.TrapsConfig;
+import de.opalium.luckysky.config.MessagesConfig;
 import de.opalium.luckysky.config.WorldsConfig;
 import de.opalium.luckysky.util.Msg;
 import de.opalium.luckysky.util.Worlds;
-import java.util.List;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.inventory.Inventory;
 
-public class AdminGui implements Listener {
-    private static final String TITLE = ChatColor.DARK_AQUA + "LuckySky Admin";
-    private static final int SIZE = 27;
-
-    // NEU: Slots für die beiden Reset-Buttons (freie Plätze im 27er-Inventar)
-    private static final int SLOT_CLEAR_PLANE_Y101 = 8;   // TNT
-    private static final int SLOT_CLEAR_FIELD_FULL = 9;   // GUNPOWDER
-
+public class GameManager {
     private final LuckySkyPlugin plugin;
+    private final PlatformService platformService;
+    private final WipeService wipeService;
+    private final LuckyService luckyService;
+    private final DurationService durationService;
+    private final WitherService witherService;
+    private final RewardsService rewardsService;
+    private final ScoreboardService scoreboardService;
 
-    public AdminGui(LuckySkyPlugin plugin) {
+    private GameState state = GameState.IDLE;
+
+    private final Set<UUID> activeParticipants = new HashSet<>();
+    private final Set<UUID> allParticipants = new HashSet<>();
+    private final Set<UUID> disconnectedParticipants = new HashSet<>();
+
+    public GameManager(LuckySkyPlugin plugin, ScoreboardService scoreboardService) {
         this.plugin = plugin;
+        this.scoreboardService = scoreboardService;
+        this.platformService = new PlatformService(plugin);
+        this.wipeService = new WipeService(plugin);
+        this.luckyService = new LuckyService(plugin);
+        this.durationService = new DurationService(plugin, scoreboardService);
+        this.witherService = new WitherService(plugin);
+        this.rewardsService = new RewardsService(plugin);
     }
 
-    public void open(Player player) {
-        Inventory inventory = Bukkit.createInventory(player, SIZE, TITLE);
-        populate(inventory);
-        player.openInventory(inventory);
+    public void shutdown() {
+        luckyService.stop();
+        durationService.stop();
+        witherService.stop();
+        refreshScoreboard();
     }
 
-    @EventHandler
-    public void onInventoryClick(InventoryClickEvent event) {
-        if (!TITLE.equals(event.getView().getTitle())) {
+    public GameState state() {
+        return state;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // PRESET-START / CLEANUP (NEU)
+    // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Startet ein Preset:
+     * - setzt Laufzeit (nur runtime),
+     * - plant Wither-Spawn in X Minuten,
+     * - öffnet optional Portal,
+     * - respektiert One-Life falls in Config aktiv (kein Config-Schreiben hier).
+     */
+    public void startPreset(int durationMinutes, int witherAfterMinutes, boolean oneLife, boolean openPortal) {
+        if (state == GameState.RUNNING) {
+            Msg.to(Bukkit.getConsoleSender(), "&ePreset ignoriert: LuckySky läuft bereits.");
             return;
         }
-        event.setCancelled(true);
-        if (!(event.getWhoClicked() instanceof Player player)) {
+
+        // Dauer runtime setzen (persistiert nicht bewusst, um Build-Sicherheit zu wahren)
+        setDurationMinutes(durationMinutes);
+
+        // Hinweis, falls One-Life im Preset gewünscht ist, aber in Config nicht aktiv
+        boolean cfgOneLife = gameConfig().lives().oneLife();
+        if (oneLife && !cfgOneLife) {
+            Msg.to(Bukkit.getConsoleSender(),
+                    "&eHinweis: Preset fordert One-Life, aber &fconfig.yml &ehat one_life=false. (Runtime bleibt ohne Respawn)");
+        }
+
+        // Wither-Spawn planen (überschreibt ggf. Default)
+        witherService.scheduleSpawn(witherAfterMinutes);
+
+        // Portal öffnen (Multiverse-Portals)
+        if (openPortal) {
+            PortalService.openBackspawn();
+        }
+
+        // regulär starten (teleports, binds, services)
+        start();
+    }
+
+    /**
+     * Stoppt das Spiel und räumt Everything auf:
+     * - Wither-Timer abbrechen,
+     * - Spiel stoppen,
+     * - Portal optional schließen.
+     */
+    public void stopAndCleanup(boolean closePortal) {
+        witherService.cancelSpawn();
+        stop();
+        if (closePortal) {
+            PortalService.closeBackspawn();
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+
+    public void start() {
+        if (state == GameState.RUNNING) {
+            Msg.to(Bukkit.getConsoleSender(), "&cLuckySky läuft bereits.");
             return;
         }
-        int slot = event.getRawSlot();
-        if (slot < 0 || slot >= SIZE) {
+        World world = ensureWorldLoaded();
+        GameConfig game = gameConfig();
+        GameConfig.Position position = game.lucky().position();
+        if (game.lucky().requireAirAtTarget()
+                && world.getBlockAt(position.x(), position.y(), position.z()).getType() != Material.AIR) {
+            Msg.to(Bukkit.getConsoleSender(), "&cLucky-Locus ist blockiert. Entferne Block bei "
+                    + position.x() + ", " + position.y() + ", " + position.z() + ".");
             return;
         }
-        switch (slot) {
-            // NEU: unsere beiden Buttons
-            case SLOT_CLEAR_PLANE_Y101 -> handleClearPlaneY101(player);
-            case SLOT_CLEAR_FIELD_FULL -> handleClearField300(player);
+        activeParticipants.clear();
+        allParticipants.clear();
+        disconnectedParticipants.clear();
+        platformService.placeBase();
+        bindAll();
+        teleportAllToPlatform();
+        setAllSurvivalInWorld();
+        luckyService.start();
+        durationService.startDefault();
+        witherService.start();
+        state = GameState.RUNNING;
+        refreshScoreboard();
+        broadcast(messages().gamePrefix() + worldConfig().lucky().startBanner());
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (!platformService.isBaseIntact()) {
+                platformService.placeBase();
+                Msg.to(Bukkit.getConsoleSender(), messages().adminPrefix() + "Plattformkern wiederhergestellt.");
+            }
+        }, 100L);
+        Bukkit.getScheduler().runTaskLater(plugin,
+                () -> Msg.to(Bukkit.getConsoleSender(), messages().adminPrefix() + "Game is running."), 1L);
+    }
 
-            case 10 -> handleStartCountdown(player);
-            case 11 -> handleStopToLobby(player);
-            case 12 -> handleDuration(player, 5);
-            case 13 -> handleDuration(player, 20);
-            case 14 -> handleDuration(player, 60);
-            case 15 -> handleTauntToggle(player);
-            case 16 -> handleWitherToggle(player);
-            case 17 -> handleScoreboardToggle(player);
-            case 18 -> handleTimerToggle(player);
-            case 19 -> handleLuckyVariant(player);
-            case 20 -> handleSoftWipe(player);
-            case 21 -> handleHardWipe(player);
-            case 22 -> handleBind(player);
-            case 23 -> handlePlatform(player);
-            case 24 -> handleTeleport(player);
-            case 25 -> handleSave(player);
-            default -> { }
+    public void stop() {
+        if (state != GameState.RUNNING) {
+            teleportAllToLobby();
+            clearParticipants();
+            state = GameState.STOPPED;
+            refreshScoreboard();
+            return;
         }
-        Bukkit.getScheduler().runTask(plugin, () -> open(player));
+        luckyService.stop();
+        durationService.stop();
+        witherService.stop();
+        state = GameState.STOPPED;
+        refreshScoreboard();
+        broadcast(messages().gamePrefix() + plugin.configs().messages().stopBanner());
+        teleportAllToLobby();
+        clearParticipants();
     }
 
-    private void populate(Inventory inventory) {
-        GameConfig game = plugin.configs().game();
-        TrapsConfig traps = plugin.configs().traps();
-        boolean running = plugin.game().state() == de.opalium.luckysky.game.GameState.RUNNING;
-
-        // NEU: Reset-Buttons vorne links (Slots 8 & 9)
-        // nutzt deine GuiItems-Factories; falls die nicht existieren, nimm die button(...)-Variante.
-        inventory.setItem(SLOT_CLEAR_PLANE_Y101, GuiItems.tntClearPlaneY101());
-        inventory.setItem(SLOT_CLEAR_FIELD_FULL, GuiItems.fullClear0to319());
-
-        inventory.setItem(10, GuiItems.button(Material.LIME_DYE, "&aStart Countdown",
-                List.of("&7Startet das Spiel und teleportiert zur Plattform."), running));
-        inventory.setItem(11, GuiItems.button(Material.BARRIER, "&cStop & Lobby",
-                List.of("&7Stoppt das Spiel und sendet alle zur Lobby."), false));
-        inventory.setItem(12, GuiItems.button(Material.CLOCK, "&eMode 5",
-                List.of("&7Setzt Dauer auf 5 Minuten."), false));
-        inventory.setItem(13, GuiItems.button(Material.CLOCK, "&eMode 20",
-                List.of("&7Setzt Dauer auf 20 Minuten."), false));
-        inventory.setItem(14, GuiItems.button(Material.CLOCK, "&eMode 60",
-                List.of("&7Setzt Dauer auf 60 Minuten."), false));
-
-        boolean tauntsEnabled = traps.withers().taunts().enabled();
-        boolean witherEnabled = traps.withers().enabled();
-        inventory.setItem(15, GuiItems.button(Material.GOAT_HORN, tauntsEnabled ? "&aTaunts AN" : "&cTaunts AUS",
-                List.of("&7Schaltet Wither-Taunts um."), tauntsEnabled));
-        inventory.setItem(16, GuiItems.button(Material.WITHER_SKELETON_SKULL, witherEnabled ? "&aWither AN" : "&cWither AUS",
-                List.of("&7Aktiviert/Deaktiviert Wither-Spawns."), witherEnabled));
-
-        boolean scoreboardEnabled = plugin.scoreboard().isEnabled();
-        boolean timerVisible = plugin.scoreboard().isTimerVisible();
-        inventory.setItem(17, GuiItems.button(Material.OAK_SIGN, scoreboardEnabled ? "&aScoreboard AN" : "&cScoreboard AUS",
-                List.of("&7Schaltet das LuckySky-Scoreboard."), scoreboardEnabled));
-        inventory.setItem(18, GuiItems.button(Material.COMPASS, timerVisible ? "&aTimer sichtbar" : "&cTimer versteckt",
-                List.of("&7Blendt den Timer im Scoreboard ein/aus."), timerVisible));
-        inventory.setItem(19, GuiItems.button(Material.SPONGE, "&bLucky-Variante",
-                List.of("&7Aktuell: &f" + game.lucky().variant()), false));
-        inventory.setItem(20, GuiItems.button(Material.FEATHER, "&bSoft-Wipe",
-                List.of("&7Entfernt Effekte um Lucky."), false));
-        inventory.setItem(21, GuiItems.button(Material.NETHERITE_SWORD, "&cHard-Wipe",
-                List.of("&7Entfernt Entities großflächig."), false));
-        inventory.setItem(22, GuiItems.button(Material.RESPAWN_ANCHOR, "&bBind",
-                List.of("&7Setzt Spawn für alle."), false));
-        inventory.setItem(23, GuiItems.button(Material.PRISMARINE_BRICKS, "&bPlattform",
-                List.of("&7Baut Safe-Plattform."), false));
-        inventory.setItem(24, GuiItems.button(Material.ENDER_PEARL, "&dTeleport",
-                List.of("&7Teleportiert dich zum Spawn."), false));
-        inventory.setItem(25, GuiItems.button(Material.NAME_TAG, "&aSave Config",
-                List.of("&7Speichert & läd Config neu."), false));
+    public void placePlatform() {
+        ensureWorldLoaded();
+        platformService.placeBase();
+        Msg.to(Bukkit.getConsoleSender(), "&bSafe-Plattform gesetzt.");
     }
 
-    // ====== NEU: Handler für die beiden Reset-Buttons ======
-
-    /** Ebene y=101 im ±300-Umkreis auf AIR, danach Podest wiederherstellen. */
-    private void handleClearPlaneY101(Player player) {
-        // Welt: LuckySky
-        dispatch("execute in LuckySky run fill -300 101 -300 300 101 300 minecraft:air");
-        // Podest neu
-        dispatch("execute in LuckySky run setblock 0 100 -1 minecraft:prismarine_stairs[facing=south,half=bottom,shape=straight]");
-        dispatch("execute in LuckySky run setblock 0 100 0  minecraft:prismarine_stairs[facing=south,half=bottom,shape=straight]");
-        dispatch("execute in LuckySky run setblock 0 100 1  minecraft:prismarine_bricks");
-        dispatch("execute in LuckySky run setblock 0 100 2  minecraft:prismarine_bricks");
-        // Feedback
-        dispatch("tellraw @a {\"text\":\"✔ Ebene y=101 im Radius ±300 gereinigt.\",\"color\":\"green\"}");
-        Msg.to(player, "&aReset ausgeführt (y=101, ±300).");
+    public void placePlatformExtended() {
+        ensureWorldLoaded();
+        platformService.placeBase();
+        platformService.placeExtended();
+        Msg.to(Bukkit.getConsoleSender(), "&bSafe-Plattform erweitert.");
     }
 
-    /** 0..319 im ±300-Umkreis auf AIR, danach Podest wiederherstellen. */
-    private void handleClearField300(Player player) {
-        dispatch("execute in LuckySky run fill -300 0 -300 300 319 300 minecraft:air");
-        dispatch("execute in LuckySky run setblock 0 100 -1 minecraft:prismarine_stairs[facing=south,half=bottom,shape=straight]");
-        dispatch("execute in LuckySky run setblock 0 100 0  minecraft:prismarine_stairs[facing=south,half=bottom,shape=straight]");
-        dispatch("execute in LuckySky run setblock 0 100 1  minecraft:prismarine_bricks");
-        dispatch("execute in LuckySky run setblock 0 100 2  minecraft:prismarine_bricks");
-        dispatch("tellraw @a {\"text\":\"✔ Bereich ±300 (0..319) gereinigt. Plattform wiederhergestellt.\",\"color\":\"green\"}");
-        Msg.to(player, "&aVollwipe ausgeführt (0..319, ±300).");
+    public int softClear() {
+        return wipeService.fieldClearSoft();
     }
 
-    private void dispatch(String cmd) {
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
+    public int hardClear() {
+        return wipeService.hardWipe();
     }
 
-    // ====== Bestehende Handler bleiben unverändert ======
-
-    private void handleStartCountdown(Player player) {
-        plugin.game().start();
-        Msg.to(player, "&aCountdown gestartet.");
+    public void bindAll() {
+        Optional<Location> respawnOpt = platformSpawnLocation();
+        if (respawnOpt.isEmpty()) {
+            Msg.to(Bukkit.getConsoleSender(), messages().adminPrefix() + "Kein LuckySky-Spawn definiert.");
+            return;
+        }
+        Location respawn = respawnOpt.get();
+        World world = respawn.getWorld();
+        if (world == null) {
+            return;
+        }
+        WorldsConfig.Spawn spawn = worldConfig().spawn();
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (!player.getWorld().equals(world)) {
+                continue;
+            }
+            player.setBedSpawnLocation(respawn, true);
+            UUID id = player.getUniqueId();
+            activeParticipants.add(id);
+            allParticipants.add(id);
+            disconnectedParticipants.remove(id);
+        }
+        broadcast(messages().gamePrefix() + String.format("&bSpawnpoint gesetzt (&f%.1f, %.1f, %.1f&b).",
+                spawn.x(), spawn.y(), spawn.z()));
+        refreshScoreboard();
     }
 
-    private void handleStopToLobby(Player player) {
-        plugin.game().stop();
-        Msg.to(player, "&eGame gestoppt & Lobby.");
+    public void setDurationMinutes(int minutes) {
+        durationService.startMinutes(minutes);
+        refreshScoreboard();
     }
 
-    private void handleDuration(Player player, int minutes) {
-        plugin.game().setDurationMinutes(minutes);
-        Msg.to(player, "&aDauer auf " + minutes + " Minuten gesetzt.");
+    public void setTauntsEnabled(boolean enabled) {
+        witherService.setTauntsEnabled(enabled);
+        refreshScoreboard();
     }
 
-    private void handleTauntToggle(Player player) {
-        TrapsConfig traps = plugin.configs().traps();
-        boolean newValue = !traps.withers().taunts().enabled();
-        plugin.configs().updateTraps(traps.withTauntsEnabled(newValue));
-        plugin.reloadSettings();
-        plugin.game().setTauntsEnabled(newValue);
-        Msg.to(player, newValue ? "&aTaunts aktiviert." : "&cTaunts deaktiviert.");
+    public void setWitherEnabled(boolean enabled) {
+        witherService.setWitherEnabled(enabled);
+        refreshScoreboard();
     }
 
-    private void handleWitherToggle(Player player) {
-        TrapsConfig traps = plugin.configs().traps();
-        boolean newValue = !traps.withers().enabled();
-        plugin.configs().updateTraps(traps.withWithersEnabled(newValue));
-        plugin.reloadSettings();
-        plugin.game().setWitherEnabled(newValue);
-        Msg.to(player, newValue ? "&aWither aktiviert." : "&cWither deaktiviert.");
+    public void spawnWitherNow() {
+        witherService.spawnNow();
+        refreshScoreboard();
     }
 
-    private void handleLuckyVariant(Player player) {
-        GameConfig game = plugin.configs().game();
-        List<String> variants = game.lucky().variantsAvailable();
-        String current = game.lucky().variant();
-        int index = variants.indexOf(current);
-        int nextIndex = variants.isEmpty() ? 0 : (index + 1) % variants.size();
-        String next = variants.isEmpty() ? current : variants.get(nextIndex);
-        plugin.configs().updateGame(game.withLuckyVariant(next));
-        plugin.reloadSettings();
-        Msg.to(player, "&bLucky-Variante jetzt: &f" + next);
+    public void setAllSurvivalInWorld() {
+        World world = Worlds.require(worldConfig().worldName());
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (player.getWorld().equals(world)) {
+                player.setGameMode(GameMode.SURVIVAL);
+            }
+        }
     }
 
-    private void handleScoreboardToggle(Player player) {
-        boolean enabled = plugin.scoreboard().isEnabled();
-        plugin.scoreboard().setEnabled(!enabled);
-        Msg.to(player, !enabled ? "&aScoreboard aktiviert." : "&cScoreboard deaktiviert.");
+    public void teleportAllToPlatform() {
+        Optional<Location> locationOpt = platformSpawnLocation();
+        if (locationOpt.isEmpty()) {
+            return;
+        }
+        Location location = locationOpt.get();
+        World world = location.getWorld();
+        if (world == null) {
+            return;
+        }
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (!player.getWorld().equals(world)) {
+                continue;
+            }
+            player.teleport(location);
+        }
     }
 
-    private void handleTimerToggle(Player player) {
-        boolean visible = plugin.scoreboard().isTimerVisible();
-        plugin.scoreboard().setTimerVisible(!visible);
-        Msg.to(player, !visible ? "&aTimer eingeblendet." : "&cTimer ausgeblendet.");
+    public void teleportAllToLobby() {
+        Optional<Location> lobbyOpt = lobbySpawnLocation();
+        if (lobbyOpt.isEmpty()) {
+            Msg.to(Bukkit.getConsoleSender(), messages().adminPrefix() + "Kein LuckySky-Lobby-Spawn definiert.");
+            return;
+        }
+        Location lobby = lobbyOpt.get();
+        World world = lobby.getWorld();
+        if (world == null) {
+            return;
+        }
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (!player.getWorld().getName().equalsIgnoreCase(worldConfig().worldName())) {
+                continue;
+            }
+            player.teleport(lobby);
+            player.setBedSpawnLocation(lobby, true);
+            if (state != GameState.RUNNING && !gameConfig().lives().oneLife()) {
+                player.setGameMode(GameMode.SURVIVAL);
+            }
+        }
     }
 
-    private void handleSoftWipe(Player player) {
-        int removed = plugin.game().softClear();
-        Msg.to(player, "&7Soft-Wipe entfernt: &f" + removed);
-    }
-
-    private void handleHardWipe(Player player) {
-        int removed = plugin.game().hardClear();
-        Msg.to(player, "&7Hard-Wipe entfernt: &f" + removed);
-    }
-
-    private void handleBind(Player player) {
-        plugin.game().bindAll();
-        Msg.to(player, "&bAlle gebunden.");
-    }
-
-    private void handlePlatform(Player player) {
-        plugin.game().placePlatform();
-        Msg.to(player, "&bPlattform gesetzt.");
-    }
-
-    private void handleTeleport(Player player) {
-        WorldsConfig.LuckyWorld worldConfig = plugin.configs().worlds().luckySky();
-        World world = Worlds.require(worldConfig.worldName());
-        WorldsConfig.Spawn spawn = worldConfig.spawn();
-        Location location = new Location(world, spawn.x(), spawn.y(), spawn.z(), spawn.yaw(), spawn.pitch());
+    public void teleportPlayerToLobby(Player player) {
+        Optional<Location> lobbyOpt = lobbySpawnLocation();
+        if (lobbyOpt.isEmpty()) {
+            return;
+        }
+        Location location = lobbyOpt.get();
         player.teleport(location);
-        Msg.to(player, "&dTeleportiert.");
+        player.setBedSpawnLocation(location, true);
     }
 
-    private void handleSave(Player player) {
-        plugin.configs().saveAll();
-        plugin.reloadSettings();
-        Msg.to(player, "&aConfig gespeichert.");
+    public boolean isParticipant(Player player) {
+        return allParticipants.contains(player.getUniqueId());
+    }
+
+    public boolean isActiveParticipant(Player player) {
+        return activeParticipants.contains(player.getUniqueId());
+    }
+
+    public void handleParticipantDeath(Player player) {
+        if (!isActiveParticipant(player)) {
+            return;
+        }
+        UUID id = player.getUniqueId();
+        activeParticipants.remove(id);
+        disconnectedParticipants.remove(id);
+        if (gameConfig().lives().oneLife()) {
+            Bukkit.getScheduler().runTask(plugin, () -> player.setGameMode(GameMode.SPECTATOR));
+            if (activeParticipants.isEmpty()) {
+                handleAllPlayersEliminated();
+            }
+        }
+        refreshScoreboard();
+    }
+
+    public void handleRespawn(Player player) {
+        if (state != GameState.RUNNING) {
+            return;
+        }
+        if (!isParticipant(player)) {
+            return;
+        }
+        if (gameConfig().lives().oneLife()) {
+            return;
+        }
+        activeParticipants.add(player.getUniqueId());
+        disconnectedParticipants.remove(player.getUniqueId());
+        refreshScoreboard();
+    }
+
+    public void handleQuit(Player player) {
+        UUID id = player.getUniqueId();
+        if (!allParticipants.contains(id)) {
+            return;
+        }
+        boolean wasActive = activeParticipants.remove(id);
+        if (!wasActive) {
+            disconnectedParticipants.remove(id);
+            return;
+        }
+        if (state == GameState.RUNNING) {
+            disconnectedParticipants.add(id);
+            if (activeParticipants.isEmpty()) {
+                handleAllPlayersEliminated();
+            }
+        }
+        refreshScoreboard();
+    }
+
+    public void handleJoin(Player player) {
+        UUID id = player.getUniqueId();
+        if (!disconnectedParticipants.contains(id)) {
+            return;
+        }
+        if (state != GameState.RUNNING) {
+            disconnectedParticipants.remove(id);
+            return;
+        }
+        World world = Worlds.require(worldConfig().worldName());
+        if (!player.getWorld().equals(world)) {
+            return;
+        }
+        disconnectedParticipants.remove(id);
+        activeParticipants.add(id);
+        if (state == GameState.RUNNING) {
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                player.setGameMode(GameMode.SURVIVAL);
+                platformSpawnLocation().ifPresent(player::teleport);
+            });
+        }
+        refreshScoreboard();
+    }
+
+    public void onDurationExpired() {
+        if (state != GameState.RUNNING) {
+            return;
+        }
+        rewardsService.triggerFail(allParticipants);
+        broadcast(messages().gamePrefix() + "&eZeit abgelaufen – Spiel gestoppt.");
+        stop();
+    }
+
+    public void handleWitherKill(Player killer) {
+        if (state != GameState.RUNNING) {
+            return;
+        }
+        rewardsService.triggerWin(killer, activeParticipants);
+        broadcast(messages().gamePrefix() + "&aWither besiegt! GG!");
+        stop();
+    }
+
+    public void reloadSettings() {
+        luckyService.reload();
+        durationService.reload();
+        witherService.reload();
+        refreshScoreboard();
+    }
+
+    private void handleAllPlayersEliminated() {
+        rewardsService.triggerFail(allParticipants);
+        broadcast(messages().gamePrefix() + "&cAlle Spieler ausgeschieden – Spiel beendet.");
+        stop();
+    }
+
+    public Set<UUID> activeParticipants() {
+        return Collections.unmodifiableSet(activeParticipants);
+    }
+
+    public Set<UUID> allParticipants() {
+        return Collections.unmodifiableSet(allParticipants);
+    }
+
+    public void triggerRewardsWin(Player killer) {
+        rewardsService.triggerWin(killer, activeParticipants);
+        refreshScoreboard();
+    }
+
+    public void triggerRewardsFail() {
+        rewardsService.triggerFail(allParticipants);
+        refreshScoreboard();
+    }
+
+    public boolean oneLifeEnabled() {
+        return gameConfig().lives().oneLife();
+    }
+
+    public Optional<Location> platformSpawnLocation() {
+        return locationForSpawn(worldConfig().spawn());
+    }
+
+    public Optional<Location> lobbySpawnLocation() {
+        return locationForSpawn(worldConfig().lobby());
+    }
+
+    private World ensureWorldLoaded() {
+        return Worlds.require(worldConfig().worldName());
+    }
+
+    private Optional<Location> locationForSpawn(WorldsConfig.Spawn spawn) {
+        if (spawn == null) {
+            return Optional.empty();
+        }
+        World world = Worlds.require(worldConfig().worldName());
+        return Optional.of(new Location(world, spawn.x(), spawn.y(), spawn.z(), spawn.yaw(), spawn.pitch()));
+    }
+
+    private GameConfig gameConfig() {
+        return plugin.configs().game();
+    }
+
+    private WorldsConfig.LuckyWorld worldConfig() {
+        return plugin.configs().worlds().luckySky();
+    }
+
+    private MessagesConfig messages() {
+        return plugin.configs().messages();
+    }
+
+    private void clearParticipants() {
+        activeParticipants.clear();
+        allParticipants.clear();
+        disconnectedParticipants.clear();
+    }
+
+    private void broadcast(String message) {
+        String colored = Msg.color(messages().prefix() + message);
+        Bukkit.getOnlinePlayers().forEach(p -> p.sendMessage(colored));
+        Bukkit.getConsoleSender().sendMessage(colored);
+    }
+
+    private void refreshScoreboard() {
+        if (scoreboardService != null) {
+            scoreboardService.refresh();
+        }
     }
 }
