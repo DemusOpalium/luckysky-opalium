@@ -30,31 +30,34 @@ public class WitherService {
         this.tauntsEnabled = traps.withers().taunts().enabled();
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // LEBENSZYKLUS
+    // ─────────────────────────────────────────────────────────────
     public void start() {
-        stop();
+        stop(); // Timer säubern
         TrapsConfig traps = traps();
         witherEnabled = traps.withers().enabled();
         tauntsEnabled = traps.withers().taunts().enabled();
-        if (!witherEnabled) {
-            return;
-        }
-        spawnTimer = Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, this::spawn,
-                traps.withers().spawnAfterMinutes() * 60L * 20L);
+        if (!witherEnabled) return;
+
+        // einheitlich über scheduleSpawn(...)
+        scheduleSpawn(traps.withers().spawnAfterMinutes());
+
         if (tauntsEnabled) {
-            tauntTimer = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, this::taunt,
-                    traps.withers().taunts().everyTicks(), traps.withers().taunts().everyTicks());
+            tauntTimer = Bukkit.getScheduler().scheduleSyncRepeatingTask(
+                plugin, this::taunt,
+                traps.withers().taunts().everyTicks(),
+                traps.withers().taunts().everyTicks()
+            );
         }
     }
 
     public void stop() {
-        if (spawnTimer != -1) {
-            Bukkit.getScheduler().cancelTask(spawnTimer);
-        }
+        cancelSpawn();
         if (tauntTimer != -1) {
             Bukkit.getScheduler().cancelTask(tauntTimer);
+            tauntTimer = -1;
         }
-        spawnTimer = -1;
-        tauntTimer = -1;
     }
 
     public void reload() {
@@ -67,8 +70,35 @@ public class WitherService {
         }
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // NEU: EXPLIZITE PLANUNG / ABBRUCH
+    // ─────────────────────────────────────────────────────────────
+    /** Plant den Wither-Spawn in X Minuten (überschreibt Config-Verzögerung). */
+    public void scheduleSpawn(int minutes) {
+        cancelSpawn();
+        if (!witherEnabled || plugin.game().state() != GameState.RUNNING) return;
+        if (minutes <= 0) {
+            // sofort spawnen (gleiches Verhalten wie spawnNow, aber ohne Taunt-Neuaufbau)
+            Bukkit.getScheduler().runTask(plugin, this::spawn);
+            return;
+        }
+        long delay = minutes * 60L * 20L;
+        spawnTimer = Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, this::spawn, delay);
+    }
+
+    /** Bricht geplanten Wither-Spawn ab. */
+    public void cancelSpawn() {
+        if (spawnTimer != -1) {
+            Bukkit.getScheduler().cancelTask(spawnTimer);
+            spawnTimer = -1;
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // STEUERUNGEN
+    // ─────────────────────────────────────────────────────────────
     public void spawnNow() {
-        stop();
+        stop(); // vermeidet Doppel-Spawn/Timer
         spawn();
         if (tauntsEnabled && plugin.game().state() == GameState.RUNNING) {
             setTauntsEnabled(true);
@@ -91,21 +121,25 @@ public class WitherService {
             tauntTimer = -1;
         } else if (enabled && plugin.game().state() == GameState.RUNNING) {
             TrapsConfig traps = traps();
-            if (tauntTimer != -1) {
-                Bukkit.getScheduler().cancelTask(tauntTimer);
-            }
-            tauntTimer = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, this::taunt,
-                    traps.withers().taunts().everyTicks(), traps.withers().taunts().everyTicks());
+            if (tauntTimer != -1) Bukkit.getScheduler().cancelTask(tauntTimer);
+            tauntTimer = Bukkit.getScheduler().scheduleSyncRepeatingTask(
+                plugin, this::taunt,
+                traps.withers().taunts().everyTicks(),
+                traps.withers().taunts().everyTicks()
+            );
         }
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // INTERN
+    // ─────────────────────────────────────────────────────────────
     private void spawn() {
-        if (!witherEnabled || plugin.game().state() != GameState.RUNNING) {
-            return;
-        }
+        if (!witherEnabled || plugin.game().state() != GameState.RUNNING) return;
+
         GameConfig.Position position = plugin.configs().game().lucky().position();
         World world = Worlds.require(worldConfig().worldName());
         Location location = new Location(world, position.x(), position.y(), position.z() - 6);
+
         Wither wither = (Wither) world.spawnEntity(location, EntityType.WITHER);
         wither.setCustomNameVisible(true);
         wither.customName(Component.text("Abyssal Wither", NamedTextColor.DARK_PURPLE));
@@ -113,30 +147,18 @@ public class WitherService {
     }
 
     private void taunt() {
-        if (!tauntsEnabled || plugin.game().state() != GameState.RUNNING) {
-            return;
-        }
+        if (!tauntsEnabled || plugin.game().state() != GameState.RUNNING) return;
         World world = Worlds.require(worldConfig().worldName());
-        if (world.getEntitiesByClass(Wither.class).isEmpty()) {
-            return;
-        }
+        if (world.getEntitiesByClass(Wither.class).isEmpty()) return;
+
         List<String> taunts = traps().withers().taunts().lines();
-        if (taunts.isEmpty()) {
-            return;
-        }
+        if (taunts.isEmpty()) return;
+
         String line = taunts.get((int) (Math.random() * taunts.size()));
         Bukkit.broadcastMessage(Msg.color(messages().prefix() + "&c" + line));
     }
 
-    private TrapsConfig traps() {
-        return plugin.configs().traps();
-    }
-
-    private WorldsConfig.LuckyWorld worldConfig() {
-        return plugin.configs().worlds().luckySky();
-    }
-
-    private MessagesConfig messages() {
-        return plugin.configs().messages();
-    }
+    private TrapsConfig traps() { return plugin.configs().traps(); }
+    private WorldsConfig.LuckyWorld worldConfig() { return plugin.configs().worlds().luckySky(); }
+    private MessagesConfig messages() { return plugin.configs().messages(); }
 }
