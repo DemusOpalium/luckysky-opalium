@@ -6,7 +6,6 @@ import de.opalium.luckysky.config.TrapsConfig;
 import de.opalium.luckysky.config.WorldsConfig;
 import de.opalium.luckysky.util.Msg;
 import de.opalium.luckysky.util.Worlds;
-import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -17,14 +16,17 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
+
+import java.util.List;
 
 public class AdminGui implements Listener {
     private static final String TITLE = ChatColor.DARK_AQUA + "LuckySky Admin";
     private static final int SIZE = 27;
 
-    // NEU: Slots für die beiden Reset-Buttons (freie Plätze im 27er-Inventar)
-    private static final int SLOT_CLEAR_PLANE_Y101 = 8;   // TNT
-    private static final int SLOT_CLEAR_FIELD_FULL = 9;   // GUNPOWDER
+    // NEU: Slots für die beiden Reset-Buttons
+    private static final int SLOT_CLEAR_PLANE_Y101 = 8;  // TNT
+    private static final int SLOT_CLEAR_FIELD_FULL = 9; // GUNPOWDER
 
     private final LuckySkyPlugin plugin;
 
@@ -40,22 +42,16 @@ public class AdminGui implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        if (!TITLE.equals(event.getView().getTitle())) {
-            return;
-        }
+        if (!TITLE.equals(event.getView().getTitle())) return;
         event.setCancelled(true);
-        if (!(event.getWhoClicked() instanceof Player player)) {
-            return;
-        }
+        if (!(event.getWhoClicked() instanceof Player player)) return;
+
         int slot = event.getRawSlot();
-        if (slot < 0 || slot >= SIZE) {
-            return;
-        }
+        if (slot < 0 || slot >= SIZE) return;
+
         switch (slot) {
-            // NEU: unsere beiden Buttons
             case SLOT_CLEAR_PLANE_Y101 -> handleClearPlaneY101(player);
             case SLOT_CLEAR_FIELD_FULL -> handleClearField300(player);
-
             case 10 -> handleStartCountdown(player);
             case 11 -> handleStopToLobby(player);
             case 12 -> handleDuration(player, 5);
@@ -82,8 +78,7 @@ public class AdminGui implements Listener {
         TrapsConfig traps = plugin.configs().traps();
         boolean running = plugin.game().state() == de.opalium.luckysky.game.GameState.RUNNING;
 
-        // NEU: Reset-Buttons vorne links (Slots 8 & 9)
-        // nutzt deine GuiItems-Factories; falls die nicht existieren, nimm die button(...)-Variante.
+        // NEU: Reset-Buttons
         inventory.setItem(SLOT_CLEAR_PLANE_Y101, GuiItems.tntClearPlaneY101());
         inventory.setItem(SLOT_CLEAR_FIELD_FULL, GuiItems.fullClear0to319());
 
@@ -111,6 +106,7 @@ public class AdminGui implements Listener {
                 List.of("&7Schaltet das LuckySky-Scoreboard."), scoreboardEnabled));
         inventory.setItem(18, GuiItems.button(Material.COMPASS, timerVisible ? "&aTimer sichtbar" : "&cTimer versteckt",
                 List.of("&7Blendt den Timer im Scoreboard ein/aus."), timerVisible));
+
         inventory.setItem(19, GuiItems.button(Material.SPONGE, "&bLucky-Variante",
                 List.of("&7Aktuell: &f" + game.lucky().variant()), false));
         inventory.setItem(20, GuiItems.button(Material.FEATHER, "&bSoft-Wipe",
@@ -127,39 +123,121 @@ public class AdminGui implements Listener {
                 List.of("&7Speichert & läd Config neu."), false));
     }
 
-    // ====== NEU: Handler für die beiden Reset-Buttons ======
+    // ====== NEUE FUNKTIONALE RESET-HANDLER ======
 
     /** Ebene y=101 im ±300-Umkreis auf AIR, danach Podest wiederherstellen. */
     private void handleClearPlaneY101(Player player) {
-        // Welt: LuckySky
-        dispatch("execute in LuckySky run fill -300 101 -300 300 101 300 minecraft:air");
-        // Podest neu
-        dispatch("execute in LuckySky run setblock 0 100 -1 minecraft:prismarine_stairs[facing=south,half=bottom,shape=straight]");
-        dispatch("execute in LuckySky run setblock 0 100 0  minecraft:prismarine_stairs[facing=south,half=bottom,shape=straight]");
-        dispatch("execute in LuckySky run setblock 0 100 1  minecraft:prismarine_bricks");
-        dispatch("execute in LuckySky run setblock 0 100 2  minecraft:prismarine_bricks");
-        // Feedback
-        dispatch("tellraw @a {\"text\":\"✔ Ebene y=101 im Radius ±300 gereinigt.\",\"color\":\"green\"}");
-        Msg.to(player, "&aReset ausgeführt (y=101, ±300).");
+        World world = Bukkit.getWorld("LuckySky");
+        if (world == null) {
+            Msg.to(player, "&cWelt 'LuckySky' nicht gefunden!");
+            return;
+        }
+
+        Msg.to(player, "&aBereinige Ebene y=101 (±300)... (kann 10-30s dauern)");
+        dispatch("tellraw @a {\"text\":\"Ebene y=101 wird gereinigt...\",\"color\":\"yellow\"}");
+
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            int minX = -300, maxX = 300;
+            int minZ = -300, maxZ = 300;
+            int y = 101;
+            int chunkSize = 50;
+
+            for (int x = minX; x <= maxX; x += chunkSize) {
+                for (int z = minZ; z <= maxZ; z += chunkSize) {
+                    int fromX = x;
+                    int toX = Math.min(x + chunkSize - 1, maxX);
+                    int fromZ = z;
+                    int toZ = Math.min(z + chunkSize - 1, maxZ);
+
+                    String cmd = String.format("fill %d %d %d %d %d %d minecraft:air replace #minecraft:all_blocks",
+                            fromX, y, fromZ, toX, y, toZ);
+
+                    Bukkit.getScheduler().runTask(plugin, () -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd));
+                    try { Thread.sleep(50); } catch (InterruptedException ignored) {}
+                }
+            }
+
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                restorePlatform();
+                dispatch("tellraw @a {\"text\":\"Ebene y=101 gereinigt & Podest wiederhergestellt.\",\"color\":\"green\"}");
+                Msg.to(player, "&aEbene y=101 erfolgreich bereinigt.");
+            });
+        });
     }
 
     /** 0..319 im ±300-Umkreis auf AIR, danach Podest wiederherstellen. */
     private void handleClearField300(Player player) {
-        dispatch("execute in LuckySky run fill -300 0 -300 300 319 300 minecraft:air");
-        dispatch("execute in LuckySky run setblock 0 100 -1 minecraft:prismarine_stairs[facing=south,half=bottom,shape=straight]");
-        dispatch("execute in LuckySky run setblock 0 100 0  minecraft:prismarine_stairs[facing=south,half=bottom,shape=straight]");
-        dispatch("execute in LuckySky run setblock 0 100 1  minecraft:prismarine_bricks");
-        dispatch("execute in LuckySky run setblock 0 100 2  minecraft:prismarine_bricks");
-        dispatch("tellraw @a {\"text\":\"✔ Bereich ±300 (0..319) gereinigt. Plattform wiederhergestellt.\",\"color\":\"green\"}");
-        Msg.to(player, "&aVollwipe ausgeführt (0..319, ±300).");
+        World world = Bukkit.getWorld("LuckySky");
+        if (world == null) {
+            Msg.to(player, "&cWelt 'LuckySky' nicht gefunden!");
+            return;
+        }
+
+        Msg.to(player, "&aVollbereinigung 0–319 (±300)... (1-3 Minuten!)");
+        dispatch("tellraw @a {\"text\":\"Vollbereinigung läuft...\",\"color\":\"red\"}");
+
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            int minX = -300, maxX = 300;
+            int minZ = -300, maxZ = 300;
+            int minY = 0, maxY = 319;
+            int chunkSize = 48;
+            int heightChunk = 14;
+
+            int totalChunks = ((maxX - minX) / chunkSize + 1) *
+                              ((maxZ - minZ) / chunkSize + 1) *
+                              ((maxY - minY) / heightChunk + 1);
+            int processed = 0;
+
+            for (int x = minX; x <= maxX; x += chunkSize) {
+                for (int z = minZ; z <= maxZ; z += chunkSize) {
+                    for (int y = minY; y <= maxY; y += heightChunk) {
+                        int fromX = x, toX = Math.min(x + chunkSize - 1, maxX);
+                        int fromZ = z, toZ = Math.min(z + chunkSize - 1, maxZ);
+                        int fromY = y, toY = Math.min(y + heightChunk - 1, maxY);
+
+                        String cmd = String.format("fill %d %d %d %d %d %d minecraft:air replace #minecraft:all_blocks",
+                                fromX, fromY, fromZ, toX, toY, toZ);
+
+                        Bukkit.getScheduler().runTask(plugin, () -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd));
+                        processed++;
+
+                        if (processed % 15 == 0) {
+                            final int progress = processed * 100 / totalChunks;
+                            Bukkit.getScheduler().runTask(plugin, () ->
+                                dispatch("tellraw @a [\"\",{\"text\":\"Bereinigung: \"},{\"text\":\"" + progress + "%\",\"color\":\"gold\"}]")
+                            );
+                        }
+
+                        try { Thread.sleep(80); } catch (InterruptedException ignored) {}
+                    }
+                }
+            }
+
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                restorePlatform();
+                dispatch("tellraw @a {\"text\":\"Spielfeld vollständig bereinigt (0–319, ±300).\",\"color\":\"green\"}");
+                Msg.to(player, "&aVollbereinigung abgeschlossen!");
+            });
+        });
+    }
+
+    /** Podest wiederherstellen – zentralisiert */
+    private void restorePlatform() {
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
+                "setblock 0 100 -1 minecraft:prismarine_stairs[facing=south,half=bottom,shape=straight] replace");
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
+                "setblock 0 100 0 minecraft:prismarine_stairs[facing=south,half=bottom,shape=straight] replace");
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
+                "setblock 0 100 1 minecraft:prismarine_bricks replace");
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
+                "setblock 0 100 2 minecraft:prismarine_bricks replace");
     }
 
     private void dispatch(String cmd) {
         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
     }
 
-    // ====== Bestehende Handler bleiben unverändert ======
-
+    // ====== BESTEHENDE HANDLER (unverändert) ======
     private void handleStartCountdown(Player player) {
         plugin.game().start();
         Msg.to(player, "&aCountdown gestartet.");
