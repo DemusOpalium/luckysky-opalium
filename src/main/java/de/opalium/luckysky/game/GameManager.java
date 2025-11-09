@@ -56,6 +56,61 @@ public class GameManager {
         return state;
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // PRESET-START / CLEANUP (NEU)
+    // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Startet ein Preset:
+     * - setzt Laufzeit (nur runtime),
+     * - plant Wither-Spawn in X Minuten,
+     * - öffnet optional Portal,
+     * - respektiert One-Life falls in Config aktiv (kein Config-Schreiben hier).
+     */
+    public void startPreset(int durationMinutes, int witherAfterMinutes, boolean oneLife, boolean openPortal) {
+        if (state == GameState.RUNNING) {
+            Msg.to(Bukkit.getConsoleSender(), "&ePreset ignoriert: LuckySky läuft bereits.");
+            return;
+        }
+
+        // Dauer runtime setzen (persistiert nicht bewusst, um Build-Sicherheit zu wahren)
+        setDurationMinutes(durationMinutes);
+
+        // Hinweis, falls One-Life im Preset gewünscht ist, aber in Config nicht aktiv
+        boolean cfgOneLife = gameConfig().lives().oneLife();
+        if (oneLife && !cfgOneLife) {
+            Msg.to(Bukkit.getConsoleSender(),
+                    "&eHinweis: Preset fordert One-Life, aber &fconfig.yml &ehat one_life=false. (Runtime bleibt ohne Respawn)");
+        }
+
+        // Wither-Spawn planen (überschreibt ggf. Default)
+        witherService.scheduleSpawn(witherAfterMinutes);
+
+        // Portal öffnen (Multiverse-Portals)
+        if (openPortal) {
+            PortalService.openBackspawn();
+        }
+
+        // regulär starten (teleports, binds, services)
+        start();
+    }
+
+    /**
+     * Stoppt das Spiel und räumt Everything auf:
+     * - Wither-Timer abbrechen,
+     * - Spiel stoppen,
+     * - Portal optional schließen.
+     */
+    public void stopAndCleanup(boolean closePortal) {
+        witherService.cancelSpawn();
+        stop();
+        if (closePortal) {
+            PortalService.closeBackspawn();
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+
     public void start() {
         if (state == GameState.RUNNING) {
             Msg.to(Bukkit.getConsoleSender(), "&cLuckySky läuft bereits.");
