@@ -94,28 +94,28 @@ public class AdminGui implements Listener {
 
         // RESET WELT
         inv.setItem(SLOT_RESET_WORLD, GuiItems.button(
-            Material.TNT, "&c&lRESET WELT",
-            List.of("&7Löscht &cLuckySky&7 komplett",
-                    "&7und erstellt sie neu (gleicher Seed).",
-                    "", "&eDauer: &f~10 Sekunden",
-                    "&aPodest wird neu gebaut."), true));
+                Material.TNT, "&c&lRESET WELT",
+                List.of("&7Löscht &cLuckySky&7 komplett",
+                        "&7und erstellt sie neu (gleicher Seed).",
+                        "", "&eDauer: &f~10 Sekunden",
+                        "&aPodest wird neu gebaut."), true));
 
         // CREATE 3 ARENAS
         inv.setItem(SLOT_CREATE_ARENAS, GuiItems.button(
-            Material.NETHER_STAR, "&d&lCREATE 3 ARENAS",
-            List.of("&7Speichert Seed & erstellt:",
-                    "&f→ LuckySky_Arena1",
-                    "&f→ LuckySky_Arena2",
-                    "&f→ LuckySky_Arena3",
-                    "", "&7±175 Blöcke, Border 175",
-                    "&7Spawn: 0, 101, 0"), true));
+                Material.NETHER_STAR, "&d&lCREATE 3 ARENAS",
+                List.of("&7Speichert Seed & erstellt:",
+                        "&f→ LuckySky_Arena1",
+                        "&f→ LuckySky_Arena2",
+                        "&f→ LuckySky_Arena3",
+                        "", "&7±175 Blöcke, Border 175",
+                        "&7Spawn: 0, 101, 0"), true));
 
         // WITHER TOGGLE
         boolean witherEnabled = traps.withers().enabled();
         inv.setItem(SLOT_TOGGLE_WITHER, GuiItems.button(
-            Material.WITHER_SKELETON_SKULL,
-            witherEnabled ? "&aWither AN" : "&cWither AUS",
-            List.of("&7Aktiviert/Deaktiviert Wither-Spawns."), witherEnabled
+                Material.WITHER_SKELETON_SKULL,
+                witherEnabled ? "&aWither AN" : "&cWither AUS",
+                List.of("&7Aktiviert/Deaktiviert Wither-Spawns."), witherEnabled
         ));
 
         inv.setItem(10, GuiItems.button(Material.LIME_DYE, "&aStart Countdown",
@@ -296,7 +296,7 @@ public class AdminGui implements Listener {
                 for (int z = -300; z <= 300; z += STEP_XZ) {
                     for (int y = 0; y <= 319; y += STEP_Y) {
                         int x2 = Math.min(x + STEP_XZ - 1, 300);
-                    int z2 = Math.min(z + STEP_XZ - 1, 300);
+                        int z2 = Math.min(z + STEP_XZ - 1, 300);
                         int y2 = Math.min(y + STEP_Y - 1, 319);
                         String cmd = String.format("fill %d %d %d %d %d %d air", x, y, z, x2, y2, z2);
                         sync(() -> dispatchIn(w, cmd));
@@ -341,12 +341,11 @@ public class AdminGui implements Listener {
     }
 
     private void restorePlatform(World world) {
-        String ns = world.getKey().toString();
         String[] cmds = {
-            "setblock 0 100 -1 prismarine_stairs[facing=south,half=bottom,shape=straight]",
-            "setblock 0 100 0 prismarine_stairs[facing=south,half=bottom,shape=straight]",
-            "setblock 0 100 1 prismarine_bricks",
-            "setblock 0 100 2 prismarine_bricks"
+                "setblock 0 100 -1 prismarine_stairs[facing=south,half=bottom,shape=straight]",
+                "setblock 0 100 0 prismarine_stairs[facing=south,half=bottom,shape=straight]",
+                "setblock 0 100 1 prismarine_bricks",
+                "setblock 0 100 2 prismarine_bricks"
         };
         for (String c : cmds) dispatchIn(world, c);
     }
@@ -360,7 +359,6 @@ public class AdminGui implements Listener {
     private void sleep(long ms) { try { Thread.sleep(ms); } catch (InterruptedException ignored) {} }
 
     private void waitForWorldUnload(String worldName) {
-        // wartet aktiv bis die Welt entladen/gelöscht ist (max. ~10s)
         for (int i = 0; i < 20; i++) {
             if (Bukkit.getWorld(worldName) == null) return;
             sleep(500);
