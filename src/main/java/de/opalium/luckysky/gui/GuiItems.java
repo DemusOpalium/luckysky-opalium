@@ -5,9 +5,8 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
-import org.bukkit.inventory.ItemStack;
+import import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,48 +31,72 @@ public final class GuiItems {
         return stack;
     }
 
-    // Komfort-Overload: ohne glow
     public static ItemStack button(Material material, String name, List<String> lore) {
         return button(material, name, lore, false);
     }
 
-    // ====== UNSERE BEIDEN NEUEN ADMIN-BUTTONS (optimiert) ======
-
-    /** TNT-Reset: nur Ebene y=101 im ±300-Umkreis auf AIR */
+    // ====== CLEAR BUTTONS ======
     public static ItemStack tntClearPlaneY101() {
         return button(
             Material.TNT,
-            "&c&lCLEAR Y=101 &8(±300)",
+            "CLEAR Y=101 (300)",
             Arrays.asList(
-                "&7Löscht &nalle Blöcke&7 auf &ey=101",
-                "&7im Umkreis von &b±300 Blöcken&7.",
+                "Löscht alle Blöcke auf y=101",
+                "im Umkreis von 300 Blöcken.",
                 "",
-                "&e⏱ Dauer: &f10–30 Sekunden",
-                "&aPodest wird danach neu gebaut."
+                "Dauer: 10–30 Sekunden",
+                "Podest wird danach neu gebaut."
             ),
-            true // Glow = auffälliger!
+            true
         );
     }
 
-    /** Vollwipe: 0..319 im ±300-Umkreis auf AIR */
     public static ItemStack fullClear0to319() {
         return button(
             Material.GUNPOWDER,
-            "&4&lVOLLWIPE &8(0–319, ±300)",
+            "VOLLWIPE (0–319, 300)",
             Arrays.asList(
-                "&7Löscht &c&lALLES&7 von &ey=0 bis y=319",
-                "&7im Radius &b±300 Blöcke&7.",
+                "Löscht ALLES von y=0 bis y=319",
+                "im Radius 300 Blöcke.",
                 "",
-                "&6⚠ &cSehr langsam! &6(1–3 Minuten)",
-                "&cKann Server kurz laggen!",
+                "Sehr langsam! (1–3 Minuten)",
+                "Kann Server kurz laggen!",
                 "",
-                "&aPodest wird danach neu gebaut."
+                "Podest wird danach neu gebaut."
             ),
-            true // Glow + roter Name = Warnung!
+            true
         );
     }
 
-    // Hilfsmethode: § → Adventure Component
+    // ====== NEU: SCHEMATIC BUTTONS ======
+    public static ItemStack loadSchematic() {
+        return button(
+            Material.PAPER,
+            "Load Schematic",
+            Arrays.asList(
+                "Lädt Schematic 'platform' aus",
+                "plugins/WorldEdit/schematics/",
+                "",
+                "Nutze: //schem load platform"
+            ),
+            false
+        );
+    }
+
+    public static ItemStack pasteSchematic() {
+        return button(
+            Material.STRUCTURE_BLOCK,
+            "Paste Schematic",
+            Arrays.asList(
+                "Pastet das geladene Schematic",
+                "an deiner aktuellen Position.",
+                "",
+                "Nutze: //paste"
+            ),
+            true
+        );
+    }
+
     private static Component component(String text) {
         return SERIALIZER.deserialize(text);
     }
