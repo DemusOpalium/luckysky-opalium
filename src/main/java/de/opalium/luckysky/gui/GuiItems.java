@@ -14,135 +14,40 @@ import java.util.stream.Collectors;
 
 public final class GuiItems {
     private GuiItems() {}
+    private static final LegacyComponentSerializer S = LegacyComponentSerializer.legacyAmpersand();
+    private static final ItemFlag[] F = {ItemFlag.HIDE_ATTRIBUTES, ItemFlag.HIDE_UNBREAKABLE, ItemFlag.HIDE_DESTROYS, ItemFlag.HIDE_PLACED_ON};
 
-    private static final LegacyComponentSerializer SERIALIZER = LegacyComponentSerializer.legacyAmpersand();
-
-    // Nur Flags, die in 1.19.3+ existieren!
-    private static final ItemFlag[] BASE_FLAGS = {
-            ItemFlag.HIDE_ATTRIBUTES,
-            ItemFlag.HIDE_UNBREAKABLE,
-            ItemFlag.HIDE_DESTROYS,
-            ItemFlag.HIDE_PLACED_ON
-            // HIDE_POTION_EFFECTS → nur 1.19.4+
-            // HIDE_DYE → nur 1.20.2+
-    };
-
-    // -------- Core-Builder (String-API)
-    public static ItemStack button(Material material, String name, List<String> lore, boolean glow) {
-        return button(material, component(name), toComponents(lore), glow);
+    public static ItemStack b(Material m, String n, List<String> l, boolean g) {
+        ItemStack s = new ItemStack(m);
+        ItemMeta t = s.getItemMeta();
+        if (t == null) return s;
+        t.displayName(c(n));
+        if (l != null) t.lore(l.stream().map(GuiItems::c).collect(Collectors.toList()));
+        t.addItemFlags(F);
+        if (g) t.addEnchant(Enchantment.INFINITY, 1, true);
+        else t.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+        s.setItemMeta(t);
+        return s;
     }
 
-    public static ItemStack button(Material material, String name, List<String> lore) {
-        return button(material, name, lore, false);
+    public static ItemStack b(Material m, String n, List<String> l) { return b(m, n, l, false); }
+    public static ItemStack b(Material m, String n, String... l) { return b(m, n, Arrays.asList(l), false); }
+
+    public static ItemStack t(Material on, Material off, boolean e, String a, String b, List<String> l) {
+        return b(e ? on : off, e ? "&a" + a : "&c" + b, l, e);
     }
 
-    public static ItemStack button(Material material, String name, String... loreLines) {
-        return button(material, name, Arrays.asList(loreLines), false);
-    }
+    public static ItemStack clearY101() { return b(Material.TNT, "&c&lCLEAR Y=101 &8(±300)",
+        Arrays.asList("&7Löscht &nalle Blöcke&7 auf &ey=101", "&7im Umkreis von &b±300 Blöcken&7.", "", "&eDauer: &f10–30s", "&aPodest neu gebaut."), true); }
 
-    // -------- Core-Builder (Component-API)
-    public static ItemStack button(Material material, Component name, List<Component> lore, boolean glow) {
-        ItemStack stack = new ItemStack(material);
-        ItemMeta meta = stack.getItemMeta();
-        if (meta == null) return stack;
+    public static ItemStack fullClear() { return b(Material.GUNPOWDER, "&4&lVOLLWIPE &8(0–319, ±300)",
+        Arrays.asList("&7Löscht &c&lALLES&7 von &ey=0 bis y=319", "&7im Radius &b±300 Blöcke&7.", "", "&6Langsam! &6(1–3 Min)", "&cLag möglich!", "", "&aPodest neu gebaut."), true); }
 
-        if (name != null) meta.displayName(name);
-        if (lore != null && !lore.isEmpty()) {
-            meta.lore(lore.stream().filter(Objects::nonNull).collect(Collectors.toList()));
-        }
+    public static ItemStack loadSchem() { return b(Material.PAPER, "&aLoad Schematic",
+        Arrays.asList("&7Lädt &fplatform", "&7aus &eplugins/WorldEdit/schematics/", "", "&7//schem load platform"), false); }
 
-        meta.addItemFlags(BASE_FLAGS);
+    public static ItemStack pasteSchem() { return b(Material.STRUCTURE_BLOCK, "&aPaste Schematic",
+        Arrays.asList("&7Pastet geladenes Schematic", "&7an deiner Position.", "", "&7//paste"), true); }
 
-        if (glow) {
-            meta.addEnchant(Enchantment.INFINITY, 1, true);
-        } else {
-            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-        }
-
-        stack.setItemMeta(meta);
-        return stack;
-    }
-
-    // -------- Toggle-Factory
-    public static ItemStack toggle(Material matOn, Material matOff, boolean enabled,
-                                   String onLabel, String offLabel, List<String> commonLore) {
-        Material m = enabled ? matOn : matOff;
-        String name = enabled ? "&a" + onLabel : "&c" + offLabel;
-        return button(m, name, commonLore, enabled);
-    }
-
-    // -------- Presets: Clear
-    public static ItemStack tntClearPlaneY101() {
-        return button(
-                Material.TNT,
-                "&c&lCLEAR Y=101 &8(±300)",
-                Arrays.asList(
-                        "&7Löscht &nalle Blöcke&7 auf &ey=101",
-                        "&7im Umkreis von &b±300 Blöcken&7.",
-                        "",
-                        "&eDauer: &f10–30 Sekunden",
-                        "&aPodest wird danach neu gebaut."
-                ),
-                true
-        );
-    }
-
-    public static ItemStack fullClear0to319() {
-        return button(
-                Material.GUNPOWDER,
-                "&4&lVOLLWIPE &8(0–319, ±300)",
-                Arrays.asList(
-                        "&7Löscht &c&lALLES&7 von &ey=0 bis y=319",
-                        "&7im Radius &b±300 Blöcke&7.",
-                        "",
-                        "&6Sehr langsam! &6(1–3 Minuten)",
-                        "&cKann Server kurz laggen!",
-                        "",
-                        "&aPodest wird danach neu gebaut."
-                ),
-                true
-        );
-    }
-
-    // -------- Presets: Schematics
-    public static ItemStack loadSchematic() {
-        return button(
-                Material.PAPER,
-                "&aLoad Schematic",
-                Arrays.asList(
-                        "&7Lädt Schematic &fplatform",
-                        "&7aus &eplugins/WorldEdit/schematics/",
-                        "",
-                        "&7Befehl: &f//schem load platform"
-                ),
-                false
-        );
-    }
-
-    public static ItemStack pasteSchematic() {
-        return button(
-                Material.STRUCTURE_BLOCK,
-                "&aPaste Schematic",
-                Arrays.asList(
-                        "&7Pastet das geladene Schematic",
-                        "&7an deiner aktuellen Position.",
-                        "",
-                        "&7Befehl: &f//paste"
-                ),
-                true
-        );
-    }
-
-    // -------- Helpers
-    private static Component component(String text) {
-        return text == null ? Component.empty() : SERIALIZER.deserialize(text);
-    }
-
-    private static List<Component> toComponents(List<String> lines) {
-        if (lines == null) return null;
-        return lines.stream()
-                .filter(Objects::nonNull)
-                .map(GuiItems::component)
-                .collect(Collectors.toList());
-    }
+    private static Component c(String t) { return t == null ? Component.empty() : S.deserialize(t); }
 }
