@@ -6,11 +6,7 @@ import de.opalium.luckysky.config.TrapsConfig;
 import de.opalium.luckysky.config.WorldsConfig;
 import de.opalium.luckysky.util.Msg;
 import de.opalium.luckysky.util.Worlds;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -112,7 +108,7 @@ public class AdminGui implements Listener {
         inv.setItem(25, GuiItems.button(Material.NAME_TAG, "&aSave Config", List.of("&7Speichert & läd Config neu."), false));
     }
 
-    // ====== CLEAR Y=101 (±300) ======
+    // ====== CLEAR Y=101 (±300) – NUR GELADENE CHUNKS ======
     private void clearY101(Player p) {
         World w = Bukkit.getWorld("LuckySky");
         if (w == null) {
@@ -120,29 +116,38 @@ public class AdminGui implements Listener {
             return;
         }
 
-        Msg.to(p, "&aLösche y=101 (±300)...");
+        Msg.to(p, "&aLösche y=101 (±300) in geladenen Chunks...");
         tellAll("Ebene y=101 wird bereinigt...", "yellow");
 
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            int size = 48;
-            for (int x = -300; x <= 300; x += size) {
-                for (int z = -300; z <= 300; z += size) {
-                    int x1 = x, x2 = Math.min(x + size - 1, 300);
-                    int z1 = z, z2 = Math.min(z + size - 1, 300);
-                    String cmd = String.format("fill %d 101 %d %d 101 %d air", x1, z1, x2, z2);
-                    runCommand(cmd);
-                    sleep(30);
+            int radius = 300;
+            int size = 32; // 2 Chunks
+            int processed = 0;
+
+            for (int x = -radius; x <= radius; x += size) {
+                for (int z = -radius; z <= radius; z += size) {
+                    int x1 = x, x2 = Math.min(x + size - 1, radius);
+                    int z1 = z, z2 = Math.min(z + size - 1, radius);
+
+                    // Nur wenn Chunk geladen ist
+                    if (isChunkLoaded(w, x1 >> 4, z1 >> 4)) {
+                        String cmd = String.format("fill %d 101 %d %d 101 %d air", x1, z1, x2, z2);
+                        runCommand(cmd);
+                        processed++;
+                        sleep(30);
+                    }
                 }
             }
+
             runSync(() -> {
                 rebuildPlatform();
-                tellAll("Ebene y=101 sauber!", "green");
+                tellAll("Ebene y=101 sauber! (" + processed + " Blöcke)", "green");
                 Msg.to(p, "&aFertig!");
             });
         });
     }
 
-    // ====== CLEAR 0–319 (±300) ======
+    // ====== CLEAR 0–319 (±300) – NUR GELADENE CHUNKS ======
     private void clearFullField(Player p) {
         World w = Bukkit.getWorld("LuckySky");
         if (w == null) {
@@ -150,31 +155,41 @@ public class AdminGui implements Listener {
             return;
         }
 
-        Msg.to(p, "&aStarte Vollbereinigung 0–319...");
+        Msg.to(p, "&aStarte Vollbereinigung 0–319 in geladenen Chunks...");
         tellAll("Vollbereinigung läuft...", "red");
 
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            int size = 48, height = 16;
-            int total = 13 * 13 * 20; // ca. 3380 Chunks
-            int done = 0;
+            int radius = 300;
+            int size = 32, height = 16;
+            int total = 0, done = 0;
 
-            for (int x = -300; x <= 300; x += size) {
-                for (int z = -300; z <= 300; z += size) {
+            // Zähle mögliche Chunks
+            for (int x = -radius; x <= radius; x += size)
+                for (int z = -radius; z <= radius; z += size)
+                    for (int y = 0; y <= 319; y += height)
+                        if (isChunkLoaded(w, x >> 4, z >> 4)) total++;
+
+            for (int x = -radius; x <= radius; x += size) {
+                for (int z = -radius; z <= radius; z += size) {
+                    int cx = x >> 4, cz = z >> 4;
+                    if (!isChunkLoaded(w, cx, cz)) continue;
+
                     for (int y = 0; y <= 319; y += height) {
-                        int x1 = x, x2 = Math.min(x + size - 1, 300);
-                        int z1 = z, z2 = Math.min(z + size - 1, 300);
+                        int x1 = x, x2 = Math.min(x + size - 1, radius);
+                        int z1 = z, z2 = Math.min(z + size - 1, radius);
                         int y1 = y, y2 = Math.min(y + height - 1, 319);
                         String cmd = String.format("fill %d %d %d %d %d %d air", x1, y1, z1, x2, y2, z2);
                         runCommand(cmd);
                         done++;
                         if (done % 30 == 0) {
-                            int pct = done * 100 / total;
+                            int pct = total > 0 ? done * 100 / total : 100;
                             runSync(() -> tellAll("Wipe: " + pct + "%", "gold"));
                         }
                         sleep(50);
                     }
                 }
             }
+
             runSync(() -> {
                 rebuildPlatform();
                 tellAll("Spielfeld 100% sauber!", "dark_green");
@@ -183,7 +198,7 @@ public class AdminGui implements Listener {
         });
     }
 
-    // ====== POD EST WIEDERHERSTELLEN ======
+    // ====== POD EST WIEDERHERSTELLEN (0 101 0) ======
     private void rebuildPlatform() {
         String[] blocks = {
             "setblock 0 100 -1 prismarine_stairs[facing=south,half=bottom,shape=straight]",
@@ -197,10 +212,12 @@ public class AdminGui implements Listener {
     }
 
     // ====== HELFER-METHODEN ======
+    private boolean isChunkLoaded(World world, int chunkX, int chunkZ) {
+        return world.isChunkLoaded(chunkX, chunkZ);
+    }
+
     private void runCommand(String cmd) {
-        Bukkit.getScheduler().runTask(plugin, () ->
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd)
-        );
+        Bukkit.getScheduler().runCommand(plugin, Bukkit.getConsoleSender(), cmd);
     }
 
     private void runSync(Runnable task) {
