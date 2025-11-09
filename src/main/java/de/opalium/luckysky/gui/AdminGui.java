@@ -21,13 +21,12 @@ import org.bukkit.inventory.Inventory;
 public class AdminGui implements Listener {
     private static final String TITLE = ChatColor.DARK_AQUA + "LuckySky Admin";
     private static final int SIZE = 27;
-
+    
     // Slots für die beiden Reset-Buttons
-    private static final int SLOT_CLEAR_PLANE_Y101 = 8;  // TNT
-    private static final int SLOT_CLEAR_FIELD_FULL = 9;  // GUNPOWDER
-
+    private static final int SLOT_CLEAR_PLANE_Y101 = 8; // TNT
+    private static final int SLOT_CLEAR_FIELD_FULL = 9; // GUNPOWDER
     private static final String LUCKY_WORLD_NAME = "LuckySky";
-
+    
     private final LuckySkyPlugin plugin;
 
     public AdminGui(LuckySkyPlugin plugin) {
@@ -45,14 +44,11 @@ public class AdminGui implements Listener {
         if (!TITLE.equals(event.getView().getTitle())) return;
         event.setCancelled(true);
         if (!(event.getWhoClicked() instanceof Player player)) return;
-
         int slot = event.getRawSlot();
         if (slot < 0 || slot >= SIZE) return;
-
         switch (slot) {
             case SLOT_CLEAR_PLANE_Y101 -> handleClearPlaneY101(player);
             case SLOT_CLEAR_FIELD_FULL -> handleClearField300(player);
-
             case 10 -> handleStartCountdown(player);
             case 11 -> handleStopToLobby(player);
             case 12 -> handleDuration(player, 5);
@@ -78,11 +74,11 @@ public class AdminGui implements Listener {
         GameConfig game = plugin.configs().game();
         TrapsConfig traps = plugin.configs().traps();
         boolean running = plugin.game().state() == de.opalium.luckysky.game.GameState.RUNNING;
-
+        
         // unsere zwei neuen Items
         inventory.setItem(SLOT_CLEAR_PLANE_Y101, GuiItems.tntClearPlaneY101());
         inventory.setItem(SLOT_CLEAR_FIELD_FULL, GuiItems.fullClear0to319());
-
+        
         inventory.setItem(10, GuiItems.button(Material.LIME_DYE, "&aStart Countdown",
                 List.of("&7Startet das Spiel und teleportiert zur Plattform."), running));
         inventory.setItem(11, GuiItems.button(Material.BARRIER, "&cStop & Lobby",
@@ -93,21 +89,21 @@ public class AdminGui implements Listener {
                 List.of("&7Setzt Dauer auf 20 Minuten."), false));
         inventory.setItem(14, GuiItems.button(Material.CLOCK, "&eMode 60",
                 List.of("&7Setzt Dauer auf 60 Minuten."), false));
-
+        
         boolean tauntsEnabled = traps.withers().taunts().enabled();
         boolean witherEnabled = traps.withers().enabled();
         inventory.setItem(15, GuiItems.button(Material.GOAT_HORN, tauntsEnabled ? "&aTaunts AN" : "&cTaunts AUS",
                 List.of("&7Schaltet Wither-Taunts um."), tauntsEnabled));
         inventory.setItem(16, GuiItems.button(Material.WITHER_SKELETON_SKULL, witherEnabled ? "&aWither AN" : "&cWither AUS",
                 List.of("&7Aktiviert/Deaktiviert Wither-Spawns."), witherEnabled));
-
+        
         boolean scoreboardEnabled = plugin.scoreboard().isEnabled();
         boolean timerVisible = plugin.scoreboard().isTimerVisible();
         inventory.setItem(17, GuiItems.button(Material.OAK_SIGN, scoreboardEnabled ? "&aScoreboard AN" : "&cScoreboard AUS",
                 List.of("&7Schaltet das LuckySky-Scoreboard."), scoreboardEnabled));
         inventory.setItem(18, GuiItems.button(Material.COMPASS, timerVisible ? "&aTimer sichtbar" : "&cTimer versteckt",
                 List.of("&7Blendt den Timer im Scoreboard ein/aus."), timerVisible));
-
+        
         inventory.setItem(19, GuiItems.button(Material.SPONGE, "&bLucky-Variante",
                 List.of("&7Aktuell: &f" + game.lucky().variant()), false));
         inventory.setItem(20, GuiItems.button(Material.FEATHER, "&bSoft-Wipe",
@@ -125,7 +121,6 @@ public class AdminGui implements Listener {
     }
 
     // ====== FUNKTIONALE CLEAR-HANDLER (Paper 1.21.10) ======
-
     /** Ebene y=101 im ±300-Quadrat leeren; danach Podest. */
     private void handleClearPlaneY101(Player player) {
         if (!isInLuckyWorld(player)) {
@@ -134,24 +129,22 @@ public class AdminGui implements Listener {
         }
         Msg.to(player, "&aBereinige Ebene &ey=101 &7(±300) ...");
         perform(player, "tellraw @a {\"text\":\"Ebene y=101 wird gereinigt...\",\"color\":\"yellow\"}");
-
+        
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             final int y = 101;
             final int minX = -300, maxX = 300;
             final int minZ = -300, maxZ = 300;
             final int step = 48; // 48x48x1 = 2.304 Blöcke (unter Limit)
-
+            
             for (int x = minX; x <= maxX; x += step) {
                 for (int z = minZ; z <= maxZ; z += step) {
                     final int x1 = x, x2 = Math.min(x + step - 1, maxX);
                     final int z1 = z, z2 = Math.min(z + step - 1, maxZ);
                     final String cmd = String.format("fill %d %d %d %d %d %d air", x1, y, z1, x2, y, z2);
-
                     Bukkit.getScheduler().runTask(plugin, () -> perform(player, cmd));
                     try { Thread.sleep(25); } catch (InterruptedException ignored) {}
                 }
             }
-
             Bukkit.getScheduler().runTask(plugin, () -> {
                 restorePlatform(player);
                 perform(player, "tellraw @a {\"text\":\"✔ Ebene y=101 gereinigt & Podest wiederhergestellt.\",\"color\":\"green\"}");
@@ -168,27 +161,26 @@ public class AdminGui implements Listener {
         }
         Msg.to(player, "&aVollbereinigung &70–319 &7(±300) gestartet …");
         perform(player, "tellraw @a {\"text\":\"Vollbereinigung des Spielfelds läuft...\",\"color\":\"red\"}");
-
+        
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             final int minX = -300, maxX = 300;
             final int minZ = -300, maxZ = 300;
-            final int minY = 0,     maxY = 319;
-            final int stepXZ = 48;  // 48×48×14 = 32.256 < 32.768
-            final int stepY  = 14;
-
+            final int minY = 0, maxY = 319;
+            final int stepXZ = 48; // 48×48×14 = 32.256 < 32.768
+            final int stepY = 14;
+            
             int total = ((maxX - minX) / stepXZ + 1) *
                         ((maxZ - minZ) / stepXZ + 1) *
-                        ((maxY - minY) / stepY  + 1);
+                        ((maxY - minY) / stepY + 1);
             int done = 0;
-
+            
             for (int x = minX; x <= maxX; x += stepXZ) {
                 for (int z = minZ; z <= maxZ; z += stepXZ) {
                     for (int y = minY; y <= maxY; y += stepY) {
                         final int x1 = x, x2 = Math.min(x + stepXZ - 1, maxX);
                         final int z1 = z, z2 = Math.min(z + stepXZ - 1, maxZ);
-                        final int y1 = y, y2 = Math.min(y + stepY  - 1, maxY);
+                        final int y1 = y, y2 = Math.min(y + stepY - 1, maxY);
                         final String cmd = String.format("fill %d %d %d %d %d %d air", x1, y1, z1, x2, y2, z2);
-
                         Bukkit.getScheduler().runTask(plugin, () -> perform(player, cmd));
                         done++;
                         if (done % 20 == 0) {
@@ -200,7 +192,6 @@ public class AdminGui implements Listener {
                     }
                 }
             }
-
             Bukkit.getScheduler().runTask(plugin, () -> {
                 restorePlatform(player);
                 perform(player, "tellraw @a {\"text\":\"✔ Spielfeld 100% sauber.\",\"color\":\"dark_green\"}");
@@ -210,7 +201,6 @@ public class AdminGui implements Listener {
     }
 
     // ====== Hilfen ======
-
     private boolean isInLuckyWorld(Player p) {
         World w = p.getWorld();
         return w != null && w.getName().equalsIgnoreCase(LUCKY_WORLD_NAME);
@@ -219,18 +209,17 @@ public class AdminGui implements Listener {
     /** Podest 0 100 (-1..2) wiederherstellen – im Kontext der Spielerwelt. */
     private void restorePlatform(Player player) {
         perform(player, "setblock 0 100 -1 prismarine_stairs[facing=south,half=bottom,shape=straight]");
-        perform(player, "setblock 0 100 0  prismarine_stairs[facing=south,half=bottom,shape=straight]");
-        perform(player, "setblock 0 100 1  prismarine_bricks");
-        perform(player, "setblock 0 100 2  prismarine_bricks");
+        perform(player, "setblock 0 100 0 prismarine_stairs[facing=south,half=bottom,shape=straight]");
+        perform(player, "setblock 0 100 1 prismarine_bricks");
+        perform(player, "setblock 0 100 2 prismarine_bricks");
     }
 
     /** Führt einen Command im Kontext des klickenden Admins aus (richtige Welt!). */
     private void perform(Player player, String cmd) {
-        player.performCommand(cmd);
+        Bukkit.dispatchCommand(player, cmd);
     }
 
     // ====== Bestehende Handler bleiben unverändert ======
-
     private void handleStartCountdown(Player player) {
         plugin.game().start();
         Msg.to(player, "&aCountdown gestartet.");
