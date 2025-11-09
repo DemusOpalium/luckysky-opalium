@@ -22,9 +22,9 @@ public class AdminGui implements Listener {
     private static final String TITLE = ChatColor.DARK_AQUA + "LuckySky Admin";
     private static final int SIZE = 27;
 
-    // NEU: Slots für die beiden Reset-Buttons (freie Plätze im 27er-Inventar)
-    private static final int SLOT_CLEAR_PLANE_Y101 = 8;   // TNT
-    private static final int SLOT_CLEAR_FIELD_FULL = 9;   // GUNPOWDER
+    // Slots für die beiden Reset-Buttons im 27er-Inventar
+    private static final int SLOT_CLEAR_PLANE_Y101 = 8;   // TNT: y=101 in ±300
+    private static final int SLOT_CLEAR_FIELD_FULL = 9;   // GUNPOWDER: 0..319 in ±300
 
     private final LuckySkyPlugin plugin;
 
@@ -40,19 +40,15 @@ public class AdminGui implements Listener {
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
-        if (!TITLE.equals(event.getView().getTitle())) {
-            return;
-        }
+        if (!TITLE.equals(event.getView().getTitle())) return;
         event.setCancelled(true);
-        if (!(event.getWhoClicked() instanceof Player player)) {
-            return;
-        }
+        if (!(event.getWhoClicked() instanceof Player player)) return;
+
         int slot = event.getRawSlot();
-        if (slot < 0 || slot >= SIZE) {
-            return;
-        }
+        if (slot < 0 || slot >= SIZE) return;
+
         switch (slot) {
-            // NEU: unsere beiden Buttons
+            // unsere beiden neuen Reset-Buttons
             case SLOT_CLEAR_PLANE_Y101 -> handleClearPlaneY101(player);
             case SLOT_CLEAR_FIELD_FULL -> handleClearField300(player);
 
@@ -74,6 +70,8 @@ public class AdminGui implements Listener {
             case 25 -> handleSave(player);
             default -> { }
         }
+
+        // GUI nach der Aktion neu aufbauen
         Bukkit.getScheduler().runTask(plugin, () -> open(player));
     }
 
@@ -82,10 +80,25 @@ public class AdminGui implements Listener {
         TrapsConfig traps = plugin.configs().traps();
         boolean running = plugin.game().state() == de.opalium.luckysky.game.GameState.RUNNING;
 
-        // NEU: Reset-Buttons vorne links (Slots 8 & 9)
-        // nutzt deine GuiItems-Factories; falls die nicht existieren, nimm die button(...)-Variante.
-        inventory.setItem(SLOT_CLEAR_PLANE_Y101, GuiItems.tntClearPlaneY101());
-        inventory.setItem(SLOT_CLEAR_FIELD_FULL, GuiItems.fullClear0to319());
+        // Reset-Buttons (nutzt eure GuiItems-Factories; falls nicht vorhanden,
+        // einfach die button(...) Variante verwenden)
+        try {
+            inventory.setItem(SLOT_CLEAR_PLANE_Y101, GuiItems.tntClearPlaneY101());
+            inventory.setItem(SLOT_CLEAR_FIELD_FULL, GuiItems.fullClear0to319());
+        } catch (NoSuchMethodError | Exception ignored) {
+            inventory.setItem(SLOT_CLEAR_PLANE_Y101, GuiItems.button(
+                    Material.TNT,
+                    "§cFELD CLEAR §7(±300 @ y=101)",
+                    List.of("§7Ebene y=101 im Radius ±300 → AIR.", "§7Podest wird danach neu gesetzt."),
+                    false
+            ));
+            inventory.setItem(SLOT_CLEAR_FIELD_FULL, GuiItems.button(
+                    Material.GUNPOWDER,
+                    "&cFELD CLEAR (0..319, ±300)",
+                    List.of("&70..319 im ±300-Umkreis → AIR.", "&7Podest wird danach neu gesetzt."),
+                    false
+            ));
+        }
 
         inventory.setItem(10, GuiItems.button(Material.LIME_DYE, "&aStart Countdown",
                 List.of("&7Startet das Spiel und teleportiert zur Plattform."), running));
@@ -127,38 +140,21 @@ public class AdminGui implements Listener {
                 List.of("&7Speichert & läd Config neu."), false));
     }
 
-    // ====== NEU: Handler für die beiden Reset-Buttons ======
+    // ====== Neue Handler für die Reset-Buttons (API-basiert, kein /execute) ======
 
-    /** Ebene y=101 im ±300-Umkreis auf AIR, danach Podest wiederherstellen. */
+    /** Ebene y=101 im ±300-Quadrat auf AIR, danach Podest wiederherstellen. */
     private void handleClearPlaneY101(Player player) {
-        // Welt: LuckySky
-        dispatch("execute in LuckySky run fill -300 101 -300 300 101 300 minecraft:air");
-        // Podest neu
-        dispatch("execute in LuckySky run setblock 0 100 -1 minecraft:prismarine_stairs[facing=south,half=bottom,shape=straight]");
-        dispatch("execute in LuckySky run setblock 0 100 0  minecraft:prismarine_stairs[facing=south,half=bottom,shape=straight]");
-        dispatch("execute in LuckySky run setblock 0 100 1  minecraft:prismarine_bricks");
-        dispatch("execute in LuckySky run setblock 0 100 2  minecraft:prismarine_bricks");
-        // Feedback
-        dispatch("tellraw @a {\"text\":\"✔ Ebene y=101 im Radius ±300 gereinigt.\",\"color\":\"green\"}");
-        Msg.to(player, "&aReset ausgeführt (y=101, ±300).");
+        int changed = plugin.game().clearPlaneY(101, 300, true);
+        Msg.to(player, "&aEbene y=101 geleert (&f±300&7). Geänderte Blöcke (laufend im Log): &f" + changed);
     }
 
-    /** 0..319 im ±300-Umkreis auf AIR, danach Podest wiederherstellen. */
+    /** 0..319 im ±300-Quadrat auf AIR, danach Podest wiederherstellen. */
     private void handleClearField300(Player player) {
-        dispatch("execute in LuckySky run fill -300 0 -300 300 319 300 minecraft:air");
-        dispatch("execute in LuckySky run setblock 0 100 -1 minecraft:prismarine_stairs[facing=south,half=bottom,shape=straight]");
-        dispatch("execute in LuckySky run setblock 0 100 0  minecraft:prismarine_stairs[facing=south,half=bottom,shape=straight]");
-        dispatch("execute in LuckySky run setblock 0 100 1  minecraft:prismarine_bricks");
-        dispatch("execute in LuckySky run setblock 0 100 2  minecraft:prismarine_bricks");
-        dispatch("tellraw @a {\"text\":\"✔ Bereich ±300 (0..319) gereinigt. Plattform wiederhergestellt.\",\"color\":\"green\"}");
-        Msg.to(player, "&aVollwipe ausgeführt (0..319, ±300).");
+        int changed = plugin.game().clearCuboid(300, 0, 319, true);
+        Msg.to(player, "&aVolumen 0..319 (&f±300&7) geleert. Geänderte Blöcke (laufend im Log): &f" + changed);
     }
 
-    private void dispatch(String cmd) {
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
-    }
-
-    // ====== Bestehende Handler bleiben unverändert ======
+    // ====== Bestehende Handler ======
 
     private void handleStartCountdown(Player player) {
         plugin.game().start();
