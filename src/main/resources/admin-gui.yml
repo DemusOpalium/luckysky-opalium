@@ -6,6 +6,8 @@
 # Menü öffnen (type: open-menu).
 
 defaults:
+  # Material used whenever an invalid item is configured below.
+  fallback-material: PAPER
   filler:
     material: LIGHT_BLUE_STAINED_GLASS_PANE
     name: " "
