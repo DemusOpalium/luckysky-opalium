@@ -174,6 +174,15 @@ public class WitherService {
         }
 
         World world = Worlds.require(worldConfig().worldName());
+        boolean singleBoss = plugin.configs().game().wither().singleBoss();
+        if (singleBoss) {
+            List<Wither> existing = world.getEntitiesByClass(Wither.class);
+            if (!existing.isEmpty()) {
+                existing.forEach(Wither::remove);
+                plugin.getLogger().info("[LuckySky] SingleBoss: entfernt " + existing.size()
+                        + " Wither in " + world.getName());
+            }
+        }
 
         // Guards gegen Fehlkonfig
         if (world.getDifficulty() == Difficulty.PEACEFUL) {

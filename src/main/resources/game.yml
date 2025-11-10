@@ -34,6 +34,8 @@ rewards:
       - "say LuckySky gescheitert."
 lives:
   one_life: false
+wither:
+  single_boss: false
 scoreboard:
   enabled: true
   title: "&bLuckySky"
