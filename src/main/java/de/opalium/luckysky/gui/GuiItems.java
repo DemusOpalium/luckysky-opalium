@@ -49,7 +49,7 @@ public final class GuiItems {
             m.lore(lore.stream().filter(Objects::nonNull).collect(Collectors.toList()));
 
         m.addItemFlags(BASE_FLAGS);
-        // Glow/Enchant aus Stabilitätsgründen deaktiviert
+        // Glow/Enchant optional – derzeit bewusst aus
         it.setItemMeta(m);
         return it;
     }
@@ -62,40 +62,7 @@ public final class GuiItems {
     }
 
     // ============================================================
-    // == LEGACY CLEAR-BUTTONS (Kompatibel zu AdminGui) ===========
-    // ============================================================
-    public static ItemStack tntClearPlaneY101() {
-        return button(
-                Material.TNT,
-                "&c&lCLEAR Y=101 &8(±300)",
-                Arrays.asList(
-                        "&7Löscht &nalle Blöcke&7 auf &ey=101",
-                        "&7im Umkreis von &b±300 Blöcken&7.",
-                        "",
-                        "&eDauer: &f10–30 Sekunden",
-                        "&aPodest wird danach neu gebaut."
-                )
-        );
-    }
-
-    public static ItemStack fullClear0to319() {
-        return button(
-                Material.GUNPOWDER,
-                "&4&lVOLLWIPE &8(0–319, ±300)",
-                Arrays.asList(
-                        "&7Löscht &c&lALLES&7 von &ey=0 bis y=319",
-                        "&7im Radius &b±300 Blöcke&7.",
-                        "",
-                        "&6Sehr langsam! &6(1–3 Minuten)",
-                        "&cKann Server kurz laggen!",
-                        "",
-                        "&aPodest wird danach neu gebaut."
-                )
-        );
-    }
-
-    // ============================================================
-    // == ADMIN-PRESETS ===========================================
+    // == ADMIN-PRESETS (bereinigt) ===============================
     // ============================================================
     public static ItemStack adminResetWorld() {
         return button(Material.TNT, "&c&lRESET WELT",
@@ -103,14 +70,6 @@ public final class GuiItems {
                         "&7und erstellt sie neu (gleicher Seed).",
                         "", "&eDauer: &f~10 Sekunden",
                         "&aPodest wird neu gebaut."));
-    }
-
-    public static ItemStack adminCreateArenas() {
-        return button(Material.NETHER_STAR, "&d&lCREATE 3 ARENAS",
-                Arrays.asList("&7Erstellt:", "&f→ LuckySky_Arena1",
-                        "&f→ LuckySky_Arena2", "&f→ LuckySky_Arena3",
-                        "", "&7±175 Blöcke, Border 350",
-                        "&7Spawn: 0, 101, 0"));
     }
 
     public static ItemStack adminToggleWither(boolean enabled) {
@@ -193,16 +152,18 @@ public final class GuiItems {
     }
 
     // ============================================================
-    // == SPEZIELLE SPAWN-BUTTONS ================================
+    // == SPEZIELLE TEST-SPAWN-BUTTONS (neu) =====================
     // ============================================================
     public static ItemStack adminSpawnLuckyBlock() {
-        return button(Material.GOLD_BLOCK, "&6&lSpawn Lucky-Block",
-                List.of("&7Setzt einen Lucky-Block an deine Position."));
+        return button(Material.GOLD_BLOCK, "&6&lSpawn Lucky-Block (Test)",
+                List.of("&7Platziert an deiner Position",
+                        "&7einen Lucky-Block-Platzhalter."));
     }
 
     public static ItemStack adminSpawnWither() {
-        return button(Material.WITHER_SKELETON_SKULL, "&5&lSpawn Wither",
-                List.of("&7Spawnt einen Wither bei dir."));
+        return button(Material.WITHER_SKELETON_SKULL, "&5&lSpawn Wither (Test)",
+                List.of("&7Spawnt einen Wither",
+                        "&7an deiner Position."));
     }
 
     // ============================================================
