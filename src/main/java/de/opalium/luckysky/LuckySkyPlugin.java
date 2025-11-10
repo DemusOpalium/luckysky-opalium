@@ -71,6 +71,8 @@ public final class LuckySkyPlugin extends JavaPlugin {
         pm.registerEvents(playerGui, this);
         pm.registerEvents(duels, this);
 
+        scoreboard.attachAll();
+
         getLogger().info("[LuckySky] enabled.");
     }
 
@@ -96,6 +98,7 @@ public final class LuckySkyPlugin extends JavaPlugin {
         this.configs.reloadAll();
         if (scoreboard != null) {
             scoreboard.reload();
+            scoreboard.attachAll();
         }
         if (game != null) {
             game.reloadSettings();

@@ -45,7 +45,8 @@ public final class AdminGuiLayout {
         ConfigurationSection defaults = yaml.getConfigurationSection("defaults");
         Material fallbackMaterial = ButtonDisplay.resolveFallbackMaterial(defaults, logger, unknownMaterials);
 
-        Map<String, Button> buttons = readButtons(yaml.getConfigurationSection("buttons"), logger, fallbackMaterial, unknownMaterials);
+        Map<String, Button> buttons = readButtons(
+                yaml.getConfigurationSection("buttons"), logger, fallbackMaterial, unknownMaterials);
         Map<String, Menu> menus = readMenus(yaml.getConfigurationSection("menus"), buttons, defaults, fallbackMaterial, unknownMaterials, logger);
 
         String defaultMenu = yaml.getString("default-menu", yaml.getString("default_menu"));
@@ -85,6 +86,10 @@ public final class AdminGuiLayout {
             }
             ButtonDisplay display = ButtonDisplay.from(buttonSection.getConfigurationSection("display"), buttonSection,
                     fallbackMaterial, logger, unknownMaterials);
+            if (display == null) {
+                logger.warning("[LuckySky] Hiding admin GUI button '" + id
+                        + "' due to invalid or missing material configuration.");
+            }
             Action action = Action.from(buttonSection, logger);
             if (action == null) {
                 logger.warning("[LuckySky] Skipping admin GUI button '" + id
@@ -97,7 +102,8 @@ public final class AdminGuiLayout {
             boolean onlyWhenRunning = buttonSection.getBoolean("only-when-running", buttonSection.getBoolean("only_when_running"));
             boolean onlyWhenIdle = buttonSection.getBoolean("only-when-idle", buttonSection.getBoolean("only_when_idle"));
             String permission = trimToNull(buttonSection.getString("permission"));
-            map.put(id, new Button(id, display, action, permission, lockWhenRunning, hideWhenLocked, close, onlyWhenRunning, onlyWhenIdle));
+            map.put(id, new Button(id, display, action, permission, lockWhenRunning, hideWhenLocked, close,
+                    onlyWhenRunning, onlyWhenIdle));
         }
         return map;
     }
@@ -237,8 +243,8 @@ public final class AdminGuiLayout {
     public record ButtonDisplay(Material material, String name, List<String> lore, boolean glow) {
         private static final ButtonDisplay DEFAULT_FILLER = new ButtonDisplay(Material.GRAY_STAINED_GLASS_PANE, " ", List.of(), false);
 
-        public static ButtonDisplay from(ConfigurationSection section, ConfigurationSection fallback, Material fallbackMaterial,
-                Logger logger, Set<String> unknownMaterials) {
+        public static ButtonDisplay from(ConfigurationSection section, ConfigurationSection fallback,
+                Material fallbackMaterial, Logger logger, Set<String> unknownMaterials) {
             if (section == null) {
                 if (fallback != null && fallback.contains("material")) {
                     return fromMaterialSection(fallback, fallbackMaterial, logger, unknownMaterials);
@@ -260,6 +266,9 @@ public final class AdminGuiLayout {
                 materialPath = section.getCurrentPath();
             }
             Material material = resolveMaterial(configuredName, fallbackMaterial, logger, unknownMaterials, materialPath);
+            if (material == null) {
+                return null;
+            }
             String name = section.getString("name", section.getString("title", ""));
             List<String> lore = section.getStringList("lore");
             boolean glow = section.getBoolean("glow", false);
@@ -289,10 +298,10 @@ public final class AdminGuiLayout {
                 return fallbackMaterial;
             }
 
-            String normalised = trimmed.toUpperCase(Locale.ROOT).replace('-', '_').replace(' ', '_');
-            Material material = Material.matchMaterial(normalised, false);
+            Material material = Material.matchMaterial(trimmed, true);
             if (material == null) {
-                material = Material.matchMaterial(trimmed, false);
+                String normalised = trimmed.toUpperCase(Locale.ROOT).replace('-', '_').replace(' ', '_');
+                material = Material.matchMaterial(normalised, true);
             }
 
             if (material == null) {
@@ -308,17 +317,15 @@ public final class AdminGuiLayout {
 
             String trackingKey = trimmed.toLowerCase(Locale.ROOT);
             if (unknownMaterials.add(trackingKey)) {
-                String fallbackName = fallbackMaterial.name();
                 if (configPath != null && !configPath.isEmpty()) {
                     logger.warning("[LuckySky] Unknown material '" + trimmed + "' in admin-gui.yml at '" + configPath
-                            + "'. Falling back to " + fallbackName + ".");
+                            + "'. Button will be hidden.");
                 } else {
-                    logger.warning("[LuckySky] Unknown material '" + trimmed + "' in admin-gui.yml. Falling back to "
-                            + fallbackName + ".");
+                    logger.warning("[LuckySky] Unknown material '" + trimmed + "' in admin-gui.yml. Button will be hidden.");
                 }
             }
 
-            return fallbackMaterial;
+            return null;
         }
 
         private static final String FALLBACK_MATERIAL_KEY = "fallback-material";
@@ -338,7 +345,7 @@ public final class AdminGuiLayout {
 
             Material resolved = resolveMaterial(configured, material, logger, unknownMaterials,
                     defaults.getCurrentPath() + "." + FALLBACK_MATERIAL_KEY);
-            return resolved;
+            return resolved != null ? resolved : material;
         }
     }
 

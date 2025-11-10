@@ -120,6 +120,22 @@ public class ScoreboardService {
         assignToPlayers(manager);
     }
 
+    public void attachAll() {
+        ScoreboardManager manager = Bukkit.getScoreboardManager();
+        if (manager == null) {
+            return;
+        }
+        if (!enabled || config == null || config.lines().isEmpty()) {
+            clearScoreboard(manager);
+            return;
+        }
+        if (board == null || objective == null) {
+            refresh();
+            return;
+        }
+        assignToPlayers(manager);
+    }
+
     private void ensureObjective(ScoreboardManager manager) {
         if (board != null && objective != null) {
             return;
@@ -164,6 +180,10 @@ public class ScoreboardService {
         if (manager == null) {
             return;
         }
+        clearScoreboard(manager);
+    }
+
+    private void clearScoreboard(ScoreboardManager manager) {
         if (board != null) {
             Scoreboard main = manager.getMainScoreboard();
             for (Player player : Bukkit.getOnlinePlayers()) {

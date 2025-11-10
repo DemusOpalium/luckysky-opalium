@@ -85,7 +85,7 @@ public class AdminGui implements Listener {
         boolean running = plugin.game().state() == GameState.RUNNING;
         for (Map.Entry<Integer, String> entry : menu.slotMapping().entrySet()) {
             AdminGuiLayout.Button template = layout.button(entry.getValue());
-            if (template == null) {
+            if (template == null || template.display() == null) {
                 continue;
             }
             if (template.onlyWhenRunning() && !running) {
@@ -326,12 +326,12 @@ public class AdminGui implements Listener {
     }
 
     private void openPortal(Player player) {
-        PortalService.openBackspawn();
+        PortalService.openBackspawn(player);
         Msg.to(player, "&bPortal geöffnet.");
     }
 
     private void closePortal(Player player) {
-        PortalService.closeBackspawn();
+        PortalService.closeBackspawn(player);
         Msg.to(player, "&cPortal entfernt.");
     }
 
