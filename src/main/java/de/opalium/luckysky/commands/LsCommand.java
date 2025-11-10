@@ -19,12 +19,13 @@ public class LsCommand implements CommandExecutor, TabCompleter {
     private static final List<String> SUBCOMMANDS = List.of(
             "reload", "duels", "countdown", "start", "stop", "reset", "plat", "plat+", "bind",
             "clean", "hardwipe", "mode5", "mode20", "mode60",
-            "wither", "taunt_on", "taunt_off", "gui"
+            "wither", "taunt_on", "taunt_off", "gui", "sky"
     );
 
     private static final String PERM_BASE = "opalium.luckysky.base";
     private static final String PERM_ADMIN = "opalium.luckysky.admin";
     private static final String PERM_DUELS_USE = "opalium.luckysky.duels.use";
+    private static final String PERM_PLAYER_GUI = "luckysky.gui.players";
 
     private final LuckySkyPlugin plugin;
 
@@ -212,6 +213,16 @@ public class LsCommand implements CommandExecutor, TabCompleter {
                     plugin.adminGui().open(player, menuId);
                 }
             }
+            case "sky" -> {
+                if (!requirePermission(sender, PERM_PLAYER_GUI)) {
+                    return true;
+                }
+                if (!(sender instanceof Player player)) {
+                    Msg.to(sender, "&cNur Spieler.");
+                    return true;
+                }
+                plugin.playerGui().open(player);
+            }
             default -> Msg.to(sender, "&7Unbekannt. /ls help");
         }
         return true;
@@ -236,6 +247,9 @@ public class LsCommand implements CommandExecutor, TabCompleter {
         }
         if (sender.hasPermission(PERM_DUELS_USE)) {
             Msg.to(sender, "&7/ls duels [Variante] &8– Öffnet LuckySky-Duels oder wählt ein Kit");
+        }
+        if (sender.hasPermission(PERM_PLAYER_GUI)) {
+            Msg.to(sender, "&7/ls sky &8– Öffnet das Spieler-Menü");
         }
     }
 

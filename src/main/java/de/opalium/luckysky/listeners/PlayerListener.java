@@ -3,6 +3,7 @@ package de.opalium.luckysky.listeners;
 import de.opalium.luckysky.LuckySkyPlugin;
 import de.opalium.luckysky.game.GameManager;
 import de.opalium.luckysky.game.GameState;
+import de.opalium.luckysky.gui.PlayerGui;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -12,6 +13,7 @@ import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 
 public class PlayerListener implements Listener {
     private final LuckySkyPlugin plugin;
@@ -77,5 +79,22 @@ public class PlayerListener implements Listener {
     public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
         plugin.game().handleJoin(event.getPlayer());
         plugin.scoreboard().refresh();
+    }
+
+    @EventHandler
+    public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
+        if (!event.getRightClicked().hasMetadata("NPC")) {
+            return;
+        }
+        Player player = event.getPlayer();
+        if (!player.hasPermission("luckysky.gui.players")) {
+            return;
+        }
+        PlayerGui gui = plugin.playerGui();
+        if (gui == null) {
+            return;
+        }
+        event.setCancelled(true);
+        gui.open(player);
     }
 }
