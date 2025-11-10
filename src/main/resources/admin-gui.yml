@@ -3,7 +3,8 @@
 # Dieses Layout kann erweitert werden, um neue Menüs oder Buttons hinzuzufügen,
 # ohne das Plugin neu zu bauen. Jeder Button kann entweder eine eingebaute
 # Funktion (type: builtin), eine Befehlsliste (type: command) oder ein anderes
-# Menü öffnen (type: open-menu).
+# Menü öffnen (type: open-menu). Bei type: command muss eine nicht-leere
+# commands:-Liste angegeben werden, sonst wird der Button ignoriert.
 
 defaults:
   filler:
@@ -308,6 +309,7 @@ buttons:
       name: "&aZum Spiel"
       lore:
         - "&7Beispiel: teleportiert den Spieler via Befehl."
+      # Die Liste darf nicht leer sein, sonst wird der Button aus dem Menü entfernt.
       commands:
         - "warp luckysky {player}"
 
@@ -319,6 +321,7 @@ buttons:
       name: "&bInfo"
       lore:
         - "&7Zeigt einen Info-Befehl für Spieler."
+      # Die Liste darf nicht leer sein, sonst wird der Button aus dem Menü entfernt.
       commands:
         - "msg {player} &bViel Spaß auf LuckySky!"
 

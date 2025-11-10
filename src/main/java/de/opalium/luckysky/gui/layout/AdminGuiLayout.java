@@ -77,6 +77,11 @@ public final class AdminGuiLayout {
             }
             ButtonDisplay display = ButtonDisplay.from(buttonSection.getConfigurationSection("display"), buttonSection, logger);
             Action action = Action.from(buttonSection, logger);
+            if (action == null) {
+                logger.warning("[LuckySky] Skipping admin GUI button '" + id
+                        + "' because its action could not be loaded.");
+                continue;
+            }
             boolean lockWhenRunning = buttonSection.getBoolean("lock-when-running", buttonSection.getBoolean("lock_when_running"));
             boolean hideWhenLocked = buttonSection.getBoolean("hide-when-locked", buttonSection.getBoolean("hide_when_locked"));
             boolean close = buttonSection.getBoolean("close-after", buttonSection.getBoolean("close_after"));
@@ -158,9 +163,16 @@ public final class AdminGuiLayout {
             return switch (type) {
                 case "command", "commands" -> {
                     Executor executor = Executor.from(section.getString("executor"));
-                    List<String> commands = new ArrayList<>(section.getStringList("commands"));
+                    List<String> commands = new ArrayList<>();
+                    for (String entry : section.getStringList("commands")) {
+                        if (!entry.isBlank()) {
+                            commands.add(entry);
+                        }
+                    }
                     if (commands.isEmpty()) {
-                        logger.warning("[LuckySky] Command button without commands defined in admin-gui.yml");
+                        logger.warning("[LuckySky] Command button without commands defined in admin-gui.yml at "
+                                + section.getCurrentPath());
+                        yield null;
                     }
                     yield new CommandAction(executor, Collections.unmodifiableList(commands));
                 }

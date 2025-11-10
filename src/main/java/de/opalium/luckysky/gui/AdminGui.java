@@ -551,6 +551,11 @@ public class AdminGui implements Listener {
     // =====================================================================
 
     private void executeCommands(Player player, AdminGuiLayout.Action.CommandAction command) {
+        if (command.commands().isEmpty()) {
+            plugin.getLogger().warning("[LuckySky] Command button executed without any commands configured.");
+            Msg.to(player, "&cFür diese Aktion sind keine Befehle konfiguriert. Bitte admin-gui.yml prüfen.");
+            return;
+        }
         for (String raw : command.commands()) {
             String cmd = raw.replace("{player}", player.getName()).replace("%player%", player.getName());
             switch (command.executor()) {
