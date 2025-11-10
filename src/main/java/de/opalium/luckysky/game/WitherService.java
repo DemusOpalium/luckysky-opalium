@@ -33,14 +33,17 @@ public class WitherService {
         this.tauntsEnabled = traps.withers().taunts().enabled();
     }
 
-    // Lebenszyklus
+    // ─────────────────────────────────────────────────────────────
+    // LEBENSZYKLUS
+    // ─────────────────────────────────────────────────────────────
     public void start() {
-        stop();
+        stop(); // Timer säubern
         TrapsConfig traps = traps();
         witherEnabled = traps.withers().enabled();
         tauntsEnabled = traps.withers().taunts().enabled();
         if (!witherEnabled) return;
 
+        // einheitlich über scheduleSpawn(...)
         scheduleSpawn(traps.withers().spawnAfterMinutes());
 
         if (tauntsEnabled) {
@@ -70,11 +73,13 @@ public class WitherService {
         }
     }
 
-    // Planung / Abbruch
+    // ─────────────────────────────────────────────────────────────
+    // PLANUNG / ABBRUCH
+    // ─────────────────────────────────────────────────────────────
+    /** Plant den Wither-Spawn in X Minuten (überschreibt Config-Verzögerung). */
     public void scheduleSpawn(int minutes) {
         cancelSpawn();
         if (!witherEnabled || plugin.game().state() != GameState.RUNNING) return;
-
         if (minutes <= 0) {
             Bukkit.getScheduler().runTask(plugin, this::spawn);
             return;
@@ -83,6 +88,7 @@ public class WitherService {
         spawnTimer = Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, this::spawn, delay);
     }
 
+    /** Bricht geplanten Wither-Spawn ab. */
     public void cancelSpawn() {
         if (spawnTimer != -1) {
             Bukkit.getScheduler().cancelTask(spawnTimer);
@@ -90,8 +96,29 @@ public class WitherService {
         }
     }
 
-    // Steuerung
+    // ─────────────────────────────────────────────────────────────
+    // ÖFFENTLICHE STEUERUNGEN
+    // ─────────────────────────────────────────────────────────────
+    /** Löst eine Spawn-Anfrage aus und liefert Ergebnisstatus. */
+    public SpawnRequestResult requestSpawn(SpawnTrigger trigger) {
+        if (!witherEnabled) {
+            return SpawnRequestResult.WITHER_DISABLED;
+        }
+        if (plugin.game().state() != GameState.RUNNING) {
+            return SpawnRequestResult.GAME_NOT_RUNNING;
+        }
+        // Falls später Wither-Spawn-Mode in der Config ausgewertet wird,
+        // kann hier selektiv SKIPPED_BY_MODE zurückgegeben werden.
+        if (!shouldTrigger(trigger)) {
+            return SpawnRequestResult.SKIPPED_BY_MODE;
+        }
+        boolean ok = spawnNow();
+        return ok ? SpawnRequestResult.ACCEPTED : SpawnRequestResult.FAILED;
+    }
+
+    /** Sofort spawnen, thread-sicher. */
     public boolean spawnNow() {
+        // Timer stoppen, um Doppelspawns zu vermeiden
         stop();
 
         boolean spawned;
@@ -106,6 +133,7 @@ public class WitherService {
             }
         }
 
+        // Taunts nur reaktivieren, wenn wirklich gespawnt wurde und Game läuft
         if (spawned && tauntsEnabled && plugin.game().state() == GameState.RUNNING) {
             setTauntsEnabled(true);
         }
@@ -137,7 +165,9 @@ public class WitherService {
         }
     }
 
-    // Intern
+    // ─────────────────────────────────────────────────────────────
+    // INTERN
+    // ─────────────────────────────────────────────────────────────
     private boolean spawn() {
         if (!witherEnabled || plugin.game().state() != GameState.RUNNING) {
             return false;
@@ -145,6 +175,7 @@ public class WitherService {
 
         World world = Worlds.require(worldConfig().worldName());
 
+        // Guards gegen Fehlkonfig
         if (world.getDifficulty() == Difficulty.PEACEFUL) {
             plugin.getLogger().info("[LuckySky] Wither-Spawn abgebrochen: Difficulty=PEACEFUL in " + world.getName());
             return false;
@@ -182,7 +213,20 @@ public class WitherService {
         Bukkit.broadcastMessage(Msg.color(messages().prefix() + "&c" + line));
     }
 
-    // Public API
+    private boolean shouldTrigger(SpawnTrigger trigger) {
+        // Platzhalter: aktuell keine Mode-Logik → immer true,
+        // außer MANUAL ist explizit angefragt, dann auch true.
+        // Später ggf. über GameConfig.Wither-Mode selektieren.
+        return true;
+    }
+
+    private TrapsConfig traps() { return plugin.configs().traps(); }
+    private WorldsConfig.LuckyWorld worldConfig() { return plugin.configs().worlds().luckySky(); }
+    private MessagesConfig messages() { return plugin.configs().messages(); }
+
+    // ─────────────────────────────────────────────────────────────
+    // ENUMS
+    // ─────────────────────────────────────────────────────────────
     public enum SpawnTrigger {
         MANUAL,
         START,
@@ -193,23 +237,7 @@ public class WitherService {
         ACCEPTED,
         GAME_NOT_RUNNING,
         WITHER_DISABLED,
+        SKIPPED_BY_MODE,
         FAILED
     }
-
-    public SpawnRequestResult requestSpawn(SpawnTrigger trigger) {
-        if (!witherEnabled) {
-            return SpawnRequestResult.WITHER_DISABLED;
-        }
-        if (plugin.game().state() != GameState.RUNNING) {
-            return SpawnRequestResult.GAME_NOT_RUNNING;
-        }
-        // Aktuell keine Trigger-Filterung. START/TIMEOUT verhalten sich wie MANUAL.
-        boolean ok = spawnNow();
-        return ok ? SpawnRequestResult.ACCEPTED : SpawnRequestResult.FAILED;
-    }
-
-    // Helpers
-    private TrapsConfig traps() { return plugin.configs().traps(); }
-    private WorldsConfig.LuckyWorld worldConfig() { return plugin.configs().worlds().luckySky(); }
-    private MessagesConfig messages() { return plugin.configs().messages(); }
 }
