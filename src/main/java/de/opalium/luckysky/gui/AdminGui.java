@@ -9,6 +9,7 @@ import de.opalium.luckysky.game.PortalService;
 import de.opalium.luckysky.game.WitherService;
 import de.opalium.luckysky.gui.layout.AdminGuiLayout;
 import de.opalium.luckysky.util.Msg;
+import de.opalium.luckysky.util.WitherSpawnMessages;
 import de.opalium.luckysky.util.Worlds;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -302,14 +303,7 @@ public class AdminGui implements Listener {
 
     private void spawnWither(Player player) {
         WitherService.SpawnRequestResult result = plugin.game().spawnWitherNow();
-        switch (result) {
-            case ACCEPTED -> Msg.to(player, "&dWither-Spawn ausgelöst.");
-            case WITHER_DISABLED -> Msg.to(player, "&cWither-Spawns sind deaktiviert.");
-            case GAME_NOT_RUNNING -> Msg.to(player, "&eLuckySky läuft derzeit nicht.");
-            case SKIPPED_BY_MODE -> Msg.to(player,
-                    "&eDer aktuelle Wither-Spawn-Modus blockiert diese Aktion. &7Passe ihn in der &fgame.yml&7 an.");
-            case FAILED -> Msg.to(player, "&cWither-Spawn fehlgeschlagen (Welt/Regeln prüfen).");
-        }
+        WitherSpawnMessages.sendSpawnResult(player, result);
     }
 
     private void reloadPlugin(Player player) {
