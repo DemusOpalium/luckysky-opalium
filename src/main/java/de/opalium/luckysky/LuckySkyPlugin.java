@@ -10,6 +10,8 @@ import de.opalium.luckysky.game.ScoreboardService;
 import de.opalium.luckysky.gui.AdminGui;
 import de.opalium.luckysky.listeners.BossListener;
 import de.opalium.luckysky.listeners.PlayerListener;
+import de.opalium.luckysky.listeners.NpcRightClickListener;
+import de.opalium.luckysky.npc.NpcDepot;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabCompleter;
@@ -23,6 +25,7 @@ public final class LuckySkyPlugin extends JavaPlugin {
     private AdminGui adminGui;
     private DuelsManager duels;
     private ScoreboardService scoreboard;
+    private NpcDepot npcDepot;
 
     public static LuckySkyPlugin get() {
         return instance;
@@ -49,6 +52,8 @@ public final class LuckySkyPlugin extends JavaPlugin {
         this.game = new GameManager(this, scoreboard);
         this.adminGui = new AdminGui(this);
         this.duels = new DuelsManager(this);
+        this.npcDepot = new NpcDepot(this);
+        this.npcDepot.enable();
 
         registerCommand("ls", new LsCommand(this));
         registerCommand("arena", new ArenaCommand(this));
@@ -59,6 +64,9 @@ public final class LuckySkyPlugin extends JavaPlugin {
         pm.registerEvents(new PlayerListener(this), this);
         pm.registerEvents(adminGui, this);
         pm.registerEvents(duels, this);
+        if (npcDepot.isAvailable()) {
+            pm.registerEvents(new NpcRightClickListener(this), this);
+        }
 
         getLogger().info("[LuckySky] enabled.");
     }
@@ -71,6 +79,10 @@ public final class LuckySkyPlugin extends JavaPlugin {
         if (scoreboard != null) {
             scoreboard.shutdown();
             scoreboard = null;
+        }
+        if (npcDepot != null) {
+            npcDepot.shutdown();
+            npcDepot = null;
         }
         instance = null;
         getLogger().info("[LuckySky] disabled.");
@@ -91,6 +103,9 @@ public final class LuckySkyPlugin extends JavaPlugin {
         if (adminGui != null) {
             adminGui.reload();
         }
+        if (npcDepot != null && npcDepot.isAvailable()) {
+            npcDepot.reload();
+        }
     }
 
     public AdminGui adminGui() {
@@ -99,6 +114,10 @@ public final class LuckySkyPlugin extends JavaPlugin {
 
     public DuelsManager duels() {
         return duels;
+    }
+
+    public NpcDepot npcDepot() {
+        return npcDepot;
     }
 
     private void registerCommand(String name, CommandExecutor executor) {

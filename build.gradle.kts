@@ -19,10 +19,12 @@ java {
 repositories {
     mavenCentral()
     maven("https://repo.papermc.io/repository/maven-public/")
+    maven("https://repo.citizensnpcs.co/")
 }
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
+    compileOnly("net.citizensnpcs:citizens-main:2.0.33-SNAPSHOT")
     // TODO: später LuckPerms, Multiverse etc. als compileOnly hinzufügen
 }
 

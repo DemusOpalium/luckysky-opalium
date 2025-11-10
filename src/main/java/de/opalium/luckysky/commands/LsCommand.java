@@ -19,7 +19,7 @@ public class LsCommand implements CommandExecutor, TabCompleter {
     private static final List<String> SUBCOMMANDS = List.of(
             "reload", "duels", "countdown", "start", "stop", "reset", "plat", "plat+", "bind",
             "clean", "hardwipe", "mode5", "mode20", "mode60",
-            "wither", "taunt_on", "taunt_off", "gui"
+            "wither", "taunt_on", "taunt_off", "gui", "npc"
     );
 
     private static final String PERM_BASE = "opalium.luckysky.base";
@@ -212,6 +212,12 @@ public class LsCommand implements CommandExecutor, TabCompleter {
                     plugin.adminGui().open(player, menuId);
                 }
             }
+            case "npc" -> {
+                if (!requirePermission(sender, PERM_ADMIN)) {
+                    return true;
+                }
+                plugin.npcDepot().executeCommand(sender, args);
+            }
             default -> Msg.to(sender, "&7Unbekannt. /ls help");
         }
         return true;
@@ -233,6 +239,7 @@ public class LsCommand implements CommandExecutor, TabCompleter {
             Msg.to(sender, "&7/ls wither &8– Wither sofort spawnen");
             Msg.to(sender, "&7/ls taunt_on/off &8– Taunts toggeln");
             Msg.to(sender, "&7/ls gui &8– Öffnet das Admin-Menü");
+            Msg.to(sender, "&7/ls npc <create|summon|recall|bind|delete> <ID> &8– NPC-Depot steuern");
         }
         if (sender.hasPermission(PERM_DUELS_USE)) {
             Msg.to(sender, "&7/ls duels [Variante] &8– Öffnet LuckySky-Duels oder wählt ein Kit");
@@ -293,6 +300,15 @@ public class LsCommand implements CommandExecutor, TabCompleter {
         if (args.length == 2 && "gui".equalsIgnoreCase(args[0])) {
             String current = args[1].toLowerCase(Locale.ROOT);
             return plugin.adminGui().menuIds().stream()
+                    .filter(id -> id.toLowerCase(Locale.ROOT).startsWith(current))
+                    .collect(Collectors.toCollection(ArrayList::new));
+        }
+        if (args.length == 2 && "npc".equalsIgnoreCase(args[0])) {
+            return new ArrayList<>(List.of("create", "summon", "recall", "bind", "delete"));
+        }
+        if (args.length == 3 && "npc".equalsIgnoreCase(args[0])) {
+            String current = args[2].toLowerCase(Locale.ROOT);
+            return plugin.npcDepot().knownIds().stream()
                     .filter(id -> id.toLowerCase(Locale.ROOT).startsWith(current))
                     .collect(Collectors.toCollection(ArrayList::new));
         }

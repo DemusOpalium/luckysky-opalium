@@ -14,7 +14,8 @@ public final class ConfigService {
             "game.yml",
             "duels.yml",
             "traps.yml",
-            "admin-gui.yml"
+            "admin-gui.yml",
+            "npc.yml"
     );
 
     private final LuckySkyPlugin plugin;
@@ -23,6 +24,7 @@ public final class ConfigService {
     private GameConfig game;
     private DuelsConfig duels;
     private TrapsConfig traps;
+    private NpcConfig npc;
 
     public ConfigService(LuckySkyPlugin plugin) {
         this.plugin = plugin;
@@ -48,6 +50,7 @@ public final class ConfigService {
         this.game = load("game.yml", GameConfig::from);
         this.duels = load("duels.yml", DuelsConfig::from);
         this.traps = load("traps.yml", TrapsConfig::from);
+        this.npc = load("npc.yml", NpcConfig::from);
         return this;
     }
 
@@ -67,6 +70,7 @@ public final class ConfigService {
         save("game.yml", game::writeTo);
         save("duels.yml", duels::writeTo);
         save("traps.yml", traps::writeTo);
+        save("npc.yml", npc::writeTo);
     }
 
     private void save(String fileName, Writer writer) {
@@ -100,6 +104,10 @@ public final class ConfigService {
         return traps;
     }
 
+    public NpcConfig npc() {
+        return npc;
+    }
+
     public void updateTraps(TrapsConfig traps) {
         this.traps = traps;
         save("traps.yml", traps::writeTo);
@@ -113,6 +121,11 @@ public final class ConfigService {
     public void updateDuels(DuelsConfig duels) {
         this.duels = duels;
         save("duels.yml", duels::writeTo);
+    }
+
+    public void updateNpc(NpcConfig npc) {
+        this.npc = npc;
+        save("npc.yml", npc::writeTo);
     }
 
     @FunctionalInterface

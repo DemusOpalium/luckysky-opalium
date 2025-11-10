@@ -1,0 +1,47 @@
+storage:
+  world: "LuckySkyStorage"
+  chunks:
+    - x: 0
+      z: 0
+    - x: 1
+      z: 0
+parking:
+  world: "LuckySkyStorage"
+  x: 0.5
+  y: -58.0
+  z: 0.5
+  yaw: 0.0
+  pitch: 0.0
+npcs:
+  lucky:
+    display-name: "&6Lucky Sky"
+    entity-type: "PLAYER"
+    auto-summon: true
+    spawn:
+      world: "LuckySky"
+      x: 0.5
+      y: 101.0
+      z: 2.0
+      yaw: 180.0
+      pitch: 0.0
+    skin:
+      texture: ""
+      signature: ""
+    actions:
+      admin: "GUI"
+      player-idle:
+        type: "START"
+        commands:
+          - "say LuckySky startet jetzt!"
+      player-running:
+        type: "VOTE"
+        commands:
+          - "say Deine Stimme wurde gezählt."
+    start-commands:
+      - "say LuckySky wurde durch %player% gestartet."
+    vote-commands:
+      - "say %player% hat für LuckySky gestimmt."
+    collapse-commands:
+      - "skript run luckysky_hut_collapse"
+    collapse-delay-ticks: 120
+    return-delay-ticks: 200
