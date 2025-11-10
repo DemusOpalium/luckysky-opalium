@@ -7,7 +7,8 @@ import de.opalium.luckysky.config.TrapsConfig;
 import de.opalium.luckysky.config.WorldsConfig;
 import de.opalium.luckysky.util.Msg;
 import de.opalium.luckysky.util.Worlds;
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -177,11 +178,12 @@ public class WitherService {
         GameConfig.Wither witherConfig = plugin.configs().game().wither();
         boolean singleBoss = witherConfig != null && witherConfig.singleBoss();
         if (singleBoss) {
-            Collection<Wither> existing = world.getEntitiesByClass(Wither.class);
+            List<Wither> existing = new ArrayList<>(world.getEntitiesByClass(Wither.class));
             if (!existing.isEmpty()) {
+                int removed = existing.size();
                 existing.forEach(Wither::remove);
-                plugin.getLogger().info("[LuckySky] SingleBoss: entfernt " + existing.size()
-                        + " Wither in " + world.getName());
+                plugin.getLogger().info("[LuckySky] SingleBoss: entfernt " + removed +
+                        " Wither in " + world.getName());
             }
         }
 
