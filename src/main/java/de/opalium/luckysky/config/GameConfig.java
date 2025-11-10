@@ -16,6 +16,7 @@ public record GameConfig(
         Wipes wipes,
         Rewards rewards,
         Lives lives,
+        Wither wither,
         Scoreboard scoreboard,
         Spawns spawns
 ) {
@@ -27,9 +28,10 @@ public record GameConfig(
         Wipes wipes = readWipes(config.getConfigurationSection("wipes"));
         Rewards rewards = readRewards(config.getConfigurationSection("rewards"));
         Lives lives = new Lives(config.getBoolean("lives.one_life", false));
+        Wither wither = readWither(config.getConfigurationSection("wither"));
         Scoreboard scoreboard = readScoreboard(config.getConfigurationSection("scoreboard"));
         Spawns spawns = readSpawns(config.getConfigurationSection("spawns"));
-        return new GameConfig(durations, lucky, platform, rig, wipes, rewards, lives, scoreboard, spawns);
+        return new GameConfig(durations, lucky, platform, rig, wipes, rewards, lives, wither, scoreboard, spawns);
     }
 
     private static Durations readDurations(ConfigurationSection section) {
@@ -202,6 +204,9 @@ public record GameConfig(
         ConfigurationSection livesSection = config.createSection("lives");
         livesSection.set("one_life", lives.oneLife());
 
+        ConfigurationSection witherSection = config.createSection("wither");
+        witherSection.set("single_boss", wither.singleBoss());
+
         ConfigurationSection scoreboardSection = config.createSection("scoreboard");
         scoreboardSection.set("enabled", scoreboard.enabled());
         scoreboardSection.set("title", scoreboard.title());
@@ -216,7 +221,7 @@ public record GameConfig(
     public GameConfig withLuckyVariant(String variant) {
         Lucky updated = new Lucky(lucky.position(), lucky.intervalTicks(), lucky.requireAirAtTarget(), variant,
                 lucky.variantsAvailable());
-        return new GameConfig(durations, updated, platform, rig, wipes, rewards, lives, scoreboard, spawns);
+        return new GameConfig(durations, updated, platform, rig, wipes, rewards, lives, wither, scoreboard, spawns);
     }
 
     public record Durations(int minutesDefault, List<Integer> presets) {
@@ -250,10 +255,21 @@ public record GameConfig(
     public record Lives(boolean oneLife) {
     }
 
+    public record Wither(boolean singleBoss) {
+    }
+
     public record Scoreboard(boolean enabled, String title, List<String> lines) {
     }
 
     public record Spawns(boolean allowBinding, boolean allowLobbyOverride, String warning) {
+    }
+
+    private static Wither readWither(ConfigurationSection section) {
+        if (section == null) {
+            return new Wither(false);
+        }
+        boolean singleBoss = section.getBoolean("single_boss", section.getBoolean("singleBoss", false));
+        return new Wither(singleBoss);
     }
 
     private static Spawns readSpawns(ConfigurationSection section) {
