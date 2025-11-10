@@ -27,6 +27,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
@@ -148,6 +149,7 @@ class WitherServiceTest {
         when(world.getDifficulty()).thenReturn(Difficulty.HARD);
         when(world.getGameRuleValue(GameRule.DO_MOB_SPAWNING)).thenReturn(Boolean.TRUE);
         when(world.getName()).thenReturn("LuckySky");
+        when(world.getEntitiesByClass(Wither.class)).thenReturn(List.of());
         when(world.spawnEntity(any(Location.class), eq(EntityType.WITHER))).thenReturn(wither);
         when(scheduler.scheduleSyncRepeatingTask(eq(plugin), any(Runnable.class), anyLong(), anyLong())).thenReturn(1);
 
@@ -164,6 +166,39 @@ class WitherServiceTest {
 
             assertEquals(WitherService.SpawnRequestResult.ACCEPTED, result);
             verify(world).spawnEntity(any(Location.class), eq(EntityType.WITHER));
+        }
+    }
+
+    @Test
+    void requestSpawnRemovesExistingWithersBeforeSpawning() {
+        World world = mock(World.class);
+        Wither existing = mock(Wither.class);
+        Wither spawned = mock(Wither.class);
+        BukkitScheduler scheduler = mock(BukkitScheduler.class);
+
+        when(world.getDifficulty()).thenReturn(Difficulty.HARD);
+        when(world.getGameRuleValue(GameRule.DO_MOB_SPAWNING)).thenReturn(Boolean.TRUE);
+        when(world.getName()).thenReturn("LuckySky");
+        when(world.getEntitiesByClass(Wither.class)).thenReturn(List.of(existing));
+        when(world.spawnEntity(any(Location.class), eq(EntityType.WITHER))).thenReturn(spawned);
+        when(scheduler.scheduleSyncRepeatingTask(eq(plugin), any(Runnable.class), anyLong(), anyLong())).thenReturn(1);
+
+        try (MockedStatic<Worlds> worlds = mockStatic(Worlds.class);
+             MockedStatic<Bukkit> bukkit = mockStatic(Bukkit.class);
+             MockedStatic<Msg> msg = mockStatic(Msg.class)) {
+            worlds.when(() -> Worlds.require("LuckySky")).thenReturn(world);
+            bukkit.when(Bukkit::isPrimaryThread).thenReturn(true);
+            bukkit.when(Bukkit::getScheduler).thenReturn(scheduler);
+            bukkit.when(() -> Bukkit.broadcastMessage(anyString())).thenReturn(1);
+            msg.when(() -> Msg.color(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
+
+            WitherService.SpawnRequestResult result = service.requestSpawn(WitherService.SpawnTrigger.MANUAL);
+
+            assertEquals(WitherService.SpawnRequestResult.ACCEPTED, result);
+
+            InOrder inOrder = inOrder(existing, world);
+            inOrder.verify(existing).remove();
+            inOrder.verify(world).spawnEntity(any(Location.class), eq(EntityType.WITHER));
         }
     }
 

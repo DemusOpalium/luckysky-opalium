@@ -7,6 +7,7 @@ import de.opalium.luckysky.config.TrapsConfig;
 import de.opalium.luckysky.config.WorldsConfig;
 import de.opalium.luckysky.util.Msg;
 import de.opalium.luckysky.util.Worlds;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import net.kyori.adventure.text.Component;
@@ -174,6 +175,13 @@ public class WitherService {
         }
 
         World world = Worlds.require(worldConfig().worldName());
+        Collection<Wither> existingWithers = world.getEntitiesByClass(Wither.class);
+        if (!existingWithers.isEmpty()) {
+            plugin.getLogger().info("[LuckySky] Entferne vorhandene Wither vor neuem Spawn: " + existingWithers.size());
+            for (Wither existing : existingWithers) {
+                existing.remove();
+            }
+        }
 
         // Guards gegen Fehlkonfig
         if (world.getDifficulty() == Difficulty.PEACEFUL) {
