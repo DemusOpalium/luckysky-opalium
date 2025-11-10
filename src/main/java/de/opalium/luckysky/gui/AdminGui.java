@@ -306,6 +306,8 @@ public class AdminGui implements Listener {
             case ACCEPTED -> Msg.to(player, "&dWither-Spawn ausgelöst.");
             case WITHER_DISABLED -> Msg.to(player, "&cWither-Spawns sind deaktiviert.");
             case GAME_NOT_RUNNING -> Msg.to(player, "&eLuckySky läuft derzeit nicht.");
+            case SKIPPED_BY_MODE -> Msg.to(player,
+                    "&eDer aktuelle Wither-Spawn-Modus blockiert diese Aktion. &7Passe ihn in der &fgame.yml&7 an.");
             case FAILED -> Msg.to(player, "&cWither-Spawn fehlgeschlagen (Welt/Regeln prüfen).");
         }
     }
