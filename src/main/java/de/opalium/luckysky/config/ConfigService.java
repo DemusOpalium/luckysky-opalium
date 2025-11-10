@@ -13,7 +13,8 @@ public final class ConfigService {
             "worlds.yml",
             "game.yml",
             "duels.yml",
-            "traps.yml"
+            "traps.yml",
+            "admin-gui.yml"
     );
 
     private final LuckySkyPlugin plugin;

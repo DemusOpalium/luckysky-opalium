@@ -16,7 +16,8 @@ public record GameConfig(
         Wipes wipes,
         Rewards rewards,
         Lives lives,
-        Scoreboard scoreboard
+        Scoreboard scoreboard,
+        Spawns spawns
 ) {
     public static GameConfig from(FileConfiguration config) {
         Durations durations = readDurations(config.getConfigurationSection("durations"));
@@ -27,7 +28,8 @@ public record GameConfig(
         Rewards rewards = readRewards(config.getConfigurationSection("rewards"));
         Lives lives = new Lives(config.getBoolean("lives.one_life", false));
         Scoreboard scoreboard = readScoreboard(config.getConfigurationSection("scoreboard"));
-        return new GameConfig(durations, lucky, platform, rig, wipes, rewards, lives, scoreboard);
+        Spawns spawns = readSpawns(config.getConfigurationSection("spawns"));
+        return new GameConfig(durations, lucky, platform, rig, wipes, rewards, lives, scoreboard, spawns);
     }
 
     private static Durations readDurations(ConfigurationSection section) {
@@ -204,12 +206,17 @@ public record GameConfig(
         scoreboardSection.set("enabled", scoreboard.enabled());
         scoreboardSection.set("title", scoreboard.title());
         scoreboardSection.set("lines", scoreboard.lines());
+
+        ConfigurationSection spawnsSection = config.createSection("spawns");
+        spawnsSection.set("allow_binding", spawns.allowBinding());
+        spawnsSection.set("allow_lobby_override", spawns.allowLobbyOverride());
+        spawnsSection.set("warning", spawns.warning());
     }
 
     public GameConfig withLuckyVariant(String variant) {
         Lucky updated = new Lucky(lucky.position(), lucky.intervalTicks(), lucky.requireAirAtTarget(), variant,
                 lucky.variantsAvailable());
-        return new GameConfig(durations, updated, platform, rig, wipes, rewards, lives, scoreboard);
+        return new GameConfig(durations, updated, platform, rig, wipes, rewards, lives, scoreboard, spawns);
     }
 
     public record Durations(int minutesDefault, List<Integer> presets) {
@@ -244,5 +251,18 @@ public record GameConfig(
     }
 
     public record Scoreboard(boolean enabled, String title, List<String> lines) {
+    }
+
+    public record Spawns(boolean allowBinding, boolean allowLobbyOverride, String warning) {
+    }
+
+    private static Spawns readSpawns(ConfigurationSection section) {
+        if (section == null) {
+            return new Spawns(false, false, "&8Spawns werden extern verwaltet. Aktivieren nur bei Bedarf.");
+        }
+        boolean allowBinding = section.getBoolean("allow_binding", section.getBoolean("allowBind", false));
+        boolean allowLobbyOverride = section.getBoolean("allow_lobby_override", section.getBoolean("allowLobbyOverride", false));
+        String warning = section.getString("warning", "&8Wir empfehlen Essentials/Multiverse für Respawns zu nutzen.");
+        return new Spawns(allowBinding, allowLobbyOverride, warning);
     }
 }

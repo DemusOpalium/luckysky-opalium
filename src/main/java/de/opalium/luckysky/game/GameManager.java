@@ -16,6 +16,7 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public class GameManager {
@@ -188,6 +189,24 @@ public class GameManager {
     }
 
     public void bindAll() {
+        bindAllInternal(null, true);
+    }
+
+    public void bindAll(CommandSender sender) {
+        bindAllInternal(sender, false);
+    }
+
+    private void bindAllInternal(CommandSender sender, boolean silent) {
+        GameConfig.Spawns spawns = gameConfig().spawns();
+        if (!spawns.allowBinding()) {
+            if (!silent) {
+                if (sender != null) {
+                    Msg.to(sender, spawns.warning());
+                }
+                Msg.to(Bukkit.getConsoleSender(), spawns.warning());
+            }
+            return;
+        }
         Optional<Location> respawnOpt = platformSpawnLocation();
         if (respawnOpt.isEmpty()) {
             Msg.to(Bukkit.getConsoleSender(), messages().adminPrefix() + "Kein LuckySky-Spawn definiert.");
@@ -211,6 +230,9 @@ public class GameManager {
         }
         broadcast(messages().gamePrefix() + String.format("&bSpawnpoint gesetzt (&f%.1f, %.1f, %.1f&b).",
                 spawn.x(), spawn.y(), spawn.z()));
+        if (sender != null && !silent) {
+            Msg.to(sender, "&aSpawnpunkte aktualisiert.");
+        }
         refreshScoreboard();
     }
 
@@ -277,7 +299,9 @@ public class GameManager {
                 continue;
             }
             player.teleport(lobby);
-            player.setBedSpawnLocation(lobby, true);
+            if (gameConfig().spawns().allowLobbyOverride()) {
+                player.setBedSpawnLocation(lobby, true);
+            }
             if (state != GameState.RUNNING && !gameConfig().lives().oneLife()) {
                 player.setGameMode(GameMode.SURVIVAL);
             }
@@ -291,7 +315,9 @@ public class GameManager {
         }
         Location location = lobbyOpt.get();
         player.teleport(location);
-        player.setBedSpawnLocation(location, true);
+        if (gameConfig().spawns().allowLobbyOverride()) {
+            player.setBedSpawnLocation(location, true);
+        }
     }
 
     public boolean isParticipant(Player player) {

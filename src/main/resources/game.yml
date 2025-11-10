@@ -42,3 +42,7 @@ scoreboard:
     - "&7Timer: &f{timer}"
     - "&7Spieler: &f{players}"
     - "&7Wither: &f{wither}"
+spawns:
+  allow_binding: false
+  allow_lobby_override: false
+  warning: "&8Respawns werden extern verwaltet (Essentials/MV). Nur aktivieren, wenn LuckySky die Spawns übernehmen soll."
