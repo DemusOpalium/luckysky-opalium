@@ -70,6 +70,7 @@ class WitherServiceTest {
                 new GameConfig.Rewards("balanced", List.of(), List.of()),
                 new GameConfig.Lives(false),
                 new GameConfig.Scoreboard(false, "Title", List.of("line")),
+                new GameConfig.Wither(GameConfig.WitherSpawnMode.ALL),
                 new GameConfig.Spawns(false, false, "")
         );
         MessagesConfig messagesConfig = new MessagesConfig("&d☁ LuckySky&7 » ", "", "", "", "", "");
