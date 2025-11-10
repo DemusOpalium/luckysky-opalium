@@ -11,6 +11,9 @@ Paper plugin for Opalium's LuckySky minigame. Provides match control, safe-platf
 - **Rewards engine:** Command lists run on boss victory or failure, supporting winner-only or everyone payout modes.
 - **Admin & Duels GUIs:** The LuckySky Admin GUI exposes all match controls in-game, while the optional Duels GUI/command maps Lucky variants to configured Duels kits.
 
+## Configuration Notes
+- `admin-gui.yml` command buttons must declare a non-empty `commands:` list. Buttons without runnable commands are ignored when the layout is loaded.
+
 ## In Arbeit
 - Arena quality-of-life helpers such as rig/corridor/sign automation remain TODO and require implementation before parity with legacy tooling.
 - Continuous integration/packaging automation is not yet part of the repository (no Gradle wrapper or CI workflows provided).
