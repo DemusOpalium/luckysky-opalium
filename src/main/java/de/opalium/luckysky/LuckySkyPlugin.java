@@ -88,6 +88,9 @@ public final class LuckySkyPlugin extends JavaPlugin {
         if (duels != null) {
             duels.reload();
         }
+        if (adminGui != null) {
+            adminGui.reload();
+        }
     }
 
     public AdminGui adminGui() {

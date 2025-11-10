@@ -126,8 +126,7 @@ public class LsCommand implements CommandExecutor, TabCompleter {
                 if (game == null || !requirePermission(sender, PERM_ADMIN)) {
                     return true;
                 }
-                game.bindAll();
-                Msg.to(sender, "&bAlle gebunden.");
+                game.bindAll(sender);
             }
             case "clean" -> {
                 GameManager game = requireGame(sender);
@@ -206,7 +205,12 @@ public class LsCommand implements CommandExecutor, TabCompleter {
                     Msg.to(sender, "&cNur Spieler.");
                     return true;
                 }
-                plugin.adminGui().open(player);
+                String menuId = args.length > 1 ? args[1] : null;
+                if (menuId == null) {
+                    plugin.adminGui().open(player);
+                } else {
+                    plugin.adminGui().open(player, menuId);
+                }
             }
             default -> Msg.to(sender, "&7Unbekannt. /ls help");
         }
@@ -284,6 +288,12 @@ public class LsCommand implements CommandExecutor, TabCompleter {
             String current = args[0].toLowerCase(Locale.ROOT);
             return SUBCOMMANDS.stream()
                     .filter(sub -> sub.startsWith(current))
+                    .collect(Collectors.toCollection(ArrayList::new));
+        }
+        if (args.length == 2 && "gui".equalsIgnoreCase(args[0])) {
+            String current = args[1].toLowerCase(Locale.ROOT);
+            return plugin.adminGui().menuIds().stream()
+                    .filter(id -> id.toLowerCase(Locale.ROOT).startsWith(current))
                     .collect(Collectors.toCollection(ArrayList::new));
         }
         return Collections.emptyList();
