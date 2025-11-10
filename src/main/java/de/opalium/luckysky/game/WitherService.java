@@ -223,10 +223,13 @@ public class WitherService {
     }
 
     private boolean shouldTrigger(SpawnTrigger trigger) {
-        // Platzhalter: aktuell keine Mode-Logik → immer true,
-        // außer MANUAL ist explizit angefragt, dann auch true.
-        // Später ggf. über GameConfig.Wither-Mode selektieren.
-        return true;
+        GameConfig.Wither config = plugin.configs().game().wither();
+        GameConfig.WitherSpawnMode mode = config != null ? config.spawnMode() : GameConfig.WitherSpawnMode.ALL;
+        if (mode.allows(trigger)) {
+            return true;
+        }
+        plugin.getLogger().info("[LuckySky] Wither-Spawn übersprungen (" + trigger + ") wegen Mode=" + mode.configKey());
+        return false;
     }
 
     private TrapsConfig traps() { return plugin.configs().traps(); }
