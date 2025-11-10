@@ -1,14 +1,9 @@
 # LuckySky Admin GUI Layout
 #
-# Dieses Layout kann erweitert werden, um neue Menüs oder Buttons hinzuzufügen,
-# ohne das Plugin neu zu bauen. Jeder Button kann entweder eine eingebaute
-# Funktion (type: builtin), eine Befehlsliste (type: command) oder ein anderes
-# Menü öffnen (type: open-menu). Bei type: command muss eine nicht-leere
-# commands:-Liste angegeben werden, sonst wird der Button ignoriert.
+# Ein einziges Menü mit allen wichtigen Event-Shortcuts.
+# Buttons können erweitert oder entfernt werden, ohne das Plugin neu zu bauen.
 
 defaults:
-  # Material used whenever an invalid item is configured below.
-  fallback-material: PAPER
   filler:
     material: LIGHT_BLUE_STAINED_GLASS_PANE
     name: " "
@@ -26,7 +21,7 @@ buttons:
       name: "&a▸ Start &f{minutes}m"
       lore:
         - "&7Setzt die Dauer auf &f{minutes}&7 Minuten."
-        - "&7Aktueller Status: {state}"
+        - "&7Status: {state}"
       glow: true
 
   start_20:
@@ -39,7 +34,7 @@ buttons:
       name: "&a▸ Start &f{minutes}m"
       lore:
         - "&7Setzt die Dauer auf &f{minutes}&7 Minuten."
-        - "&7Aktueller Status: {state}"
+        - "&7Status: {state}"
 
   start_60:
     type: builtin
@@ -51,7 +46,7 @@ buttons:
       name: "&a▸ Start &f{minutes}m"
       lore:
         - "&7Setzt die Dauer auf &f{minutes}&7 Minuten."
-        - "&7Aktueller Status: {state}"
+        - "&7Status: {state}"
 
   stop_game:
     type: builtin
@@ -60,25 +55,17 @@ buttons:
       material: BARRIER
       name: "&c■ Stop & Lobby"
       lore:
-        - "&7Beendet das laufende Match und sendet alle zur Lobby."
+        - "&7Stoppt das Match & teleportiert alle zur Lobby."
 
-  toggle_wither:
+  cycle_variant:
     type: builtin
-    key: TOGGLE_WITHER
+    key: CYCLE_VARIANT
     display:
-      material: WITHER_SKELETON_SKULL
-      name: "&bWither: {status}"
+      material: SPONGE
+      name: "&5Variante"
       lore:
-        - "&7Schaltet den automatischen Wither-Spawn um."
-
-  toggle_taunts:
-    type: builtin
-    key: TOGGLE_TAUNTS
-    display:
-      material: GOAT_HORN
-      name: "&dTaunts: {status}"
-      lore:
-        - "&7Aktiviert oder deaktiviert Wither-Taunts."
+        - "&7Aktuell: &f{variant}"
+        - "&7Klick zum Wechseln."
 
   scoreboard_toggle:
     type: builtin
@@ -87,7 +74,7 @@ buttons:
       material: OAK_SIGN
       name: "&9Scoreboard: {status}"
       lore:
-        - "&7Blendet das LuckySky-Scoreboard ein oder aus."
+        - "&7Blendt das LuckySky-Scoreboard ein/aus."
 
   timer_toggle:
     type: builtin
@@ -98,15 +85,23 @@ buttons:
       lore:
         - "&7Schaltet den Timer im Scoreboard."
 
-  cycle_variant:
+  toggle_wither:
     type: builtin
-    key: CYCLE_VARIANT
+    key: TOGGLE_WITHER
     display:
-      material: SPONGE
-      name: "&5Variante"
+      material: WITHER_SKELETON_SKULL
+      name: "&bWither: {status}"
       lore:
-        - "&7Aktuell: &f{variant}"
-        - "&7Klick, um zur nächsten Vorlage zu wechseln."
+        - "&7Automatischen Wither-Spawn toggeln."
+
+  toggle_taunts:
+    type: builtin
+    key: TOGGLE_TAUNTS
+    display:
+      material: GOAT_HORN
+      name: "&dTaunts: {status}"
+      lore:
+        - "&7Wither Taunts aktivieren/deaktivieren."
 
   spawn_wither:
     type: builtin
@@ -115,7 +110,7 @@ buttons:
       material: NETHER_STAR
       name: "&dWither sofort"
       lore:
-        - "&7Spawnt den Wither unmittelbar."
+        - "&7Spawnt den Wither direkt."
 
   reward_win:
     type: builtin
@@ -124,7 +119,7 @@ buttons:
       material: EMERALD
       name: "&aReward: Win"
       lore:
-        - "&7Löst die Rewards für einen Sieg aus."
+        - "&7Löst Win-Rewards aus."
 
   reward_fail:
     type: builtin
@@ -133,7 +128,43 @@ buttons:
       material: REDSTONE
       name: "&cReward: Fail"
       lore:
-        - "&7Löst die Rewards für Zeitablauf aus."
+        - "&7Löst Fail-Rewards aus."
+
+  npc_deploy:
+    type: command
+    executor: player
+    display:
+      material: ARMOR_STAND
+      name: "&eNPC Deploy"
+      lore:
+        - "&7Stellt Event-NPCs auf."
+        - "&8Passe commands unter admin-gui.yml an."
+    commands:
+      - "tell {player} §7[§bLuckySky§7] §cKonfiguriere npc_deploy commands in admin-gui.yml"
+
+  npc_recall:
+    type: command
+    executor: player
+    display:
+      material: LEAD
+      name: "&eNPC Recall"
+      lore:
+        - "&7Holt Event-NPCs zurück."
+        - "&8Passe commands unter admin-gui.yml an."
+    commands:
+      - "tell {player} §7[§bLuckySky§7] §cKonfiguriere npc_recall commands in admin-gui.yml"
+
+  rotate_world:
+    type: command
+    executor: player
+    display:
+      material: GLOBE_BANNER_PATTERN
+      name: "&9Welt-Rotation"
+      lore:
+        - "&7Startet die nächste Welt-Rotation."
+        - "&8Passe commands unter admin-gui.yml an."
+    commands:
+      - "tell {player} §7[§bLuckySky§7] §cKonfiguriere rotate_world commands in admin-gui.yml"
 
   save_base:
     type: builtin
@@ -142,7 +173,7 @@ buttons:
       material: WRITABLE_BOOK
       name: "&bBase sichern"
       lore:
-        - "&7Sichert LuckySky als Snapshot."
+        - "&7Snapshot der LuckySky-Welt erstellen."
         - "&8Ziel: {path}"
       glow: true
 
@@ -154,7 +185,7 @@ buttons:
       material: BOOK
       name: "&cBase laden"
       lore:
-        - "&7Ersetzt LuckySky mit dem Snapshot."
+        - "&7Snapshot nach LuckySky zurückspielen."
         - "&8Status: {status}"
 
   load_schematic:
@@ -173,36 +204,7 @@ buttons:
       material: STRUCTURE_BLOCK
       name: "&bSchematic pasten"
       lore:
-        - "&7Pastet das aktuell geladene Schematic."
-
-  soft_wipe:
-    type: builtin
-    key: SOFT_WIPE
-    display:
-      material: FEATHER
-      name: "&aSoft-Wipe"
-      lore:
-        - "&7Entfernt nahe Entities rund um Lucky."
-
-  hard_wipe:
-    type: builtin
-    key: HARD_WIPE
-    display:
-      material: NETHERITE_SWORD
-      name: "&cHard-Wipe"
-      lore:
-        - "&7Großflächiger Entity-Wipe (inkl. Armorstands)."
-
-  bind_all:
-    type: builtin
-    key: BIND_ALL
-    display:
-      material: RESPAWN_ANCHOR
-      name: "&dBind LuckySky"
-      lore:
-        - "&7Bindet alle aktuellen Spieler an LuckySky."
-        - "&6{warning}"
-        - "&7Status: {allowed}"
+        - "&7Pastet das geladene Schematic."
 
   place_platform:
     type: builtin
@@ -211,7 +213,7 @@ buttons:
       material: PRISMARINE_BRICKS
       name: "&bPlattform"
       lore:
-        - "&7Setzt die Standard-Plattform neu."
+        - "&7Setzt die Standard-Plattform."
 
   place_platform_extended:
     type: builtin
@@ -220,7 +222,7 @@ buttons:
       material: PRISMARINE_STAIRS
       name: "&bPlattform 3x3"
       lore:
-        - "&73x3-Variante für Event-Starts."
+        - "&73x3-Event-Plattform setzen."
 
   teleport_spawn:
     type: builtin
@@ -229,16 +231,36 @@ buttons:
       material: ENDER_PEARL
       name: "&dTeleport LuckySky"
       lore:
-        - "&7Teleportiert dich auf die LuckySky-Plattform."
+        - "&7Teleportiert dich zur LuckySky-Plattform."
 
-  save_config:
+  soft_wipe:
     type: builtin
-    key: SAVE_CONFIG
+    key: SOFT_WIPE
     display:
-      material: NAME_TAG
-      name: "&aConfig speichern"
+      material: FEATHER
+      name: "&aSoft-Wipe"
       lore:
-        - "&7Schreibt alle Configs & lädt sie neu."
+        - "&7Entfernt nahe Entities."
+
+  hard_wipe:
+    type: builtin
+    key: HARD_WIPE
+    display:
+      material: NETHERITE_SWORD
+      name: "&cHard-Wipe"
+      lore:
+        - "&7Großflächiger Entity-Wipe."
+
+  bind_all:
+    type: builtin
+    key: BIND_ALL
+    display:
+      material: RESPAWN_ANCHOR
+      name: "&dBind LuckySky"
+      lore:
+        - "&7Bindet alle aktuellen Spieler."
+        - "&6{warning}"
+        - "&7Status: {allowed}"
 
   portal_open:
     type: builtin
@@ -247,7 +269,7 @@ buttons:
       material: END_PORTAL_FRAME
       name: "&bPortal öffnen"
       lore:
-        - "&7Erstellt ein Multiverse-Portals Backspawn."
+        - "&7Erstellt das Backspawn-Portal (MV Portals)."
 
   portal_close:
     type: builtin
@@ -258,74 +280,23 @@ buttons:
       lore:
         - "&7Entfernt das Backspawn-Portal."
 
-  goto_world:
-    type: open-menu
-    target: world
+  save_config:
+    type: builtin
+    key: SAVE_CONFIG
     display:
-      material: GLOBE_BANNER_PATTERN
-      name: "&9Welt-Tools"
+      material: NAME_TAG
+      name: "&aConfig speichern"
       lore:
-        - "&7Base Snapshots, Wipes & Plattform."
+        - "&7Schreibt alle Configs & lädt sie neu."
 
-  goto_gameplay:
-    type: open-menu
-    target: gameplay
+  reload_plugin:
+    type: builtin
+    key: RELOAD_PLUGIN
     display:
-      material: DIAMOND_SWORD
-      name: "&5Gameplay"
+      material: EXPERIENCE_BOTTLE
+      name: "&bLuckySky reload"
       lore:
-        - "&7Scoreboard, Varianten & Rewards."
-
-  goto_examples:
-    type: open-menu
-    target: examples
-    display:
-      material: WRITABLE_BOOK
-      name: "&eVorlagen"
-      lore:
-        - "&7Beispiele für eigene Buttons."
-
-  goto_player:
-    type: open-menu
-    target: player
-    display:
-      material: PLAYER_HEAD
-      name: "&bSpieler-Menü"
-      lore:
-        - "&7Öffnet die Standard-Ansicht für User."
-
-  go_back:
-    type: open-menu
-    target: main
-    display:
-      material: ARROW
-      name: "&7Zurück"
-      lore:
-        - "&7Zurück zur Hauptübersicht."
-
-  player_join_sample:
-    type: command
-    executor: console
-    display:
-      material: LIME_DYE
-      name: "&aZum Spiel"
-      lore:
-        - "&7Beispiel: teleportiert den Spieler via Befehl."
-      # Die Liste darf nicht leer sein, sonst wird der Button aus dem Menü entfernt.
-      commands:
-        - "warp luckysky {player}"
-
-  player_info_sample:
-    type: command
-    executor: player
-    display:
-      material: PAPER
-      name: "&bInfo"
-      lore:
-        - "&7Zeigt einen Info-Befehl für Spieler."
-      # Die Liste darf nicht leer sein, sonst wird der Button aus dem Menü entfernt.
-      commands:
-        - "msg {player} &bViel Spaß auf LuckySky!"
+        - "&7Lädt Einstellungen & Services neu."
 
 menus:
   main:
@@ -336,69 +307,31 @@ menus:
       11: start_20
       12: start_60
       13: stop_game
-      14: toggle_wither
-      15: toggle_taunts
-      16: goto_world
-      19: scoreboard_toggle
-      20: timer_toggle
-      21: cycle_variant
-      22: spawn_wither
-      23: reward_win
-      24: reward_fail
-      28: goto_gameplay
-      34: goto_examples
-      40: goto_player
+      14: cycle_variant
+      15: scoreboard_toggle
+      16: timer_toggle
 
-  world:
-    title: "&9LuckySky » Welt"
-    size: 45
-    buttons:
-      10: save_base
-      11: load_base
-      12: load_schematic
-      13: paste_schematic
-      19: soft_wipe
-      20: hard_wipe
-      21: bind_all
-      22: place_platform
-      23: place_platform_extended
-      24: teleport_spawn
-      30: save_config
-      31: portal_open
-      32: portal_close
-      40: go_back
+      19: toggle_wither
+      20: toggle_taunts
+      21: spawn_wither
+      22: reward_win
+      23: reward_fail
+      24: npc_deploy
+      25: npc_recall
 
-  gameplay:
-    title: "&5LuckySky » Gameplay"
-    size: 45
-    buttons:
-      10: scoreboard_toggle
-      11: timer_toggle
-      12: cycle_variant
-      19: spawn_wither
-      20: reward_win
-      21: reward_fail
-      28: goto_world
-      40: go_back
+      28: save_base
+      29: load_base
+      30: load_schematic
+      31: paste_schematic
+      32: place_platform
+      33: place_platform_extended
+      34: teleport_spawn
 
-  examples:
-    title: "&eLuckySky » Vorlagen"
-    size: 36
-    buttons:
-      10: save_base
-      11: load_base
-      12: start_5
-      13: start_20
-      14: start_60
-      19: player_join_sample
-      20: player_info_sample
-      26: go_back
-
-  player:
-    title: "&bLuckySky » Spieler"
-    size: 27
-    permission: opalium.luckysky.menu.player
-    buttons:
-      11: player_join_sample
-      15: player_info_sample
-      22: go_back
+      37: soft_wipe
+      38: hard_wipe
+      39: bind_all
+      40: portal_open
+      41: portal_close
+      42: rotate_world
+      43: save_config
+      44: reload_plugin
