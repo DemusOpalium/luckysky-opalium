@@ -52,7 +52,8 @@ public record DuelsConfig(
         Spawns spawns = readSpawns(section.getConfigurationSection("spawns"));
         Rules rules = readRules(section.getConfigurationSection("rules"));
         Map<String, ResetPreset> resets = readResets(section.getConfigurationSection("resets"));
-        return new Arena(id, world, bounds, walls, ceiling, floor, hazards, spawns, rules, resets);
+        Map<String, ResetPreset> traps = readResets(section.getConfigurationSection("traps"));
+        return new Arena(id, world, bounds, walls, ceiling, floor, hazards, spawns, rules, resets, traps);
     }
 
     private static Walls readWalls(ConfigurationSection section) {
@@ -123,14 +124,67 @@ public record DuelsConfig(
             return new Hazards(-56, Map.of());
         }
         int layerY = section.getInt("layer_y", -56);
-        Map<String, Region> presets = new LinkedHashMap<>();
+        Map<String, HazardPreset> presets = new LinkedHashMap<>();
         ConfigurationSection presetSection = section.getConfigurationSection("presets");
         if (presetSection != null) {
             for (String id : presetSection.getKeys(false)) {
-                presets.put(id, readRegion(presetSection.getConfigurationSection(id)));
+                ConfigurationSection hazardSection = presetSection.getConfigurationSection(id);
+                if (hazardSection == null) {
+                    continue;
+                }
+                Region region = readRegion(hazardSection.getConfigurationSection("region"));
+                if (region == null) {
+                    region = readRegion(hazardSection);
+                }
+                if (region == null) {
+                    continue;
+                }
+                List<HazardLayer> layers = readHazardLayers(hazardSection, layerY);
+                presets.put(id, new HazardPreset(id, region, Collections.unmodifiableList(layers)));
             }
         }
         return new Hazards(layerY, Collections.unmodifiableMap(presets));
+    }
+
+    private static List<HazardLayer> readHazardLayers(ConfigurationSection section, int defaultY) {
+        List<HazardLayer> layers = new ArrayList<>();
+        List<Map<?, ?>> rawLayers = section.getMapList("layers");
+        if (rawLayers.isEmpty()) {
+            Map<String, Object> fallback = new LinkedHashMap<>();
+            fallback.put("y", section.getInt("y", defaultY));
+            fallback.put("offset", section.contains("offset") ? section.getInt("offset") : 0);
+            fallback.put("thickness", section.getInt("thickness", 1));
+            fallback.put("material", section.getString("material", "LAVA"));
+            rawLayers = List.of(fallback);
+        }
+        for (Map<?, ?> raw : rawLayers) {
+            if (!(raw instanceof Map<?, ?> map)) {
+                continue;
+            }
+            int base = defaultY;
+            if (map.containsKey("offset")) {
+                base += parseInt(map.get("offset"), 0);
+            }
+            int y = map.containsKey("y") ? parseInt(map.get("y"), base) : base;
+            int thickness = Math.max(1, parseInt(map.get("thickness"), 1));
+            Object mat = map.get("material");
+            String material = mat != null ? String.valueOf(mat) : String.valueOf(section.getString("material", "LAVA"));
+            layers.add(new HazardLayer(y, thickness, material));
+        }
+        return layers;
+    }
+
+    private static int parseInt(Object value, int def) {
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        if (value instanceof String s) {
+            try {
+                return Integer.parseInt(s);
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return def;
     }
 
     private static Spawns readSpawns(ConfigurationSection section) {
@@ -303,6 +357,7 @@ public record DuelsConfig(
             writeSpawns(section.createSection("spawns"), arena.spawns());
             writeRules(section.createSection("rules"), arena.rules());
             writeResets(section.createSection("resets"), arena.resets());
+            writeResets(section.createSection("traps"), arena.traps());
         }
         writeGui(config.createSection("gui"), gui);
         ConfigurationSection scoreboardSection = config.createSection("scoreboard");
@@ -351,8 +406,18 @@ public record DuelsConfig(
     private void writeHazards(ConfigurationSection section, Hazards hazards) {
         section.set("layer_y", hazards.layerY());
         ConfigurationSection presetsSection = section.createSection("presets");
-        for (Map.Entry<String, Region> entry : hazards.presets().entrySet()) {
-            writeRegion(presetsSection.createSection(entry.getKey()), entry.getValue());
+        for (Map.Entry<String, HazardPreset> entry : hazards.presets().entrySet()) {
+            ConfigurationSection presetSection = presetsSection.createSection(entry.getKey());
+            writeRegion(presetSection.createSection("region"), entry.getValue().region());
+            List<Map<String, Object>> rawLayers = new ArrayList<>();
+            for (HazardLayer layer : entry.getValue().layers()) {
+                Map<String, Object> map = new LinkedHashMap<>();
+                map.put("y", layer.y());
+                map.put("thickness", layer.thickness());
+                map.put("material", layer.material());
+                rawLayers.add(map);
+            }
+            presetSection.set("layers", rawLayers);
         }
     }
 
@@ -415,7 +480,8 @@ public record DuelsConfig(
     }
 
     public record Arena(String id, String world, Region bounds, Walls walls, Ceiling ceiling, Floor floor,
-                        Hazards hazards, Spawns spawns, Rules rules, Map<String, ResetPreset> resets) {
+                        Hazards hazards, Spawns spawns, Rules rules, Map<String, ResetPreset> resets,
+                        Map<String, ResetPreset> traps) {
     }
 
     public record Region(Vector3i min, Vector3i max) {
@@ -440,7 +506,13 @@ public record DuelsConfig(
     public record FloorPreset(String id, List<ResetStep> steps) {
     }
 
-    public record Hazards(int layerY, Map<String, Region> presets) {
+    public record Hazards(int layerY, Map<String, HazardPreset> presets) {
+    }
+
+    public record HazardPreset(String id, Region region, List<HazardLayer> layers) {
+    }
+
+    public record HazardLayer(int y, int thickness, String material) {
     }
 
     public record Spawns(Point lobby, Point p1, Point p2) {

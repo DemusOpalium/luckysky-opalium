@@ -1,147 +1,250 @@
-active_arena: "crystal_default"
+active_arena: "vault_primus"
 gui:
-  size: 27
+  size: 36
   items:
-    start:
-      slot: 11
+    arena_next:
+      slot: 10
       material: "LIME_WOOL"
       name: "§aArena wechseln"
       lore:
-        - "§7Wechselt zur nächsten Arena."
+        - "§7Nächste konfigurierte Arena auswählen."
       action: "arena:next"
-    reset:
-      slot: 13
-      material: "NETHER_STAR"
-      name: "§bReset Innenraum"
+    reset_clear:
+      slot: 11
+      material: "WATER_BUCKET"
+      name: "§bInnenraum leeren"
       lore:
-        - "§7Wendet das Preset clear_interior an."
+        - "§7Setzt den Innenraum auf Luft & Standardboden."
       action: "reset:clear_interior"
-    frame:
-      slot: 15
-      material: "DEEPSLATE_BRICKS"
-      name: "§bVolle Hülle"
+    reset_frame:
+      slot: 12
+      material: "BEDROCK"
+      name: "§8Hülle neu aufbauen"
       lore:
-        - "§7Setzt das frame_full Reset."
+        - "§7Aktiviert das Reset frame_full."
       action: "reset:frame_full"
     floor_gpt:
-      slot: 19
+      slot: 14
       material: "AMETHYST_SHARD"
-      name: "§dBoden GPT"
+      name: "§dBoden: Prisma"
       lore:
-        - "§7Bodenmuster GPT anwenden."
+        - "§7Mehrlagiges Muster aus GPT-Ringen."
       action: "floor:gpt"
     floor_storm:
-      slot: 20
+      slot: 15
       material: "POLISHED_BLACKSTONE_BRICKS"
-      name: "§dBoden Storm"
+      name: "§dBoden: Sturm"
       lore:
-        - "§7Bodenmuster Storm anwenden."
+        - "§7Kreuzförmiges Blackstone-Muster."
       action: "floor:storm"
+    floor_void:
+      slot: 16
+      material: "CRYING_OBSIDIAN"
+      name: "§dBoden: Abyss"
+      lore:
+        - "§7Kontrastreiches Obsidian/Soul-Licht."
+      action: "floor:abyss"
+    ceiling_close:
+      slot: 19
+      material: "TINTED_GLASS"
+      name: "§5Decke schließen"
+      lore:
+        - "§7Aktiviert die getönte Decke samt Licht."
+      action: "ceiling:on"
+    ceiling_open:
+      slot: 20
+      material: "IRON_TRAPDOOR"
+      name: "§5Decke öffnen"
+      lore:
+        - "§7Entfernt Glas & Licht-Raster."
+      action: "ceiling:off"
     lava_center:
       slot: 21
       material: "MAGMA_BLOCK"
-      name: "§cLava Zentrum"
+      name: "§cGefahr: Kern"
       lore:
-        - "§7Aktiviert Lava im Zentrum."
-      action: "lava:center"
-    lava_clear:
+        - "§7Aktiviert die Lava/Soul-Fire Kernfalle."
+      action: "lava:center_breach"
+    lava_ring:
       slot: 22
-      material: "BUCKET"
-      name: "§eLava Entfernen"
+      material: "SCULK"
+      name: "§cGefahr: Ring"
       lore:
-        - "§7Entfernt alle Lava-Presets."
+        - "§7Aktiviert den äußeren Lava-Ring."
+      action: "lava:ember_ring"
+    lava_clear:
+      slot: 23
+      material: "BUCKET"
+      name: "§7Gefahren säubern"
+      lore:
+        - "§7Entfernt alle aktiven Gefahren."
       action: "lava:clear"
     light_on:
-      slot: 23
-      material: "SEA_LANTERN"
-      name: "§fLicht an"
+      slot: 24
+      material: "LIGHT"
+      name: "§fLicht aktivieren"
       lore:
-        - "§7Aktiviert das Licht-Raster."
+        - "§7Setzt das LIGHT-Gitter ein."
       action: "light:on"
     light_off:
-      slot: 24
+      slot: 25
       material: "REDSTONE_TORCH"
-      name: "§cLicht aus"
+      name: "§cLicht deaktivieren"
       lore:
-        - "§7Deaktiviert das Licht-Raster."
+        - "§7Entfernt alle LIGHT-Blöcke."
       action: "light:off"
+    trap_dripstone:
+      slot: 28
+      material: "POINTED_DRIPSTONE"
+      name: "§6Falle: Dripstone-Buchten"
+      lore:
+        - "§7Öffnet seitliche Bays & enthüllt Spitzen."
+      action: "trap:dripstone_bays"
+    trap_soulfire:
+      slot: 29
+      material: "SOUL_CAMPFIRE"
+      name: "§6Falle: Seelenbrand"
+      lore:
+        - "§7Soul-Sand + Soul-Fire mit Lavaeinsatz."
+      action: "trap:soulfire_crucible"
+    trap_cascade:
+      slot: 30
+      material: "SAND"
+      name: "§6Falle: Sand-Kaskade"
+      lore:
+        - "§7Lässt Deckensand herabstürzen."
+      action: "trap:sand_cascade"
 arenas:
-  crystal_default:
+  vault_primus:
     world: "duels"
     bounds:
-      min: { x: -49, y: -58, z: -49 }
-      max: { x: 49, y: -30, z: 49 }
+      min: { x: -30, y: -64, z: -30 }
+      max: { x: 29, y: -25, z: 29 }
     walls:
       inner:
-        min: { x: -48, y: -57, z: -48 }
-        max: { x: 48, y: -40, z: 48 }
-      thickness: 1
-      core_material: "reinforced_deepslate"
-      inner_material: "polished_deepslate"
+        min: { x: -28, y: -58, z: -28 }
+        max: { x: 27, y: -30, z: 27 }
+      thickness: 2
+      core_material: "BEDROCK"
+      inner_material: "DEEPSLATE_BRICKS"
     ceiling:
-      y_glass: -39
-      y_crown: [-31, -30]
-      glass_material: "purple_stained_glass"
-      crown_material: "bedrock"
+      y_glass: -30
+      y_crown: [-29, -28, -27, -26, -25]
+      glass_material: "TINTED_GLASS"
+      crown_material: "BEDROCK"
       light_raster:
         enabled: true
-        y: -40
-        step: 12
-        material: "sea_lantern"
+        y: -29
+        step: 10
+        material: "LIGHT"
         extra_corners: true
     floor:
-      y: -57
-      default_material: "deepslate_tiles"
+      y: -58
+      default_material: "DEEPSLATE_TILES"
       presets:
         gpt:
           layers:
-            - { type: fill, from: [-48, -57, -48], to: [48, -57, 48], material: "polished_deepslate" }
-            - { type: fill, from: [-36, -57, -36], to: [36, -57, 36], material: "crying_obsidian" }
-            - { type: fill, from: [-28, -57, -28], to: [28, -57, 28], material: "amethyst_block" }
-            - { type: fill, from: [-20, -57, -20], to: [20, -57, 20], material: "obsidian" }
-            - { type: fill, from: [-12, -57, -12], to: [12, -57, 12], material: "smooth_basalt" }
-            - { type: fill, from: [-4, -57, -4], to: [4, -57, 4], material: "quartz_block" }
+            - { type: fill, from: [-28, -58, -28], to: [27, -58, 27], material: "POLISHED_DEEPSLATE" }
+            - { type: fill, from: [-20, -58, -20], to: [19, -58, 19], material: "CRYING_OBSIDIAN" }
+            - { type: fill, from: [-12, -58, -12], to: [11, -58, 11], material: "AMETHYST_BLOCK" }
+            - { type: fill, from: [-6, -58, -6], to: [5, -58, 5], material: "SMOOTH_BASALT" }
+            - { type: fill, from: [-2, -58, -2], to: [1, -58, 1], material: "QUARTZ_BLOCK" }
         storm:
           layers:
-            - { type: fill, from: [-48, -57, -48], to: [48, -57, 48], material: "deepslate_bricks" }
-            - { type: fill, from: [-48, -57, 0], to: [48, -57, 0], material: "polished_blackstone_bricks" }
-            - { type: fill, from: [0, -57, -48], to: [0, -57, 48], material: "polished_blackstone_bricks" }
+            - { type: fill, from: [-28, -58, -28], to: [27, -58, 27], material: "DEEPSLATE_BRICKS" }
+            - { type: fill, from: [-28, -58, -1], to: [27, -58, -1], material: "POLISHED_BLACKSTONE_BRICKS" }
+            - { type: fill, from: [-1, -58, -28], to: [-1, -58, 27], material: "POLISHED_BLACKSTONE_BRICKS" }
+        abyss:
+          layers:
+            - { type: fill, from: [-28, -58, -28], to: [27, -58, 27], material: "DEEPSLATE_TILES" }
+            - { type: fill, from: [-18, -58, -18], to: [17, -58, 17], material: "OBSIDIAN" }
+            - { type: fill, from: [-8, -58, -8], to: [7, -58, 7], material: "BLACK_CONCRETE" }
+            - { type: fill, from: [-8, -57, -8], to: [7, -57, 7], material: "SOUL_FIRE" }
     hazards:
-      layer_y: -56
+      layer_y: -57
       presets:
-        center: { min: {x:-4,y:-56,z:-4}, max: {x:4,y:-56,z:4} }
-        north:  { min: {x:-4,y:-56,z:-28}, max: {x:4,y:-56,z:-20} }
-        south:  { min: {x:-4,y:-56,z:20}, max: {x:4,y:-56,z:28} }
-        east:   { min: {x:20,y:-56,z:-4}, max: {x:28,y:-56,z:4} }
-        west:   { min: {x:-28,y:-56,z:-4}, max: {x:-20,y:-56,z:4} }
+        center_breach:
+          region:
+            min: { x: -6, y: -58, z: -6 }
+            max: { x: 5, y: -58, z: 5 }
+          layers:
+            - { y: -58, material: "SOUL_SAND", thickness: 1 }
+            - { y: -57, material: "SOUL_FIRE", thickness: 1 }
+            - { y: -56, material: "LAVA", thickness: 2 }
+        ember_ring:
+          region:
+            min: { x: -28, y: -58, z: -28 }
+            max: { x: 27, y: -58, z: 27 }
+          layers:
+            - { y: -57, material: "MAGMA_BLOCK", thickness: 1 }
+            - { y: -56, material: "LAVA", thickness: 1 }
     spawns:
       lobby: { x: 0.5, y: 120.0, z: 0.5, yaw: 0.0, pitch: 0.0 }
-      p1:    { x: -24.5, y: -57.0, z: 0.5, yaw: 90.0, pitch: 0.0 }
-      p2:    { x:  24.5, y: -57.0, z: 0.5, yaw: -90.0, pitch: 0.0 }
+      p1:    { x: -14.5, y: -57.0, z: 0.5, yaw: 90.0, pitch: 0.0 }
+      p2:    { x:  14.5, y: -57.0, z: 0.5, yaw: -90.0, pitch: 0.0 }
     rules:
       keep_inventory: false
-      build_protect_radius: 48
+      build_protect_radius: 30
       allow_crystals: true
       scoreboard_enabled: true
     resets:
       clear_interior:
         steps:
-          - { type: slice_fill, from_y: -56, to_y: -38, from: [-48, *, -48], to: [48, *, 48], material: "AIR" }
+          - { type: slice_fill, from_y: -57, to_y: -31, from: [-28, *, -28], to: [27, *, 27], material: "AIR" }
+          - { type: fill, from: [-28, -58, -28], to: [27, -58, 27], material: "DEEPSLATE_TILES" }
+          - { type: light_raster, enabled: false }
       frame_full:
         steps:
-          - { type: fill, from: [-49, -58, -49], to: [49, -58, 49], material: "BEDROCK" }
-          - { type: fill, from: [-49, -58, -49], to: [-49, -40, 49], material: "REINFORCED_DEEPSLATE" }
-          - { type: fill, from: [49, -58, -49], to: [49, -40, 49], material: "REINFORCED_DEEPSLATE" }
-          - { type: fill, from: [-49, -58, -49], to: [49, -40, -49], material: "REINFORCED_DEEPSLATE" }
-          - { type: fill, from: [-49, -58, 49], to: [49, -40, 49], material: "REINFORCED_DEEPSLATE" }
-          - { type: fill, from: [-48, -57, -48], to: [48, -40, 48], material: "POLISHED_DEEPSLATE" }
-          - { type: fill, from: [-49, -31, -49], to: [49, -31, 49], material: "BEDROCK" }
-          - { type: fill, from: [-49, -30, -49], to: [49, -30, 49], material: "BEDROCK" }
+          - { type: fill, from: [-30, -64, -30], to: [29, -59, 29], material: "BEDROCK" }
+          - { type: fill, from: [-30, -58, -30], to: [-29, -26, 29], material: "BEDROCK" }
+          - { type: fill, from: [28, -58, -30], to: [29, -26, 29], material: "BEDROCK" }
+          - { type: fill, from: [-30, -58, -30], to: [29, -26, -29], material: "BEDROCK" }
+          - { type: fill, from: [-30, -58, 28], to: [29, -26, 29], material: "BEDROCK" }
+          - { type: fill, from: [-28, -58, -28], to: [27, -30, 27], material: "DEEPSLATE_BRICKS" }
+          - { type: fill, from: [-26, -57, -26], to: [25, -31, 25], material: "AIR" }
+          - { type: fill, from: [-30, -29, -30], to: [29, -25, 29], material: "BEDROCK" }
+          - { type: fill, from: [-28, -30, -28], to: [27, -30, 27], material: "TINTED_GLASS" }
+          - { type: light_raster, enabled: true }
       ceiling_on:
         steps:
           - { type: light_raster, enabled: true }
-          - { type: fill, from: [-48, -39, -48], to: [48, -39, 48], material: "PURPLE_STAINED_GLASS" }
+          - { type: fill, from: [-28, -30, -28], to: [27, -30, 27], material: "TINTED_GLASS" }
       ceiling_off:
         steps:
           - { type: light_raster, enabled: false }
-          - { type: fill_replace, from: [-48, -39, -48], to: [48, -39, 48], find: "PURPLE_STAINED_GLASS", with: "AIR" }
+          - { type: fill_replace, from: [-28, -30, -28], to: [27, -30, 27], find: "TINTED_GLASS", with: "AIR" }
+    traps:
+      dripstone_bays:
+        steps:
+          - { type: particles, particle: "DRIPPING_DRIPSTONE", position: [0, -57, 0], offset: [14.0, 0.5, 14.0], count: 32, duration: 40, interval: 5 }
+          - { type: delay, ticks: 40 }
+          - type: block_remove
+            regions:
+              - from: [-26, -58, -10]
+                to: [-18, -58, 10]
+              - from: [18, -58, -10]
+                to: [26, -58, 10]
+            find: "DEEPSLATE_TILES"
+          - { type: fill, from: [-26, -63, -10], to: [-18, -63, 10], material: "POINTED_DRIPSTONE" }
+          - { type: fill, from: [18, -63, -10], to: [26, -63, 10], material: "POINTED_DRIPSTONE" }
+      soulfire_crucible:
+        steps:
+          - { type: particles, particle: "SOUL", position: [0, -56, 0], offset: [12.0, 0.7, 12.0], count: 48, duration: 60, interval: 4 }
+          - { type: fill, from: [-14, -58, -14], to: [13, -58, 13], material: "SOUL_SAND" }
+          - { type: fill, from: [-14, -57, -14], to: [13, -57, 13], material: "SOUL_FIRE" }
+          - { type: fill, from: [-10, -56, -10], to: [9, -56, 9], material: "LAVA" }
+          - type: block_remove
+            from: [-14, -55, -14]
+            to: [13, -55, 13]
+            find: "TINTED_GLASS"
+      sand_cascade:
+        steps:
+          - { type: particles, particle: "FALLING_DUST", position: [0, -45, 0], offset: [16.0, 2.0, 16.0], count: 80, duration: 40, interval: 4 }
+          - { type: delay, ticks: 20 }
+          - { type: fill, from: [-24, -29, -24], to: [23, -25, 23], material: "SAND" }
+          - type: block_remove
+            from: [-24, -30, -24]
+            to: [23, -30, 23]
+            find: "TINTED_GLASS"
+scoreboard:
+  enabled: true

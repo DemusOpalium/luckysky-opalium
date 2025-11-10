@@ -78,6 +78,10 @@ public class DuelsManager implements Listener {
         return arenaService.applyHazardPreset(preset, sender);
     }
 
+    public boolean trap(String preset, CommandSender sender) {
+        return arenaService.applyTrapPreset(preset, sender);
+    }
+
     public void light(boolean enabled, CommandSender sender) {
         arenaService.setLight(enabled, sender);
     }
@@ -119,8 +123,15 @@ public class DuelsManager implements Listener {
             }
             case "reset" -> reset(argument, player);
             case "floor" -> floor(argument, player);
+            case "ceiling" -> {
+                if (!argument.isBlank()) {
+                    String preset = argument.startsWith("ceiling_") ? argument : "ceiling_" + argument;
+                    reset(preset, player);
+                }
+            }
             case "lava" -> lava(argument, player);
             case "light" -> light(!argument.equalsIgnoreCase("off"), player);
+            case "trap" -> trap(argument, player);
             case "command" -> {
                 if (!argument.isBlank()) {
                     String command = argument.replace("%player%", player.getName());
