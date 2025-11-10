@@ -213,7 +213,7 @@ public class WitherService {
         Bukkit.broadcastMessage(Msg.color(messages().prefix() + "&c" + line));
     }
 
-    private boolean shouldTrigger(SpawnTrigger trigger) {
+    boolean shouldTrigger(SpawnTrigger trigger) {
         // Platzhalter: aktuell keine Mode-Logik → immer true,
         // außer MANUAL ist explizit angefragt, dann auch true.
         // Später ggf. über GameConfig.Wither-Mode selektieren.
