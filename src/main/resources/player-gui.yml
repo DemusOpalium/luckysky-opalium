@@ -1,0 +1,104 @@
+# LuckySky Player GUI Layout
+# Enthält das Lobby-Menü für Spieler mit Join/Leave, Start-Votes und weitere Aktionen.
+
+title: "&bLuckySky Lobby"
+size: 54
+
+filler:
+  material: LIGHT_BLUE_STAINED_GLASS_PANE
+  name: " "
+
+buttons:
+  join:
+    action: join
+    slot: 20
+    display:
+      material: LIME_DYE
+      name: "&aBeitreten"
+      lore:
+        - "&7Teleportiert dich zur LuckySky-Plattform."
+        - "&7Aktueller Status: {status}"
+      glow: true
+
+  leave:
+    action: leave
+    slot: 24
+    display:
+      material: RED_DYE
+      name: "&cVerlassen"
+      lore:
+        - "&7Sendet dich zurück in die Lobby."
+        - "&7Aktueller Ort: {status}"
+
+  start_5:
+    action: start
+    slot: 30
+    argument: "5"
+    display:
+      material: CLOCK
+      name: "&aStart &f{minutes}m"
+      lore:
+        - "&7Setzt die Dauer auf &f{minutes}&7 Minuten."
+        - "&7Status: {state}"
+      glow: true
+    placeholders:
+      minutes: "5"
+
+  start_20:
+    action: start
+    slot: 31
+    argument: "20"
+    display:
+      material: SUNFLOWER
+      name: "&aStart &f{minutes}m"
+      lore:
+        - "&7Setzt die Dauer auf &f{minutes}&7 Minuten."
+        - "&7Status: {state}"
+    placeholders:
+      minutes: "20"
+
+  start_60:
+    action: start
+    slot: 32
+    argument: "60"
+    display:
+      material: NETHER_STAR
+      name: "&aStart &f{minutes}m"
+      lore:
+        - "&7Setzt die Dauer auf &f{minutes}&7 Minuten."
+        - "&7Status: {state}"
+    placeholders:
+      minutes: "60"
+
+  lobby:
+    action: lobby
+    slot: 41
+    display:
+      material: ENDER_PEARL
+      name: "&bZur Lobby"
+      lore:
+        - "&7Teleportiert dich zur LuckySky-Lobby."
+        - "&7Spawn verfügbar: {status}"
+
+  rules:
+    action: rules
+    slot: 43
+    display:
+      material: BOOK
+      name: "&eRegeln"
+      lore:
+        - "&7Zeigt die wichtigsten Regeln an."
+    messages:
+      - "&eLuckySky-Regeln:"
+      - "&71) Kein Griefing & kein Blockieren der Plattform."
+      - "&72) Folge den Team-Anweisungen & halte die Runde fair."
+      - "&7Mehr Infos findest du im Discord."
+
+  scoreboard:
+    action: scoreboard
+    slot: 49
+    display:
+      material: OAK_SIGN
+      name: "&9Scoreboard: {status}"
+      lore:
+        - "&7Schaltet die Sidebar ein oder aus."

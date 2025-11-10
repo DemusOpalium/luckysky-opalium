@@ -42,3 +42,6 @@ permissions:
     default: op
     children:
       opalium.luckysky.duels.use: true
+  luckysky.gui.players:
+    description: Allows opening the LuckySky player GUI
+    default: true

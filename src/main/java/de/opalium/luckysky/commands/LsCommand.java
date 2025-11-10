@@ -25,6 +25,7 @@ public class LsCommand implements CommandExecutor, TabCompleter {
     private static final String PERM_BASE = "opalium.luckysky.base";
     private static final String PERM_ADMIN = "opalium.luckysky.admin";
     private static final String PERM_DUELS_USE = "opalium.luckysky.duels.use";
+    private static final String PERM_PLAYER_GUI = "luckysky.gui.players";
 
     private final LuckySkyPlugin plugin;
 
@@ -252,6 +253,9 @@ public class LsCommand implements CommandExecutor, TabCompleter {
         }
         if (sender.hasPermission(PERM_DUELS_USE)) {
             Msg.to(sender, "&7/ls duels [Variante] &8– Öffnet LuckySky-Duels oder wählt ein Kit");
+        }
+        if (sender.hasPermission(PERM_PLAYER_GUI)) {
+            Msg.to(sender, "&7/ls sky &8– Öffnet das Spieler-Menü");
         }
     }
 

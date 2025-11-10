@@ -9,6 +9,7 @@ import de.opalium.luckysky.game.GameManager;
 import de.opalium.luckysky.game.ScoreboardService;
 import de.opalium.luckysky.npc.NpcService;
 import de.opalium.luckysky.gui.AdminGui;
+import de.opalium.luckysky.gui.PlayerGui;
 import de.opalium.luckysky.listeners.BossListener;
 import de.opalium.luckysky.listeners.PlayerListener;
 import org.bukkit.command.CommandExecutor;
@@ -23,6 +24,7 @@ public final class LuckySkyPlugin extends JavaPlugin {
     private GameManager game;
     private AdminGui adminGui;
     private DuelsManager duels;
+    private PlayerGui playerGui;
     private ScoreboardService scoreboard;
     private NpcService npcs;
 
@@ -54,6 +56,7 @@ public final class LuckySkyPlugin extends JavaPlugin {
         this.scoreboard = new ScoreboardService(this);
         this.game = new GameManager(this, scoreboard);
         this.adminGui = new AdminGui(this);
+        this.playerGui = new PlayerGui(this);
         this.duels = new DuelsManager(this);
         this.npcs = new NpcService(this);
 
@@ -65,6 +68,7 @@ public final class LuckySkyPlugin extends JavaPlugin {
         pm.registerEvents(new BossListener(this), this);
         pm.registerEvents(new PlayerListener(this), this);
         pm.registerEvents(adminGui, this);
+        pm.registerEvents(playerGui, this);
         pm.registerEvents(duels, this);
 
         getLogger().info("[LuckySky] enabled.");
@@ -105,10 +109,17 @@ public final class LuckySkyPlugin extends JavaPlugin {
         if (adminGui != null) {
             adminGui.reload();
         }
+        if (playerGui != null) {
+            playerGui.reload();
+        }
     }
 
     public AdminGui adminGui() {
         return adminGui;
+    }
+
+    public PlayerGui playerGui() {
+        return playerGui;
     }
 
     public DuelsManager duels() {
