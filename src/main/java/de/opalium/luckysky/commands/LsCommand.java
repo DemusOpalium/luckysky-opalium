@@ -3,7 +3,9 @@ package de.opalium.luckysky.commands;
 import de.opalium.luckysky.LuckySkyPlugin;
 import de.opalium.luckysky.duels.DuelsManager;
 import de.opalium.luckysky.game.GameManager;
+import de.opalium.luckysky.game.WitherService;
 import de.opalium.luckysky.util.Msg;
+import de.opalium.luckysky.util.WitherSpawnMessages;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -175,8 +177,8 @@ public class LsCommand implements CommandExecutor, TabCompleter {
                 if (game == null || !requirePermission(sender, PERM_ADMIN)) {
                     return true;
                 }
-                game.spawnWitherNow();
-                Msg.to(sender, "&dWither gespawnt.");
+                WitherService.SpawnRequestResult result = game.spawnWitherNow();
+                WitherSpawnMessages.sendSpawnResult(sender, result);
             }
             case "taunt_on" -> {
                 GameManager game = requireGame(sender);
