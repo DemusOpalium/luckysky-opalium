@@ -6,6 +6,7 @@ import de.opalium.luckysky.config.TrapsConfig;
 import de.opalium.luckysky.config.WorldsConfig;
 import de.opalium.luckysky.game.GameState;
 import de.opalium.luckysky.game.PortalService;
+import de.opalium.luckysky.game.WitherService;
 import de.opalium.luckysky.gui.layout.AdminGuiLayout;
 import de.opalium.luckysky.util.Msg;
 import de.opalium.luckysky.util.Worlds;
@@ -300,8 +301,13 @@ public class AdminGui implements Listener {
     }
 
     private void spawnWither(Player player) {
-        plugin.game().spawnWitherNow();
-        Msg.to(player, "&dWither gespawnt.");
+        WitherService.SpawnRequestResult result = plugin.game().spawnWitherNow();
+        switch (result) {
+            case ACCEPTED -> Msg.to(player, "&dWither-Spawn ausgelöst.");
+            case WITHER_DISABLED -> Msg.to(player, "&cWither-Spawns sind deaktiviert.");
+            case GAME_NOT_RUNNING -> Msg.to(player, "&eLuckySky läuft derzeit nicht.");
+            case SKIPPED_BY_MODE -> Msg.to(player, "&eWither-Spawn ist für diesen Modus gesperrt.");
+        }
     }
 
     private void reloadPlugin(Player player) {

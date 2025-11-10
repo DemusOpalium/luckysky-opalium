@@ -2,17 +2,22 @@ package de.opalium.luckysky.game;
 
 import de.opalium.luckysky.LuckySkyPlugin;
 import de.opalium.luckysky.config.GameConfig;
+import de.opalium.luckysky.config.GameConfig.WitherSpawnMode;
 import de.opalium.luckysky.config.MessagesConfig;
 import de.opalium.luckysky.config.TrapsConfig;
 import de.opalium.luckysky.config.WorldsConfig;
 import de.opalium.luckysky.util.Msg;
 import de.opalium.luckysky.util.Worlds;
 import java.util.List;
+import java.util.logging.Logger;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
+import org.bukkit.Difficulty;
+import org.bukkit.GameRule;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.WorldCreator;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Wither;
 
@@ -41,7 +46,9 @@ public class WitherService {
         if (!witherEnabled) return;
 
         // einheitlich über scheduleSpawn(...)
-        scheduleSpawn(traps.withers().spawnAfterMinutes());
+        if (witherConfig().spawnMode().usesSchedule()) {
+            scheduleSpawn(traps.withers().spawnAfterMinutes());
+        }
 
         if (tauntsEnabled) {
             tauntTimer = Bukkit.getScheduler().scheduleSyncRepeatingTask(
@@ -77,13 +84,16 @@ public class WitherService {
     public void scheduleSpawn(int minutes) {
         cancelSpawn();
         if (!witherEnabled || plugin.game().state() != GameState.RUNNING) return;
+        if (!witherConfig().spawnMode().usesSchedule()) {
+            return;
+        }
         if (minutes <= 0) {
             // sofort spawnen (gleiches Verhalten wie spawnNow, aber ohne Taunt-Neuaufbau)
-            Bukkit.getScheduler().runTask(plugin, this::spawn);
+            Bukkit.getScheduler().runTask(plugin, () -> spawn());
             return;
         }
         long delay = minutes * 60L * 20L;
-        spawnTimer = Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, this::spawn, delay);
+        spawnTimer = Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> spawn(), delay);
     }
 
     /** Bricht geplanten Wither-Spawn ab. */
@@ -98,11 +108,18 @@ public class WitherService {
     // STEUERUNGEN
     // ─────────────────────────────────────────────────────────────
     public void spawnNow() {
-        stop(); // vermeidet Doppel-Spawn/Timer
-        spawn();
-        if (tauntsEnabled && plugin.game().state() == GameState.RUNNING) {
-            setTauntsEnabled(true);
-        }
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            cancelSpawn();
+            boolean resumeTaunts = tauntTimer != -1;
+            if (tauntTimer != -1) {
+                Bukkit.getScheduler().cancelTask(tauntTimer);
+                tauntTimer = -1;
+            }
+            boolean spawned = spawn();
+            if ((spawned || resumeTaunts) && tauntsEnabled && plugin.game().state() == GameState.RUNNING) {
+                setTauntsEnabled(true);
+            }
+        });
     }
 
     public void setWitherEnabled(boolean enabled) {
@@ -133,17 +150,51 @@ public class WitherService {
     // ─────────────────────────────────────────────────────────────
     // INTERN
     // ─────────────────────────────────────────────────────────────
-    private void spawn() {
-        if (!witherEnabled || plugin.game().state() != GameState.RUNNING) return;
+    private boolean spawn() {
+        Logger logger = plugin.getLogger();
+        if (!witherEnabled) {
+            logger.info("[LuckySky] Wither-Spawn abgebrochen: deaktiviert.");
+            return false;
+        }
+        if (plugin.game().state() != GameState.RUNNING) {
+            logger.info("[LuckySky] Wither-Spawn abgebrochen: Spiel läuft nicht.");
+            return false;
+        }
 
-        GameConfig.Position position = plugin.configs().game().lucky().position();
-        World world = Worlds.require(worldConfig().worldName());
-        Location location = new Location(world, position.x(), position.y(), position.z() - 6);
+        GameConfig.Wither settings = witherConfig();
+        GameConfig.Position base = plugin.configs().game().lucky().position();
+        World world = ensureWorldLoaded();
+        if (world == null) {
+            return false;
+        }
+        if (world.getDifficulty() == Difficulty.PEACEFUL) {
+            logger.info("[LuckySky] Wither-Spawn abgebrochen: Schwierigkeit PEACEFUL in " + world.getName() + ".");
+            return false;
+        }
+        Boolean doMobSpawning = world.getGameRuleValue(GameRule.DO_MOB_SPAWNING);
+        if (Boolean.FALSE.equals(doMobSpawning)) {
+            logger.info("[LuckySky] Wither-Spawn abgebrochen: GameRule doMobSpawning ist deaktiviert in " + world.getName() + ".");
+            return false;
+        }
+
+        if (settings.singleBoss()) {
+            List<Wither> existing = world.getEntitiesByClass(Wither.class);
+            if (!existing.isEmpty()) {
+                existing.forEach(Wither::remove);
+                logger.info("[LuckySky] " + existing.size() + " vorhandene(r) Wither entfernt (singleBoss=true).");
+            }
+        }
+
+        Location location = new Location(world,
+                base.x() + settings.offset().x(),
+                settings.spawnY(),
+                base.z() + settings.offset().z());
 
         Wither wither = (Wither) world.spawnEntity(location, EntityType.WITHER);
         wither.setCustomNameVisible(true);
         wither.customName(Component.text("Abyssal Wither", NamedTextColor.DARK_PURPLE));
         Bukkit.broadcastMessage(Msg.color(messages().prefix() + "&c☠ Abyssal Wither ist erwacht!"));
+        return true;
     }
 
     private void taunt() {
@@ -161,4 +212,57 @@ public class WitherService {
     private TrapsConfig traps() { return plugin.configs().traps(); }
     private WorldsConfig.LuckyWorld worldConfig() { return plugin.configs().worlds().luckySky(); }
     private MessagesConfig messages() { return plugin.configs().messages(); }
+
+    private World ensureWorldLoaded() {
+        WorldsConfig.LuckyWorld config = worldConfig();
+        String worldName = config.worldName();
+        World world = Bukkit.getWorld(worldName);
+        if (world == null) {
+            world = Bukkit.createWorld(new WorldCreator(worldName));
+        }
+        if (world == null) {
+            plugin.getLogger().info("[LuckySky] Wither-Spawn abgebrochen: Welt '" + worldName + "' nicht geladen.");
+        }
+        return world;
+    }
+
+    private GameConfig.Wither witherConfig() {
+        return plugin.configs().game().wither();
+    }
+
+    public enum SpawnTrigger {
+        MANUAL,
+        START,
+        TIMEOUT
+    }
+
+    public enum SpawnRequestResult {
+        ACCEPTED,
+        GAME_NOT_RUNNING,
+        WITHER_DISABLED,
+        SKIPPED_BY_MODE
+    }
+
+    public SpawnRequestResult requestSpawn(SpawnTrigger trigger) {
+        if (!witherEnabled) {
+            return SpawnRequestResult.WITHER_DISABLED;
+        }
+        if (plugin.game().state() != GameState.RUNNING) {
+            return SpawnRequestResult.GAME_NOT_RUNNING;
+        }
+        if (!shouldTrigger(trigger)) {
+            return SpawnRequestResult.SKIPPED_BY_MODE;
+        }
+        spawnNow();
+        return SpawnRequestResult.ACCEPTED;
+    }
+
+    private boolean shouldTrigger(SpawnTrigger trigger) {
+        WitherSpawnMode mode = witherConfig().spawnMode();
+        return switch (trigger) {
+            case MANUAL -> true;
+            case START -> mode.spawnOnStart();
+            case TIMEOUT -> mode.spawnOnTimeout();
+        };
+    }
 }

@@ -42,6 +42,13 @@ scoreboard:
     - "&7Timer: &f{timer}"
     - "&7Spieler: &f{players}"
     - "&7Wither: &f{wither}"
+wither:
+  spawnMode: "SCHEDULED"
+  spawnY: 102
+  offset:
+    x: 0
+    z: -6
+  singleBoss: true
 spawns:
   allow_binding: false
   allow_lobby_override: false

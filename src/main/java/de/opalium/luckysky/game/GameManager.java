@@ -137,7 +137,11 @@ public class GameManager {
         durationService.startDefault();
         witherService.start();
         state = GameState.RUNNING;
+        WitherService.SpawnRequestResult spawnAtStart = witherService.requestSpawn(WitherService.SpawnTrigger.START);
         refreshScoreboard();
+        if (spawnAtStart == WitherService.SpawnRequestResult.ACCEPTED) {
+            Bukkit.getScheduler().runTask(plugin, this::refreshScoreboard);
+        }
         broadcast(messages().gamePrefix() + worldConfig().lucky().startBanner());
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (!platformService.isBaseIntact()) {
@@ -251,9 +255,13 @@ public class GameManager {
         refreshScoreboard();
     }
 
-    public void spawnWitherNow() {
-        witherService.spawnNow();
-        refreshScoreboard();
+    public WitherService.SpawnRequestResult spawnWitherNow() {
+        WitherService.SpawnRequestResult result = witherService.requestSpawn(WitherService.SpawnTrigger.MANUAL);
+        if (result == WitherService.SpawnRequestResult.ACCEPTED) {
+            refreshScoreboard();
+            Bukkit.getScheduler().runTask(plugin, this::refreshScoreboard);
+        }
+        return result;
     }
 
     public void setAllSurvivalInWorld() {
@@ -402,13 +410,20 @@ public class GameManager {
         refreshScoreboard();
     }
 
-    public void onDurationExpired() {
+    public boolean onDurationExpired() {
         if (state != GameState.RUNNING) {
-            return;
+            return false;
+        }
+        WitherService.SpawnRequestResult result = witherService.requestSpawn(WitherService.SpawnTrigger.TIMEOUT);
+        if (result == WitherService.SpawnRequestResult.ACCEPTED) {
+            refreshScoreboard();
+            Bukkit.getScheduler().runTask(plugin, this::refreshScoreboard);
+            return false;
         }
         rewardsService.triggerFail(allParticipants);
         broadcast(messages().gamePrefix() + "&eZeit abgelaufen – Spiel gestoppt.");
         stop();
+        return true;
     }
 
     public void handleWitherKill(Player killer) {

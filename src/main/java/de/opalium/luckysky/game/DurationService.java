@@ -38,8 +38,10 @@ public class DurationService {
                 scoreboardService.onTimerTick(Math.max(ticksRemaining, 0));
             }
             if (ticksRemaining <= 0) {
-                plugin.game().onDurationExpired();
-                Msg.to(Bukkit.getConsoleSender(), "&eZeit abgelaufen – Spiel gestoppt.");
+                boolean stopped = plugin.game().onDurationExpired();
+                if (stopped) {
+                    Msg.to(Bukkit.getConsoleSender(), "&eZeit abgelaufen – Spiel gestoppt.");
+                }
                 stop();
             }
         }, 20L, 20L);

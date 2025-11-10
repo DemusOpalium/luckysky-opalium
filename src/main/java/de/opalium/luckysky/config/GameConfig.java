@@ -3,6 +3,7 @@ package de.opalium.luckysky.config;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -17,11 +18,13 @@ public record GameConfig(
         Rewards rewards,
         Lives lives,
         Scoreboard scoreboard,
-        Spawns spawns
+        Spawns spawns,
+        Wither wither
 ) {
     public static GameConfig from(FileConfiguration config) {
         Durations durations = readDurations(config.getConfigurationSection("durations"));
         Lucky lucky = readLucky(config.getConfigurationSection("lucky"));
+        Wither wither = readWither(config.getConfigurationSection("wither"), lucky);
         Platform platform = readPlatform(config.getConfigurationSection("platform"));
         Rig rig = readRig(config.getConfigurationSection("rig"));
         Wipes wipes = readWipes(config.getConfigurationSection("wipes"));
@@ -29,7 +32,7 @@ public record GameConfig(
         Lives lives = new Lives(config.getBoolean("lives.one_life", false));
         Scoreboard scoreboard = readScoreboard(config.getConfigurationSection("scoreboard"));
         Spawns spawns = readSpawns(config.getConfigurationSection("spawns"));
-        return new GameConfig(durations, lucky, platform, rig, wipes, rewards, lives, scoreboard, spawns);
+        return new GameConfig(durations, lucky, platform, rig, wipes, rewards, lives, scoreboard, spawns, wither);
     }
 
     private static Durations readDurations(ConfigurationSection section) {
@@ -211,12 +214,20 @@ public record GameConfig(
         spawnsSection.set("allow_binding", spawns.allowBinding());
         spawnsSection.set("allow_lobby_override", spawns.allowLobbyOverride());
         spawnsSection.set("warning", spawns.warning());
+
+        ConfigurationSection witherSection = config.createSection("wither");
+        witherSection.set("spawnMode", wither.spawnMode().name());
+        witherSection.set("spawnY", wither.spawnY());
+        ConfigurationSection offsetSection = witherSection.createSection("offset");
+        offsetSection.set("x", wither.offset().x());
+        offsetSection.set("z", wither.offset().z());
+        witherSection.set("singleBoss", wither.singleBoss());
     }
 
     public GameConfig withLuckyVariant(String variant) {
         Lucky updated = new Lucky(lucky.position(), lucky.intervalTicks(), lucky.requireAirAtTarget(), variant,
                 lucky.variantsAvailable());
-        return new GameConfig(durations, updated, platform, rig, wipes, rewards, lives, scoreboard, spawns);
+        return new GameConfig(durations, updated, platform, rig, wipes, rewards, lives, scoreboard, spawns, wither);
     }
 
     public record Durations(int minutesDefault, List<Integer> presets) {
@@ -256,6 +267,57 @@ public record GameConfig(
     public record Spawns(boolean allowBinding, boolean allowLobbyOverride, String warning) {
     }
 
+    public record Wither(WitherSpawnMode spawnMode, int spawnY, Offset offset, boolean singleBoss) {
+        public boolean spawnOnStart() {
+            return spawnMode.spawnOnStart();
+        }
+
+        public boolean spawnOnTimeout() {
+            return spawnMode.spawnOnTimeout();
+        }
+
+        public boolean usesSchedule() {
+            return spawnMode.usesSchedule();
+        }
+    }
+
+    public record Offset(int x, int z) {
+    }
+
+    public enum WitherSpawnMode {
+        SCHEDULED,
+        START,
+        TIMEOUT,
+        START_AND_TIMEOUT,
+        MANUAL;
+
+        public static WitherSpawnMode from(String raw) {
+            if (raw == null) {
+                return SCHEDULED;
+            }
+            String normalized = raw.trim().toUpperCase(Locale.ROOT).replace('-', '_').replace(' ', '_');
+            return switch (normalized) {
+                case "START" -> START;
+                case "TIMEOUT" -> TIMEOUT;
+                case "START_AND_TIMEOUT", "START_TIMEOUT", "BOTH" -> START_AND_TIMEOUT;
+                case "MANUAL", "MANUAL_ONLY" -> MANUAL;
+                default -> SCHEDULED;
+            };
+        }
+
+        public boolean spawnOnStart() {
+            return this == START || this == START_AND_TIMEOUT;
+        }
+
+        public boolean spawnOnTimeout() {
+            return this == TIMEOUT || this == START_AND_TIMEOUT;
+        }
+
+        public boolean usesSchedule() {
+            return this == SCHEDULED;
+        }
+    }
+
     private static Spawns readSpawns(ConfigurationSection section) {
         if (section == null) {
             return new Spawns(false, false, "&8Spawns werden extern verwaltet. Aktivieren nur bei Bedarf.");
@@ -264,5 +326,28 @@ public record GameConfig(
         boolean allowLobbyOverride = section.getBoolean("allow_lobby_override", section.getBoolean("allowLobbyOverride", false));
         String warning = section.getString("warning", "&8Wir empfehlen Essentials/Multiverse für Respawns zu nutzen.");
         return new Spawns(allowBinding, allowLobbyOverride, warning);
+    }
+
+    private static Wither readWither(ConfigurationSection section, Lucky lucky) {
+        int defaultY = lucky != null ? lucky.position().y() : 102;
+        WitherSpawnMode spawnMode = WitherSpawnMode.SCHEDULED;
+        int spawnY = defaultY;
+        int offsetX = 0;
+        int offsetZ = -6;
+        boolean singleBoss = true;
+        if (section != null) {
+            spawnMode = WitherSpawnMode.from(section.getString("spawnMode", section.getString("spawn_mode")));
+            spawnY = section.getInt("spawnY", section.getInt("spawn_y", defaultY));
+            ConfigurationSection offsetSection = section.getConfigurationSection("offset");
+            if (offsetSection != null) {
+                offsetX = offsetSection.getInt("x", offsetX);
+                offsetZ = offsetSection.getInt("z", offsetZ);
+            } else {
+                offsetX = section.getInt("offsetX", section.getInt("offset_x", offsetX));
+                offsetZ = section.getInt("offsetZ", section.getInt("offset_z", offsetZ));
+            }
+            singleBoss = section.getBoolean("singleBoss", section.getBoolean("single_boss", true));
+        }
+        return new Wither(spawnMode, spawnY, new Offset(offsetX, offsetZ), singleBoss);
     }
 }
