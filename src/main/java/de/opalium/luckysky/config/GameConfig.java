@@ -1,8 +1,11 @@
 package de.opalium.luckysky.config;
 
+import de.opalium.luckysky.game.WitherService;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -221,6 +224,7 @@ public record GameConfig(
         witherOffset.set("y", wither.offset().y());
         witherOffset.set("z", wither.offset().z());
         witherSection.set("single_boss", wither.singleBoss());
+        witherSection.set("spawn_mode", wither.spawnMode().configKey());
 
         ConfigurationSection spawnsSection = config.createSection("spawns");
         spawnsSection.set("allow_binding", spawns.allowBinding());
@@ -272,6 +276,7 @@ public record GameConfig(
         public boolean hasFixedSpawnY() {
             return spawnY != INHERIT_SPAWN_Y;
         }
+    public record Wither(WitherSpawnMode spawnMode) {
     }
 
     public record Spawns(boolean allowBinding, boolean allowLobbyOverride, String warning) {
@@ -310,5 +315,56 @@ public record GameConfig(
         boolean allowLobbyOverride = section.getBoolean("allow_lobby_override", section.getBoolean("allowLobbyOverride", false));
         String warning = section.getString("warning", "&8Wir empfehlen Essentials/Multiverse für Respawns zu nutzen.");
         return new Spawns(allowBinding, allowLobbyOverride, warning);
+    }
+
+    private static Wither readWither(ConfigurationSection section) {
+        if (section == null) {
+            return new Wither(WitherSpawnMode.ALL);
+        }
+        String rawMode = section.getString("spawn_mode", section.getString("spawnMode", "all"));
+        return new Wither(WitherSpawnMode.fromConfig(rawMode));
+    }
+
+    public enum WitherSpawnMode {
+        ALL("all", EnumSet.allOf(WitherService.SpawnTrigger.class)),
+        AUTO_ONLY("auto_only", EnumSet.of(WitherService.SpawnTrigger.START, WitherService.SpawnTrigger.TIMEOUT)),
+        START_ONLY("start_only", EnumSet.of(WitherService.SpawnTrigger.START)),
+        TIMEOUT_ONLY("timeout_only", EnumSet.of(WitherService.SpawnTrigger.TIMEOUT)),
+        MANUAL_ONLY("manual_only", EnumSet.of(WitherService.SpawnTrigger.MANUAL));
+
+        private final String configKey;
+        private final EnumSet<WitherService.SpawnTrigger> allowedTriggers;
+
+        WitherSpawnMode(String configKey, EnumSet<WitherService.SpawnTrigger> allowedTriggers) {
+            this.configKey = configKey;
+            this.allowedTriggers = allowedTriggers;
+        }
+
+        public boolean allows(WitherService.SpawnTrigger trigger) {
+            return allowedTriggers.contains(trigger);
+        }
+
+        public String configKey() {
+            return configKey;
+        }
+
+        public static WitherSpawnMode fromConfig(String raw) {
+            if (raw == null || raw.isBlank()) {
+                return ALL;
+            }
+            String trimmed = raw.trim();
+            for (WitherSpawnMode mode : values()) {
+                if (mode.configKey.equalsIgnoreCase(trimmed)) {
+                    return mode;
+                }
+            }
+            String normalized = trimmed.replace('-', '_').toUpperCase(Locale.ROOT);
+            for (WitherSpawnMode mode : values()) {
+                if (mode.name().equals(normalized)) {
+                    return mode;
+                }
+            }
+            return ALL;
+        }
     }
 }

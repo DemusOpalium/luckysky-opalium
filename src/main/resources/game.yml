@@ -50,6 +50,7 @@ wither:
     y: 0
     z: -6
   single_boss: true
+  spawn_mode: "all"
 spawns:
   allow_binding: false
   allow_lobby_override: false
