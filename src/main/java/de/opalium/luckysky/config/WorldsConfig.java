@@ -4,11 +4,12 @@ import java.util.Optional;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 
-public record WorldsConfig(LuckyWorld luckySky, DuelsWorld duels) {
+public record WorldsConfig(LuckyWorld luckySky, DuelsWorld duels, Rotation rotation) {
     public static WorldsConfig from(FileConfiguration config) {
         LuckyWorld luckySky = readLuckyWorld(config.getConfigurationSection("luckySky"));
         DuelsWorld duels = readDuelsWorld(config.getConfigurationSection("duels"));
-        return new WorldsConfig(luckySky, duels);
+        Rotation rotation = readRotation(config.getConfigurationSection("rotation"), luckySky);
+        return new WorldsConfig(luckySky, duels, rotation);
     }
 
     private static LuckyWorld readLuckyWorld(ConfigurationSection section) {
@@ -43,6 +44,38 @@ public record WorldsConfig(LuckyWorld luckySky, DuelsWorld duels) {
         return new DuelsWorld(worldName, lobby, protectionRadius);
     }
 
+    private static Rotation readRotation(ConfigurationSection section, LuckyWorld luckyWorld) {
+        if (section == null) {
+            return new Rotation(
+                    luckyWorld.worldName(),
+                    luckyWorld.worldName() + "_alt",
+                    "rotation/LuckySkyBase.zip",
+                    false,
+                    5,
+                    new Border(0.0, 0.0, 400.0),
+                    luckyWorld.spawn()
+            );
+        }
+        String primary = section.getString("primary", luckyWorld.worldName());
+        String secondary = section.getString("secondary", luckyWorld.worldName() + "_alt");
+        String baseZip = section.getString("baseZip", section.getString("base_zip", "rotation/LuckySkyBase.zip"));
+        boolean rotateWhenIdle = section.getBoolean("rotateWhenIdle", section.getBoolean("rotate_when_idle", false));
+        int countdownSeconds = section.getInt("countdownSeconds", section.getInt("countdown_seconds", 5));
+        Border border = readBorder(section.getConfigurationSection("border"));
+        Spawn spawn = readSpawn(section.getConfigurationSection("spawn"), luckyWorld.spawn());
+        return new Rotation(primary, secondary, baseZip, rotateWhenIdle, countdownSeconds, border, spawn);
+    }
+
+    private static Border readBorder(ConfigurationSection section) {
+        if (section == null) {
+            return new Border(0.0, 0.0, 400.0);
+        }
+        double centerX = section.getDouble("centerX", section.getDouble("center_x", 0.0));
+        double centerZ = section.getDouble("centerZ", section.getDouble("center_z", 0.0));
+        double size = section.getDouble("size", 400.0);
+        return new Border(centerX, centerZ, size);
+    }
+
     private static Spawn readSpawn(ConfigurationSection section, Spawn def) {
         if (section == null) {
             return def;
@@ -70,6 +103,7 @@ public record WorldsConfig(LuckyWorld luckySky, DuelsWorld duels) {
     public void writeTo(FileConfiguration config) {
         writeLuckyWorld(config.createSection("luckySky"), luckySky);
         writeDuelsWorld(config.createSection("duels"), duels);
+        writeRotation(config.createSection("rotation"), rotation);
     }
 
     private void writeLuckyWorld(ConfigurationSection section, LuckyWorld world) {
@@ -86,6 +120,19 @@ public record WorldsConfig(LuckyWorld luckySky, DuelsWorld duels) {
         section.set("worldName", world.worldName());
         writeSpawn(section.createSection("lobby"), world.lobby());
         section.set("protection_radius", world.protectionRadius());
+    }
+
+    private void writeRotation(ConfigurationSection section, Rotation rotation) {
+        section.set("primary", rotation.primary());
+        section.set("secondary", rotation.secondary());
+        section.set("baseZip", rotation.baseZip());
+        section.set("rotateWhenIdle", rotation.rotateWhenIdle());
+        section.set("countdownSeconds", rotation.countdownSeconds());
+        ConfigurationSection border = section.createSection("border");
+        border.set("centerX", rotation.border().centerX());
+        border.set("centerZ", rotation.border().centerZ());
+        border.set("size", rotation.border().size());
+        writeSpawn(section.createSection("spawn"), rotation.spawn());
     }
 
     private void writeSpawn(ConfigurationSection section, Spawn spawn) {
@@ -106,5 +153,17 @@ public record WorldsConfig(LuckyWorld luckySky, DuelsWorld duels) {
     }
 
     public record Spawn(double x, double y, double z, float yaw, float pitch) {
+    }
+
+    public record Rotation(String primary, String secondary, String baseZip,
+                           boolean rotateWhenIdle, int countdownSeconds,
+                           Border border, Spawn spawn) {
+    }
+
+    public record Border(double centerX, double centerZ, double size) {
+    }
+
+    public WorldsConfig withLuckyWorld(LuckyWorld newLuckyWorld) {
+        return new WorldsConfig(newLuckyWorld, duels, rotation);
     }
 }

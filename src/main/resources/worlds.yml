@@ -15,6 +15,22 @@ luckySky:
   lucky:
     startBanner: "§aLuckySky läuft – break the blocks!"
     require_air_at_target: true
+rotation:
+  primary: "LuckySky"
+  secondary: "LuckySky_alt"
+  baseZip: "rotation/LuckySkyBase.zip"
+  rotateWhenIdle: false
+  countdownSeconds: 5
+  border:
+    centerX: 0.0
+    centerZ: 0.0
+    size: 400.0
+  spawn:
+    x: 0.0
+    y: 101.0
+    z: 2.0
+    yaw: 180.0
+    pitch: 0.0
 duels:
   worldName: "duels"
   lobby:

@@ -10,6 +10,7 @@ import de.opalium.luckysky.game.ScoreboardService;
 import de.opalium.luckysky.gui.AdminGui;
 import de.opalium.luckysky.listeners.BossListener;
 import de.opalium.luckysky.listeners.PlayerListener;
+import de.opalium.luckysky.world.WorldRotationService;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabCompleter;
@@ -23,6 +24,7 @@ public final class LuckySkyPlugin extends JavaPlugin {
     private AdminGui adminGui;
     private DuelsManager duels;
     private ScoreboardService scoreboard;
+    private WorldRotationService rotation;
 
     public static LuckySkyPlugin get() {
         return instance;
@@ -40,11 +42,16 @@ public final class LuckySkyPlugin extends JavaPlugin {
         return scoreboard;
     }
 
+    public WorldRotationService rotation() {
+        return rotation;
+    }
+
     @Override
     public void onEnable() {
         instance = this;
         saveDefaultConfig();
         this.configs = new ConfigService(this).ensureDefaults().loadAll();
+        this.rotation = new WorldRotationService(this);
         this.scoreboard = new ScoreboardService(this);
         this.game = new GameManager(this, scoreboard);
         this.adminGui = new AdminGui(this);
@@ -72,6 +79,7 @@ public final class LuckySkyPlugin extends JavaPlugin {
             scoreboard.shutdown();
             scoreboard = null;
         }
+        rotation = null;
         instance = null;
         getLogger().info("[LuckySky] disabled.");
     }
@@ -81,6 +89,9 @@ public final class LuckySkyPlugin extends JavaPlugin {
         this.configs.reloadAll();
         if (scoreboard != null) {
             scoreboard.reload();
+        }
+        if (rotation != null) {
+            rotation.reload();
         }
         if (game != null) {
             game.reloadSettings();

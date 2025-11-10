@@ -10,10 +10,10 @@ public final class PortalService {
     }
 
     /** Öffnet (oder aktualisiert) ein Backspawn-Portal nach LuckySky (0/101/2). */
-    public static void openBackspawn() {
+    public static void openBackspawn(String worldName) {
         cmd("mvp create backspawn");
         cmd("mvp select backspawn");
-        cmd("mvp modify dest e:LuckySky:0,101,2");
+        cmd("mvp modify dest e:" + worldName + ":0,101,2");
     }
 
     /** Entfernt das Backspawn-Portal. */

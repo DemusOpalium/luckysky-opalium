@@ -100,6 +100,10 @@ public final class ConfigService {
         return traps;
     }
 
+    public void updateWorlds(WorldsConfig worlds) {
+        this.worlds = worlds;
+    }
+
     public void updateTraps(TrapsConfig traps) {
         this.traps = traps;
         save("traps.yml", traps::writeTo);

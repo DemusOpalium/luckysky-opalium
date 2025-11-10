@@ -16,16 +16,25 @@ public class PlatformService {
     }
 
     public void placeBase() {
-        GameConfig game = plugin.configs().game();
         World world = Worlds.require(plugin.configs().worlds().luckySky().worldName());
+        placeBase(world);
+    }
+
+    public void placeExtended() {
+        World world = Worlds.require(plugin.configs().worlds().luckySky().worldName());
+        placeExtended(world);
+    }
+
+    public void placeBase(World world) {
+        GameConfig game = plugin.configs().game();
         placeConfiguredBlocks(world, game.platform().baseBlocks());
         if (game.platform().bigPlatform()) {
             placeBigPlatform(world, platformY(game));
         }
     }
 
-    public void placeExtended() {
-        placeBase();
+    public void placeExtended(World world) {
+        placeBase(world);
     }
 
     public boolean isBaseIntact() {

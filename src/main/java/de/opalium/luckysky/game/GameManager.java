@@ -6,6 +6,7 @@ import de.opalium.luckysky.config.MessagesConfig;
 import de.opalium.luckysky.config.WorldsConfig;
 import de.opalium.luckysky.util.Msg;
 import de.opalium.luckysky.util.Worlds;
+import de.opalium.luckysky.world.WorldRotationService;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
@@ -30,6 +31,7 @@ public class GameManager {
     private final ScoreboardService scoreboardService;
 
     private GameState state = GameState.IDLE;
+    private boolean rotationScheduled;
 
     private final Set<UUID> activeParticipants = new HashSet<>();
     private final Set<UUID> allParticipants = new HashSet<>();
@@ -89,7 +91,7 @@ public class GameManager {
 
         // Portal öffnen (Multiverse-Portals)
         if (openPortal) {
-            PortalService.openBackspawn();
+            PortalService.openBackspawn(plugin.rotation().currentWorldName());
         }
 
         // regulär starten (teleports, binds, services)
@@ -117,6 +119,7 @@ public class GameManager {
             Msg.to(Bukkit.getConsoleSender(), "&cLuckySky läuft bereits.");
             return;
         }
+        rotationScheduled = false;
         World world = ensureWorldLoaded();
         GameConfig game = gameConfig();
         GameConfig.Position position = game.lucky().position();
@@ -150,21 +153,31 @@ public class GameManager {
     }
 
     public void stop() {
-        if (state != GameState.RUNNING) {
+        boolean wasRunning = state == GameState.RUNNING;
+        boolean shouldRotate = rotationScheduled;
+        rotationScheduled = false;
+
+        if (wasRunning) {
+            luckyService.stop();
+            durationService.stop();
+            witherService.stop();
+            state = GameState.STOPPED;
+            refreshScoreboard();
+            broadcast(messages().gamePrefix() + plugin.configs().messages().stopBanner());
+            teleportAllToLobby();
+            clearParticipants();
+        } else {
             teleportAllToLobby();
             clearParticipants();
             state = GameState.STOPPED;
             refreshScoreboard();
-            return;
         }
-        luckyService.stop();
-        durationService.stop();
-        witherService.stop();
-        state = GameState.STOPPED;
-        refreshScoreboard();
-        broadcast(messages().gamePrefix() + plugin.configs().messages().stopBanner());
-        teleportAllToLobby();
-        clearParticipants();
+
+        if (wasRunning && shouldRotate) {
+            plugin.rotation().rotateWorlds(WorldRotationService.RotationTrigger.GAME_END);
+        } else if (!wasRunning) {
+            plugin.rotation().rotateWorlds(WorldRotationService.RotationTrigger.IDLE);
+        }
     }
 
     public void placePlatform() {
@@ -408,6 +421,7 @@ public class GameManager {
         }
         rewardsService.triggerFail(allParticipants);
         broadcast(messages().gamePrefix() + "&eZeit abgelaufen – Spiel gestoppt.");
+        rotationScheduled = true;
         stop();
     }
 
@@ -417,6 +431,7 @@ public class GameManager {
         }
         rewardsService.triggerWin(killer, activeParticipants);
         broadcast(messages().gamePrefix() + "&aWither besiegt! GG!");
+        rotationScheduled = true;
         stop();
     }
 
@@ -430,6 +445,7 @@ public class GameManager {
     private void handleAllPlayersEliminated() {
         rewardsService.triggerFail(allParticipants);
         broadcast(messages().gamePrefix() + "&cAlle Spieler ausgeschieden – Spiel beendet.");
+        rotationScheduled = true;
         stop();
     }
 
