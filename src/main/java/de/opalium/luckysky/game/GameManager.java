@@ -58,50 +58,30 @@ public class GameManager {
     }
 
     // ─────────────────────────────────────────────────────────────
-    // PRESET-START / CLEANUP (NEU)
+    // PRESET-START / CLEANUP
     // ─────────────────────────────────────────────────────────────
-
-    /**
-     * Startet ein Preset:
-     * - setzt Laufzeit (nur runtime),
-     * - plant Wither-Spawn in X Minuten,
-     * - öffnet optional Portal,
-     * - respektiert One-Life falls in Config aktiv (kein Config-Schreiben hier).
-     */
     public void startPreset(int durationMinutes, int witherAfterMinutes, boolean oneLife, boolean openPortal) {
         if (state == GameState.RUNNING) {
             Msg.to(Bukkit.getConsoleSender(), "&ePreset ignoriert: LuckySky läuft bereits.");
             return;
         }
-
-        // Dauer runtime setzen (persistiert nicht bewusst, um Build-Sicherheit zu wahren)
         setDurationMinutes(durationMinutes);
 
-        // Hinweis, falls One-Life im Preset gewünscht ist, aber in Config nicht aktiv
         boolean cfgOneLife = gameConfig().lives().oneLife();
         if (oneLife && !cfgOneLife) {
             Msg.to(Bukkit.getConsoleSender(),
                     "&eHinweis: Preset fordert One-Life, aber &fconfig.yml &ehat one_life=false. (Runtime bleibt ohne Respawn)");
         }
 
-        // Wither-Spawn planen (überschreibt ggf. Default)
         witherService.scheduleSpawn(witherAfterMinutes);
 
-        // Portal öffnen (Multiverse-Portals)
         if (openPortal) {
             PortalService.openBackspawn();
         }
 
-        // regulär starten (teleports, binds, services)
         start();
     }
 
-    /**
-     * Stoppt das Spiel und räumt Everything auf:
-     * - Wither-Timer abbrechen,
-     * - Spiel stoppen,
-     * - Portal optional schließen.
-     */
     public void stopAndCleanup(boolean closePortal) {
         witherService.cancelSpawn();
         stop();
@@ -137,7 +117,14 @@ public class GameManager {
         durationService.startDefault();
         witherService.start();
         state = GameState.RUNNING;
+
+        WitherService.SpawnRequestResult spawnAtStart =
+                witherService.requestSpawn(WitherService.SpawnTrigger.START);
         refreshScoreboard();
+        if (spawnAtStart == WitherService.SpawnRequestResult.ACCEPTED) {
+            Bukkit.getScheduler().runTask(plugin, this::refreshScoreboard);
+        }
+
         broadcast(messages().gamePrefix() + worldConfig().lucky().startBanner());
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (!platformService.isBaseIntact()) {
@@ -251,9 +238,14 @@ public class GameManager {
         refreshScoreboard();
     }
 
-    public void spawnWitherNow() {
-        witherService.spawnNow();
-        refreshScoreboard();
+    public WitherService.SpawnRequestResult spawnWitherNow() {
+        WitherService.SpawnRequestResult result =
+                witherService.requestSpawn(WitherService.SpawnTrigger.MANUAL);
+        if (result == WitherService.SpawnRequestResult.ACCEPTED) {
+            refreshScoreboard();
+            Bukkit.getScheduler().runTask(plugin, this::refreshScoreboard);
+        }
+        return result;
     }
 
     public void setAllSurvivalInWorld() {
@@ -402,13 +394,21 @@ public class GameManager {
         refreshScoreboard();
     }
 
-    public void onDurationExpired() {
+    public boolean onDurationExpired() {
         if (state != GameState.RUNNING) {
-            return;
+            return false;
+        }
+        WitherService.SpawnRequestResult result =
+                witherService.requestSpawn(WitherService.SpawnTrigger.TIMEOUT);
+        if (result == WitherService.SpawnRequestResult.ACCEPTED) {
+            refreshScoreboard();
+            Bukkit.getScheduler().runTask(plugin, this::refreshScoreboard);
+            return false;
         }
         rewardsService.triggerFail(allParticipants);
         broadcast(messages().gamePrefix() + "&eZeit abgelaufen – Spiel gestoppt.");
         stop();
+        return true;
     }
 
     public void handleWitherKill(Player killer) {
