@@ -8,6 +8,7 @@ import de.opalium.luckysky.config.WorldsConfig;
 import de.opalium.luckysky.util.Msg;
 import de.opalium.luckysky.util.Worlds;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutionException;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -18,6 +19,7 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Wither;
+import org.bukkit.util.Vector;
 
 public class WitherService {
     private final LuckySkyPlugin plugin;
@@ -186,8 +188,32 @@ public class WitherService {
             return false;
         }
 
-        GameConfig.Position pos = plugin.configs().game().lucky().position();
-        Location location = new Location(world, pos.x(), pos.y(), pos.z() - 6);
+        GameConfig gameConfig = plugin.configs().game();
+        GameConfig.Wither witherConfig = gameConfig.wither();
+        String spawnMode = witherConfig.spawnMode() != null ? witherConfig.spawnMode() : "offset_from_lucky";
+
+        Vector spawnVector;
+        double spawnY;
+        switch (spawnMode.toLowerCase(Locale.ROOT)) {
+            case "absolute" -> {
+                spawnVector = witherConfig.offset().toVector();
+                spawnY = witherConfig.hasFixedSpawnY() ? witherConfig.spawnY() : spawnVector.getY();
+            }
+            case "offset":
+            case "offset_from_lucky":
+                spawnVector = gameConfig.lucky().position().toVector();
+                spawnVector.add(witherConfig.offset().toVector());
+                spawnY = witherConfig.hasFixedSpawnY() ? witherConfig.spawnY() : spawnVector.getY();
+                break;
+            default -> {
+                plugin.getLogger().warning("[LuckySky] Unbekannter Wither-Spawn-Mode '" + spawnMode + "', fallback auf offset_from_lucky");
+                spawnVector = gameConfig.lucky().position().toVector();
+                spawnVector.add(witherConfig.offset().toVector());
+                spawnY = witherConfig.hasFixedSpawnY() ? witherConfig.spawnY() : spawnVector.getY();
+            }
+        }
+
+        Location location = new Location(world, spawnVector.getX(), spawnY, spawnVector.getZ());
 
         try {
             Wither wither = (Wither) world.spawnEntity(location, EntityType.WITHER);

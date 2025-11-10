@@ -42,6 +42,14 @@ scoreboard:
     - "&7Timer: &f{timer}"
     - "&7Spieler: &f{players}"
     - "&7Wither: &f{wither}"
+wither:
+  spawn_mode: "offset_from_lucky"
+  spawn_y: 102
+  offset:
+    x: 0
+    y: 0
+    z: -6
+  single_boss: true
 spawns:
   allow_binding: false
   allow_lobby_override: false
