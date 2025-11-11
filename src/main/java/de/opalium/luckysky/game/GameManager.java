@@ -117,6 +117,9 @@ public class GameManager {
         durationService.startDefault();
         witherService.start();
         state = GameState.RUNNING;
+        if (plugin.rounds() != null) {
+            plugin.rounds().onRoundStarted();
+        }
 
         WitherService.SpawnRequestResult spawnAtStart =
                 witherService.requestSpawn(WitherService.SpawnTrigger.START);
@@ -137,6 +140,7 @@ public class GameManager {
     }
 
     public void stop() {
+        boolean wasRunning = state == GameState.RUNNING;
         if (state != GameState.RUNNING) {
             teleportAllToLobby();
             clearParticipants();
@@ -152,6 +156,9 @@ public class GameManager {
         broadcast(messages().gamePrefix() + plugin.configs().messages().stopBanner());
         teleportAllToLobby();
         clearParticipants();
+        if (wasRunning && plugin.rounds() != null) {
+            plugin.rounds().onRoundStopped();
+        }
     }
 
     public void placePlatform() {
