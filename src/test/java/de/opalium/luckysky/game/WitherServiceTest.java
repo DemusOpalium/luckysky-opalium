@@ -63,7 +63,7 @@ class WitherServiceTest {
                 new WorldsConfig.DuelsWorld("duels", new WorldsConfig.Spawn(0.0, 0.0, 0.0, 0f, 0f), 10)
         );
         GameConfig gameConfig = new GameConfig(
-                new GameConfig.Durations(60, List.of(60)),
+                new GameConfig.Durations(60, List.of(60), false, "&dLuckySky", false, "&eTimer: &f{time}"),
                 new GameConfig.Lucky(new GameConfig.Position(10, 64, 10), 160, true, "RANDOM", List.of("RANDOM")),
                 new GameConfig.Platform(true, List.of()),
                 new GameConfig.Rig(200, true),
@@ -83,7 +83,7 @@ class WitherServiceTest {
 
         service = new TestableWitherService(plugin);
         service.setShouldTrigger(true);
-        when(gameManager.state()).thenReturn(GameState.RUNNING);
+        when(gameManager.state()).thenReturn(GameState.RUN);
     }
 
     @Test

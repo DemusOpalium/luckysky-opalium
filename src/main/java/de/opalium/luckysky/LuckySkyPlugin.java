@@ -1,5 +1,6 @@
 package de.opalium.luckysky;
 
+import de.opalium.luckysky.access.AccessGate;
 import de.opalium.luckysky.commands.ArenaCommand;
 import de.opalium.luckysky.commands.DuelsUiCommand;
 import de.opalium.luckysky.commands.LsCommand;
@@ -27,6 +28,7 @@ public final class LuckySkyPlugin extends JavaPlugin {
     private PlayerGui playerGui;
     private ScoreboardService scoreboard;
     private NpcService npcs;
+    private AccessGate accessGate;
 
     public static LuckySkyPlugin get() {
         return instance;
@@ -59,6 +61,7 @@ public final class LuckySkyPlugin extends JavaPlugin {
         this.playerGui = new PlayerGui(this);
         this.duels = new DuelsManager(this);
         this.npcs = new NpcService(this);
+        this.accessGate = new AccessGate(this, game.stateMachine());
 
         registerCommand("ls", new LsCommand(this));
         registerCommand("arena", new ArenaCommand(this));
@@ -67,6 +70,7 @@ public final class LuckySkyPlugin extends JavaPlugin {
         PluginManager pm = getServer().getPluginManager();
         pm.registerEvents(new BossListener(this), this);
         pm.registerEvents(new PlayerListener(this), this);
+        pm.registerEvents(accessGate, this);
         pm.registerEvents(adminGui, this);
         pm.registerEvents(playerGui, this);
         pm.registerEvents(duels, this);
@@ -89,6 +93,7 @@ public final class LuckySkyPlugin extends JavaPlugin {
             npcs.shutdown();
             npcs = null;
         }
+        accessGate = null;
         instance = null;
         getLogger().info("[LuckySky] disabled.");
     }

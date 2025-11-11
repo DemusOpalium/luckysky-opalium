@@ -83,7 +83,8 @@ public class AdminGui implements Listener {
         for (int i = 0; i < inv.getSize(); i++) {
             inv.setItem(i, filler.clone());
         }
-        boolean running = plugin.game().state() == GameState.RUNNING;
+        GameState state = plugin.game().state();
+        boolean running = state == GameState.COUNTDOWN || state == GameState.RUN || state == GameState.ENDING;
         for (Map.Entry<Integer, String> entry : menu.slotMapping().entrySet()) {
             AdminGuiLayout.Button template = layout.button(entry.getValue());
             if (template == null || template.display() == null) {
@@ -150,7 +151,8 @@ public class AdminGui implements Listener {
             Msg.to(player, "&cKeine Berechtigung für diesen Button.");
             return;
         }
-        boolean running = plugin.game().state() == GameState.RUNNING;
+        GameState state = plugin.game().state();
+        boolean running = state == GameState.COUNTDOWN || state == GameState.RUN || state == GameState.ENDING;
         if (template.onlyWhenRunning() && !running) {
             Msg.to(player, "&7Nur während eines laufenden Spiels verfügbar.");
             return;
@@ -579,7 +581,7 @@ public class AdminGui implements Listener {
     private Map<String, String> placeholdersFor(Player viewer, AdminGuiLayout.Button button) {
         Map<String, String> map = new HashMap<>();
         map.put("player", viewer.getName());
-        map.put("state", plugin.game().state() == GameState.RUNNING ? "&aLäuft" : "&cGestoppt");
+        map.put("state", stateLabel(plugin.game().state()));
         map.put("path", relativeBasePath());
         switch (button.action()) {
             case AdminGuiLayout.Action.BuiltinAction builtin -> {
@@ -617,6 +619,17 @@ public class AdminGui implements Listener {
             }
         }
         return map;
+    }
+
+    private String stateLabel(GameState state) {
+        return switch (state) {
+            case RUN -> "&aLäuft";
+            case COUNTDOWN -> "&eCountdown";
+            case LOBBY -> "&bLobby";
+            case ENDING -> "&6Endphase";
+            case RESETTING -> "&cReset";
+            case IDLE -> "&7Bereit";
+        };
     }
 
     private String relativeBasePath() {

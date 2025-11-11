@@ -24,12 +24,13 @@ public class GameManager {
     private final PlatformService platformService;
     private final WipeService wipeService;
     private final LuckyService luckyService;
-    private final DurationService durationService;
+    private final CountdownService countdownService;
     private final WitherService witherService;
-    private final RewardsService rewardsService;
+    private final RewardService rewardService;
+    private final RespawnService respawnService;
     private final ScoreboardService scoreboardService;
-
-    private GameState state = GameState.IDLE;
+    private final StateMachine stateMachine;
+    private int scheduledDurationMinutes;
 
     private final Set<UUID> activeParticipants = new HashSet<>();
     private final Set<UUID> allParticipants = new HashSet<>();
@@ -38,30 +39,51 @@ public class GameManager {
     public GameManager(LuckySkyPlugin plugin, ScoreboardService scoreboardService) {
         this.plugin = plugin;
         this.scoreboardService = scoreboardService;
+        this.stateMachine = new StateMachine(plugin);
         this.platformService = new PlatformService(plugin);
         this.wipeService = new WipeService(plugin);
         this.luckyService = new LuckyService(plugin);
-        this.durationService = new DurationService(plugin, scoreboardService);
         this.witherService = new WitherService(plugin);
-        this.rewardsService = new RewardsService(plugin);
+        this.countdownService = new CountdownService(plugin, scoreboardService);
+        this.rewardService = new RewardService(plugin, this, stateMachine, scoreboardService);
+        this.respawnService = new RespawnService(plugin, this);
+        this.scheduledDurationMinutes = plugin.configs().game().durations().minutesDefault();
     }
 
     public void shutdown() {
         luckyService.stop();
-        durationService.stop();
+        countdownService.stop();
+        rewardService.cancelEndTimer();
         witherService.stop();
+        stateMachine.setState(GameState.IDLE);
         refreshScoreboard();
     }
 
     public GameState state() {
-        return state;
+        return stateMachine.state();
+    }
+
+    public StateMachine stateMachine() {
+        return stateMachine;
+    }
+
+    public CountdownService countdown() {
+        return countdownService;
+    }
+
+    public RespawnService respawn() {
+        return respawnService;
+    }
+
+    public RewardService rewards() {
+        return rewardService;
     }
 
     // ─────────────────────────────────────────────────────────────
     // PRESET-START / CLEANUP
     // ─────────────────────────────────────────────────────────────
     public void startPreset(int durationMinutes, int witherAfterMinutes, boolean oneLife, boolean openPortal) {
-        if (state == GameState.RUNNING) {
+        if (isRoundActive()) {
             Msg.to(Bukkit.getConsoleSender(), "&ePreset ignoriert: LuckySky läuft bereits.");
             return;
         }
@@ -93,7 +115,8 @@ public class GameManager {
     // ─────────────────────────────────────────────────────────────
 
     public void start() {
-        if (state == GameState.RUNNING) {
+        GameState current = stateMachine.state();
+        if (isRoundActive() || current == GameState.ENDING || current == GameState.RESETTING) {
             Msg.to(Bukkit.getConsoleSender(), "&cLuckySky läuft bereits.");
             return;
         }
@@ -109,14 +132,19 @@ public class GameManager {
         activeParticipants.clear();
         allParticipants.clear();
         disconnectedParticipants.clear();
+        stateMachine.clearWhitelist();
         platformService.placeBase();
         bindAll();
         teleportAllToPlatform();
         setAllSurvivalInWorld();
         luckyService.start();
-        durationService.startDefault();
+        int minutes = scheduledDurationMinutes > 0
+                ? scheduledDurationMinutes
+                : plugin.configs().game().durations().minutesDefault();
+        countdownService.startMinutes(minutes);
         witherService.start();
-        state = GameState.RUNNING;
+        rewardService.cancelEndTimer();
+        stateMachine.setState(GameState.COUNTDOWN);
 
         WitherService.SpawnRequestResult spawnAtStart =
                 witherService.requestSpawn(WitherService.SpawnTrigger.START);
@@ -137,21 +165,19 @@ public class GameManager {
     }
 
     public void stop() {
-        if (state != GameState.RUNNING) {
-            teleportAllToLobby();
-            clearParticipants();
-            state = GameState.STOPPED;
-            refreshScoreboard();
-            return;
-        }
+        GameState previous = stateMachine.state();
         luckyService.stop();
-        durationService.stop();
+        countdownService.stop();
+        rewardService.cancelEndTimer();
         witherService.stop();
-        state = GameState.STOPPED;
-        refreshScoreboard();
-        broadcast(messages().gamePrefix() + plugin.configs().messages().stopBanner());
+        stateMachine.setState(GameState.LOBBY);
         teleportAllToLobby();
         clearParticipants();
+        scheduledDurationMinutes = plugin.configs().game().durations().minutesDefault();
+        refreshScoreboard();
+        if (previous == GameState.COUNTDOWN || previous == GameState.RUN || previous == GameState.ENDING) {
+            broadcast(messages().gamePrefix() + plugin.configs().messages().stopBanner());
+        }
     }
 
     public void placePlatform() {
@@ -214,6 +240,7 @@ public class GameManager {
             activeParticipants.add(id);
             allParticipants.add(id);
             disconnectedParticipants.remove(id);
+            stateMachine.whitelistPlayer(id);
         }
         broadcast(messages().gamePrefix() + String.format("&bSpawnpoint gesetzt (&f%.1f, %.1f, %.1f&b).",
                 spawn.x(), spawn.y(), spawn.z()));
@@ -224,7 +251,10 @@ public class GameManager {
     }
 
     public void setDurationMinutes(int minutes) {
-        durationService.startMinutes(minutes);
+        scheduledDurationMinutes = Math.max(1, minutes);
+        if (isRoundActive()) {
+            countdownService.startMinutes(scheduledDurationMinutes);
+        }
         refreshScoreboard();
     }
 
@@ -294,7 +324,7 @@ public class GameManager {
             if (gameConfig().spawns().allowLobbyOverride()) {
                 player.setBedSpawnLocation(lobby, true);
             }
-            if (state != GameState.RUNNING && !gameConfig().lives().oneLife()) {
+            if (!isRoundActive() && !gameConfig().lives().oneLife()) {
                 player.setGameMode(GameMode.SURVIVAL);
             }
         }
@@ -328,7 +358,6 @@ public class GameManager {
         activeParticipants.remove(id);
         disconnectedParticipants.remove(id);
         if (gameConfig().lives().oneLife()) {
-            Bukkit.getScheduler().runTask(plugin, () -> player.setGameMode(GameMode.SPECTATOR));
             if (activeParticipants.isEmpty()) {
                 handleAllPlayersEliminated();
             }
@@ -337,7 +366,7 @@ public class GameManager {
     }
 
     public void handleRespawn(Player player) {
-        if (state != GameState.RUNNING) {
+        if (!isRoundActive()) {
             return;
         }
         if (!isParticipant(player)) {
@@ -361,7 +390,7 @@ public class GameManager {
             disconnectedParticipants.remove(id);
             return;
         }
-        if (state == GameState.RUNNING) {
+        if (isRoundActive()) {
             disconnectedParticipants.add(id);
             if (activeParticipants.isEmpty()) {
                 handleAllPlayersEliminated();
@@ -375,7 +404,7 @@ public class GameManager {
         if (!disconnectedParticipants.contains(id)) {
             return;
         }
-        if (state != GameState.RUNNING) {
+        if (!isRoundActive()) {
             disconnectedParticipants.remove(id);
             return;
         }
@@ -385,7 +414,8 @@ public class GameManager {
         }
         disconnectedParticipants.remove(id);
         activeParticipants.add(id);
-        if (state == GameState.RUNNING) {
+        stateMachine.whitelistPlayer(id);
+        if (isRoundActive()) {
             Bukkit.getScheduler().runTask(plugin, () -> {
                 player.setGameMode(GameMode.SURVIVAL);
                 platformSpawnLocation().ifPresent(player::teleport);
@@ -395,7 +425,7 @@ public class GameManager {
     }
 
     public boolean onDurationExpired() {
-        if (state != GameState.RUNNING) {
+        if (!isRoundActive()) {
             return false;
         }
         WitherService.SpawnRequestResult result =
@@ -405,32 +435,35 @@ public class GameManager {
             Bukkit.getScheduler().runTask(plugin, this::refreshScoreboard);
             return false;
         }
-        rewardsService.triggerFail(allParticipants);
+        prepareEndPhase();
+        rewardService.triggerFail(allParticipants);
         broadcast(messages().gamePrefix() + "&eZeit abgelaufen – Spiel gestoppt.");
-        stop();
         return true;
     }
 
     public void handleWitherKill(Player killer) {
-        if (state != GameState.RUNNING) {
+        if (!isRoundActive()) {
             return;
         }
-        rewardsService.triggerWin(killer, activeParticipants);
+        prepareEndPhase();
+        rewardService.triggerWin(killer, activeParticipants);
         broadcast(messages().gamePrefix() + "&aWither besiegt! GG!");
-        stop();
     }
 
     public void reloadSettings() {
         luckyService.reload();
-        durationService.reload();
+        countdownService.reload();
         witherService.reload();
+        if (!isRoundActive()) {
+            scheduledDurationMinutes = plugin.configs().game().durations().minutesDefault();
+        }
         refreshScoreboard();
     }
 
     private void handleAllPlayersEliminated() {
-        rewardsService.triggerFail(allParticipants);
+        prepareEndPhase();
+        rewardService.triggerFail(allParticipants);
         broadcast(messages().gamePrefix() + "&cAlle Spieler ausgeschieden – Spiel beendet.");
-        stop();
     }
 
     public Set<UUID> activeParticipants() {
@@ -442,12 +475,14 @@ public class GameManager {
     }
 
     public void triggerRewardsWin(Player killer) {
-        rewardsService.triggerWin(killer, activeParticipants);
+        prepareEndPhase();
+        rewardService.triggerWin(killer, activeParticipants);
         refreshScoreboard();
     }
 
     public void triggerRewardsFail() {
-        rewardsService.triggerFail(allParticipants);
+        prepareEndPhase();
+        rewardService.triggerFail(allParticipants);
         refreshScoreboard();
     }
 
@@ -491,6 +526,7 @@ public class GameManager {
         activeParticipants.clear();
         allParticipants.clear();
         disconnectedParticipants.clear();
+        stateMachine.clearWhitelist();
     }
 
     private void broadcast(String message) {
@@ -503,5 +539,16 @@ public class GameManager {
         if (scoreboardService != null) {
             scoreboardService.refresh();
         }
+    }
+
+    private boolean isRoundActive() {
+        GameState current = stateMachine.state();
+        return current == GameState.COUNTDOWN || current == GameState.RUN;
+    }
+
+    private void prepareEndPhase() {
+        luckyService.stop();
+        countdownService.stop();
+        witherService.stop();
     }
 }
