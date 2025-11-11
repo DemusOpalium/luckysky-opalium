@@ -1,3 +1,5 @@
+![LuckySky Banner](../images/luckysky/banner/Lucky-banner01.png)
+
 # LuckySky Wiki
 
 Diese Dokumentation fasst Betriebs- und Content-Prozesse des LuckySky-Servers zusammen. Die einzelnen Seiten decken spezialisierte Themen wie NPC-Management, grafische Bedienoberflächen, Weltrotation, PvP-Baublöcke und Fallen ab.
