@@ -1,5 +1,7 @@
+![LuckySky banner in Aurora Blue and Sunrise Gold](docs/images/luckysky/banner/Lucky-banner01.png)
+
 # LuckySky-Opalium
-Paper plugin for Opalium's LuckySky minigame. Provides match control, safe-platform utilities, Lucky Block automation, timers, Wither events, wipes, rewards, and in-game administration GUIs.
+ Paper plugin for Opalium's LuckySky minigame. Provides match control, safe-platform utilities, Lucky Block automation, timers, Wither events, wipes, rewards, and in-game administration GUIs.
 
 ## Features
 - **Match lifecycle:** `/ls start` prepares the world, builds the safe platform, binds online players to the configured respawn, switches them to Survival, and launches the running timers/services. `/ls stop` (or defeating the boss/timeout) cleanly halts the round while keeping protection blocks intact.
@@ -10,6 +12,17 @@ Paper plugin for Opalium's LuckySky minigame. Provides match control, safe-platf
 - **Arena wipes:** Soft and hard wipe routines remove lingering entities around the Lucky Block radius, including armor stand limits.
 - **Rewards engine:** Command lists run on boss victory or failure, supporting winner-only or everyone payout modes.
 - **Admin & Duels GUIs:** The LuckySky Admin GUI exposes all match controls in-game, while the optional Duels GUI/command maps Lucky variants to configured Duels kits.
+
+## 🎬 Trailer · Aurora Blue & Sunrise Gold
+<figure>
+  <video src="docs/images/luckysky/branding/branding/docs/LuckySky-Catch.mp4" controls poster="docs/images/luckysky/banner/Lucky-banner03.png">
+    Your browser does not support the video tag. You can download it directly via
+    <a href="docs/images/luckysky/branding/branding/docs/LuckySky-Catch.mp4">LuckySky-Catch.mp4</a>.
+  </video>
+  <figcaption>
+    <strong>Aurora Blue</strong> gradients and <strong>Sunrise Gold</strong> flares frame the LuckySky catch sequence.
+  </figcaption>
+</figure>
 
 ## Configuration Notes
 - `admin-gui.yml` command buttons must declare a non-empty `commands:` list. Buttons without runnable commands are ignored when the layout is loaded.
