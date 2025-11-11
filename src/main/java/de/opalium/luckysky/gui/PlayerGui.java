@@ -92,7 +92,8 @@ public class PlayerGui implements Listener {
         Map<String, String> placeholders = new HashMap<>(button.placeholders());
         GameManager game = plugin.game();
         ScoreboardService scoreboard = plugin.scoreboard();
-        boolean running = game.state() == GameState.RUNNING;
+        GameState state = game.state();
+        boolean running = state == GameState.COUNTDOWN || state == GameState.RUN;
         boolean inLuckyWorld = isInLuckyWorld(player);
         switch (button.action()) {
             case JOIN -> {
@@ -160,7 +161,8 @@ public class PlayerGui implements Listener {
         GameManager game = plugin.game();
         game.platformSpawnLocation().ifPresentOrElse(location -> {
             player.teleport(location);
-            if (game.state() == GameState.RUNNING) {
+            GameState state = game.state();
+            if (state == GameState.COUNTDOWN || state == GameState.RUN) {
                 Bukkit.getScheduler().runTask(plugin, () -> player.setGameMode(GameMode.SURVIVAL));
             }
             Msg.to(player, "&aDu wurdest nach LuckySky teleportiert.");
@@ -170,7 +172,9 @@ public class PlayerGui implements Listener {
     private void leaveLuckySky(Player player) {
         GameManager game = plugin.game();
         game.teleportPlayerToLobby(player);
-        if (game.oneLifeEnabled() && game.state() == GameState.RUNNING && game.isParticipant(player)) {
+        GameState state = game.state();
+        boolean running = state == GameState.COUNTDOWN || state == GameState.RUN;
+        if (game.oneLifeEnabled() && running && game.isParticipant(player)) {
             Bukkit.getScheduler().runTask(plugin, () -> player.setGameMode(GameMode.SPECTATOR));
         } else {
             Bukkit.getScheduler().runTask(plugin, () -> player.setGameMode(GameMode.SURVIVAL));
@@ -191,7 +195,8 @@ public class PlayerGui implements Listener {
             return;
         }
         GameManager game = plugin.game();
-        if (game.state() == GameState.RUNNING) {
+        GameState state = game.state();
+        if (state == GameState.COUNTDOWN || state == GameState.RUN || state == GameState.ENDING) {
             Msg.to(player, "&cLuckySky läuft bereits.");
             return;
         }

@@ -2,6 +2,7 @@ package de.opalium.luckysky.game;
 
 import de.opalium.luckysky.LuckySkyPlugin;
 import de.opalium.luckysky.config.GameConfig;
+import de.opalium.luckysky.game.GameState;
 import de.opalium.luckysky.util.Worlds;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -38,7 +39,8 @@ public class LuckyService {
     }
 
     private void tick() {
-        if (plugin.game().state() != GameState.RUNNING) {
+        GameState state = plugin.game().state();
+        if (state != GameState.COUNTDOWN && state != GameState.RUN) {
             return;
         }
         GameConfig game = plugin.configs().game();
