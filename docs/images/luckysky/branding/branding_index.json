@@ -1,17 +1,36 @@
 {
+  "asset_root": "docs/images/luckysky/branding",
+  "asset_count": 16,
+  "generated_by": "automation/scripts/branding_indexer.py",
   "assets": [
     {
-      "path": "docs/images/luckysky/branding/branding/banner/.keep",
+      "path": "docs/images/luckysky/branding/.keep",
+      "relative_path": ".keep",
+      "category": null,
       "type": "placeholder",
       "bytes": 1,
       "dimensions": {
         "width": null,
         "height": null
       },
-      "description": "Placeholder file retaining the banner directory structure."
+      "description": null
     },
     {
-      "path": "docs/images/luckysky/branding/branding/banner/Banner-001.png",
+      "path": "docs/images/luckysky/branding/banner/.keep",
+      "relative_path": "banner/.keep",
+      "category": "banner",
+      "type": "placeholder",
+      "bytes": 1,
+      "dimensions": {
+        "width": null,
+        "height": null
+      },
+      "description": null
+    },
+    {
+      "path": "docs/images/luckysky/branding/banner/Banner-001.png",
+      "relative_path": "banner/Banner-001.png",
+      "category": "banner",
       "type": "banner",
       "bytes": 439859,
       "dimensions": {
@@ -21,17 +40,21 @@
       "description": "Primary LuckySky promotional banner artwork in a wide format."
     },
     {
-      "path": "docs/images/luckysky/branding/branding/docs/LuckySky-Catch.mp4",
+      "path": "docs/images/luckysky/branding/docs/LuckySky-Catch.mp4",
+      "relative_path": "docs/LuckySky-Catch.mp4",
+      "category": "docs",
       "type": "video",
       "bytes": 1098637,
       "dimensions": {
-        "width": 688,
-        "height": 464
+        "width": null,
+        "height": null
       },
       "description": "Gameplay capture clip showcasing the LuckySky experience."
     },
     {
-      "path": "docs/images/luckysky/branding/branding/docs/readme.md",
+      "path": "docs/images/luckysky/branding/docs/readme.md",
+      "relative_path": "docs/readme.md",
+      "category": "docs",
       "type": "doc",
       "bytes": 1,
       "dimensions": {
@@ -41,17 +64,21 @@
       "description": "Placeholder README for branding documentation assets."
     },
     {
-      "path": "docs/images/luckysky/branding/branding/icons/128x128/.keep",
+      "path": "docs/images/luckysky/branding/icons/128x128/.keep",
+      "relative_path": "icons/128x128/.keep",
+      "category": "icons",
       "type": "placeholder",
       "bytes": 1,
       "dimensions": {
         "width": null,
         "height": null
       },
-      "description": "Placeholder file ensuring the 128x128 icon set directory persists."
+      "description": null
     },
     {
-      "path": "docs/images/luckysky/branding/branding/icons/128x128/Command-Block.png",
+      "path": "docs/images/luckysky/branding/icons/128x128/Command-Block.png",
+      "relative_path": "icons/128x128/Command-Block.png",
+      "category": "icons",
       "type": "icon",
       "bytes": 56940,
       "dimensions": {
@@ -61,7 +88,9 @@
       "description": "Command block themed LuckySky icon at 128x128 resolution."
     },
     {
-      "path": "docs/images/luckysky/branding/branding/icons/128x128/Icon-Herz.png",
+      "path": "docs/images/luckysky/branding/icons/128x128/Icon-Herz.png",
+      "relative_path": "icons/128x128/Icon-Herz.png",
+      "category": "icons",
       "type": "icon",
       "bytes": 18496,
       "dimensions": {
@@ -71,7 +100,9 @@
       "description": "Heart-shaped LuckySky icon rendered at 128x128 pixels."
     },
     {
-      "path": "docs/images/luckysky/branding/branding/icons/128x128/Icon-Rad.png",
+      "path": "docs/images/luckysky/branding/icons/128x128/Icon-Rad.png",
+      "relative_path": "icons/128x128/Icon-Rad.png",
+      "category": "icons",
       "type": "icon",
       "bytes": 20851,
       "dimensions": {
@@ -81,7 +112,9 @@
       "description": "Gear wheel LuckySky icon sized for 128x128 usage."
     },
     {
-      "path": "docs/images/luckysky/branding/branding/icons/128x128/Icon-Tool-Click-Magic.png",
+      "path": "docs/images/luckysky/branding/icons/128x128/Icon-Tool-Click-Magic.png",
+      "relative_path": "icons/128x128/Icon-Tool-Click-Magic.png",
+      "category": "icons",
       "type": "icon",
       "bytes": 16064,
       "dimensions": {
@@ -91,7 +124,9 @@
       "description": "Magic click tool LuckySky icon optimized for 128x128 displays."
     },
     {
-      "path": "docs/images/luckysky/branding/branding/icons/128x128/Icon-off.png",
+      "path": "docs/images/luckysky/branding/icons/128x128/Icon-off.png",
+      "relative_path": "icons/128x128/Icon-off.png",
+      "category": "icons",
       "type": "icon",
       "bytes": 17149,
       "dimensions": {
@@ -101,27 +136,33 @@
       "description": "Power toggle LuckySky icon at 128x128 resolution."
     },
     {
-      "path": "docs/images/luckysky/branding/branding/icons/64x64/.keep",
+      "path": "docs/images/luckysky/branding/icons/64x64/.keep",
+      "relative_path": "icons/64x64/.keep",
+      "category": "icons",
       "type": "placeholder",
       "bytes": 1,
       "dimensions": {
         "width": null,
         "height": null
       },
-      "description": "Placeholder file maintaining the 64x64 icon directory."
+      "description": null
     },
     {
-      "path": "docs/images/luckysky/branding/branding/logo/.keep",
+      "path": "docs/images/luckysky/branding/logo/.keep",
+      "relative_path": "logo/.keep",
+      "category": "logo",
       "type": "placeholder",
       "bytes": 1,
       "dimensions": {
         "width": null,
         "height": null
       },
-      "description": "Placeholder file retaining the logo directory structure."
+      "description": null
     },
     {
-      "path": "docs/images/luckysky/branding/branding/logo/LuckySky-Logo2.png",
+      "path": "docs/images/luckysky/branding/logo/LuckySky-Logo2.png",
+      "relative_path": "logo/LuckySky-Logo2.png",
+      "category": "logo",
       "type": "logo",
       "bytes": 1588843,
       "dimensions": {
@@ -131,7 +172,9 @@
       "description": "Square LuckySky emblem and logotype combination logo."
     },
     {
-      "path": "docs/images/luckysky/branding/branding/logo/LuckySky-Logo4.png",
+      "path": "docs/images/luckysky/branding/logo/LuckySky-Logo4.png",
+      "relative_path": "logo/LuckySky-Logo4.png",
+      "category": "logo",
       "type": "logo",
       "bytes": 2726169,
       "dimensions": {
@@ -141,14 +184,16 @@
       "description": "Wide rectangular LuckySky logotype variant."
     },
     {
-      "path": "docs/images/luckysky/branding/branding/styling/.keep",
+      "path": "docs/images/luckysky/branding/styling/.keep",
+      "relative_path": "styling/.keep",
+      "category": "styling",
       "type": "placeholder",
       "bytes": 1,
       "dimensions": {
         "width": null,
         "height": null
       },
-      "description": "Placeholder file for the styling assets directory."
+      "description": null
     }
   ]
 }
