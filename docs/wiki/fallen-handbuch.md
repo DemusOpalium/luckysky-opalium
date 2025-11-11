@@ -1,3 +1,5 @@
+![LuckySky Banner](../images/luckysky/banner/Lucky-banner01.png)
+
 # Fallen-Handbuch
 
 LuckySky nutzt ein modulares Fallensystem, das Admins und Bauteams für Events konfigurieren können. Dieses Handbuch listet die wichtigsten Fallentypen, Sicherheitschecks und Automationen.

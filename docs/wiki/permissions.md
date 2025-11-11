@@ -1,3 +1,5 @@
+![LuckySky Banner](../images/luckysky/banner/Lucky-banner01.png)
+
 # Permissions & LuckPerms-Setups
 
 Dieses Dokument listet alle relevanten LuckySky-Berechtigungen sowie empfohlene LuckPerms-Gruppen-Setups. Ergänzen oder modifizieren Sie die Aufteilung je nach Serverstruktur.

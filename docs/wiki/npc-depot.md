@@ -1,3 +1,5 @@
+![LuckySky Banner](../images/luckysky/banner/Lucky-banner01.png)
+
 # NPC-Depot
 
 Das NPC-Depot bündelt alle Citizens-NPCs, die für LuckySky relevante Händler-, Tutorial- oder Queue-Funktionen bereitstellen. Die Depot-Instanz liegt in einem dedizierten Verwaltungsbereich außerhalb der aktiven Spielwelten, damit Spieler-NPCs nicht versehentlich mitgeladen werden.

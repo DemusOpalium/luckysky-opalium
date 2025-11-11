@@ -1,3 +1,5 @@
+![LuckySky Banner](../images/luckysky/banner/Lucky-banner01.png)
+
 # LuckySky-Weltrotation
 
 Die LuckySky-Weltrotation organisiert, welche Arenen, Lobbywelten und Event-Instanzen aktiv sind. Diese Seite beschreibt die Planungszyklen, technische Umsetzung und Wartungsbefehle.
