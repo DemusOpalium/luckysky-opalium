@@ -189,7 +189,7 @@ public class GameManager {
         witherService.scheduleSpawn(witherAfterMinutes);
 
         if (openPortal) {
-            PortalService.openBackspawn();
+            PortalService.openBackspawn(plugin);
         }
 
         if (roundStateMachine == null || !roundStateMachine.requestStart()) {
@@ -203,7 +203,7 @@ public class GameManager {
             roundStateMachine.requestStop();
         }
         if (closePortal) {
-            PortalService.closeBackspawn();
+            PortalService.closeBackspawn(plugin);
         }
     }
 

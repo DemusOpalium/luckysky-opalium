@@ -4,27 +4,42 @@ import de.opalium.luckysky.LuckySkyPlugin;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.logging.Logger;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.configuration.ConfigurationSection;
 
 public final class ConfigService {
-    private static final List<String> FILES = List.of(
+    private static final String MASTER_CONFIG = "config/luckysky.yml";
+    private static final List<String> ROOT_FILES = List.of(
             "messages.yml",
-            "worlds.yml",
-            "game.yml",
             "duels.yml",
-            "traps.yml",
+            "traps.yml"
+    );
+    private static final List<String> GUI_FILES = List.of(
+            "config/gui/luckysky-admin.yml",
+            "config/gui/luckysky-player.yml",
+            "config/gui/duels-admin.yml",
+            "config/gui/duels-player.yml"
+    );
+    private static final List<String> LEGACY_FILES = List.of(
+            "game.yml",
+            "worlds.yml",
             "admin-gui.yml",
+            "player-gui.yml",
             "npcs.yml"
     );
 
     private final LuckySkyPlugin plugin;
     private MessagesConfig messages;
     private WorldsConfig worlds;
+    private GateConfig gate;
     private GameConfig game;
     private DuelsConfig duels;
     private TrapsConfig traps;
     private NpcConfig npcs;
+    private YamlConfiguration masterConfig;
+    private File masterFile;
 
     public ConfigService(LuckySkyPlugin plugin) {
         this.plugin = plugin;
@@ -35,22 +50,43 @@ public final class ConfigService {
         if (!dataFolder.exists()) {
             dataFolder.mkdirs();
         }
-        for (String file : FILES) {
-            File target = new File(dataFolder, file);
-            if (!target.exists()) {
-                plugin.saveResource(file, false);
-            }
+        File configDir = new File(dataFolder, "config");
+        if (!configDir.exists()) {
+            configDir.mkdirs();
         }
+        File guiDir = new File(configDir, "gui");
+        if (!guiDir.exists()) {
+            guiDir.mkdirs();
+        }
+
+        ensureResource(MASTER_CONFIG);
+        ROOT_FILES.forEach(this::ensureResource);
+        GUI_FILES.forEach(this::ensureResource);
+
+        deprecateLegacyFiles(dataFolder);
         return this;
     }
 
     public ConfigService loadAll() {
+        this.masterFile = new File(plugin.getDataFolder(), MASTER_CONFIG);
+        this.masterConfig = YamlConfiguration.loadConfiguration(masterFile);
+
         this.messages = load("messages.yml", MessagesConfig::from);
-        this.worlds = load("worlds.yml", WorldsConfig::from);
-        this.game = load("game.yml", GameConfig::from);
         this.duels = load("duels.yml", DuelsConfig::from);
         this.traps = load("traps.yml", TrapsConfig::from);
-        this.npcs = load("npcs.yml", NpcConfig::from);
+
+        ConfigurationSection worldSection = masterConfig.getConfigurationSection("world");
+        this.worlds = WorldsConfig.fromSection(worldSection);
+
+        ConfigurationSection gateSection = masterConfig.getConfigurationSection("gate");
+        this.gate = GateConfig.from(gateSection);
+
+        ConfigurationSection roundSection = masterConfig.getConfigurationSection("round");
+        ConfigurationSection rewardSection = masterConfig.getConfigurationSection("reward");
+        this.game = GameConfig.fromSections(roundSection, rewardSection);
+
+        ConfigurationSection npcSection = masterConfig.getConfigurationSection("npc");
+        this.npcs = NpcConfig.fromSection(npcSection);
         return this;
     }
 
@@ -66,11 +102,9 @@ public final class ConfigService {
 
     public void saveAll() {
         save("messages.yml", messages::writeTo);
-        save("worlds.yml", worlds::writeTo);
-        save("game.yml", game::writeTo);
         save("duels.yml", duels::writeTo);
         save("traps.yml", traps::writeTo);
-        save("npcs.yml", npcs::writeTo);
+        saveMaster();
     }
 
     private void save(String fileName, Writer writer) {
@@ -92,6 +126,10 @@ public final class ConfigService {
         return worlds;
     }
 
+    public GateConfig gate() {
+        return gate;
+    }
+
     public GameConfig game() {
         return game;
     }
@@ -108,6 +146,16 @@ public final class ConfigService {
         return npcs;
     }
 
+    public void updateWorlds(WorldsConfig worlds) {
+        this.worlds = worlds;
+        saveMaster();
+    }
+
+    public void updateGate(GateConfig gate) {
+        this.gate = gate;
+        saveMaster();
+    }
+
     public void updateTraps(TrapsConfig traps) {
         this.traps = traps;
         save("traps.yml", traps::writeTo);
@@ -115,7 +163,7 @@ public final class ConfigService {
 
     public void updateGame(GameConfig game) {
         this.game = game;
-        save("game.yml", game::writeTo);
+        saveMaster();
     }
 
     public void updateDuels(DuelsConfig duels) {
@@ -125,7 +173,102 @@ public final class ConfigService {
 
     public void updateNpcs(NpcConfig npcs) {
         this.npcs = npcs;
-        save("npcs.yml", npcs::writeTo);
+        saveMaster();
+    }
+
+    private void ensureResource(String relativePath) {
+        File target = new File(plugin.getDataFolder(), relativePath);
+        File parent = target.getParentFile();
+        if (parent != null && !parent.exists()) {
+            parent.mkdirs();
+        }
+        if (!target.exists()) {
+            plugin.saveResource(relativePath, false);
+        }
+    }
+
+    private void deprecateLegacyFiles(File dataFolder) {
+        Logger logger = plugin.getLogger();
+        for (String legacy : LEGACY_FILES) {
+            File file = new File(dataFolder, legacy);
+            if (!file.exists()) {
+                continue;
+            }
+            File backup = new File(dataFolder, legacy + ".legacy");
+            if (backup.exists()) {
+                continue;
+            }
+            boolean renamed = file.renameTo(backup);
+            if (renamed) {
+                logger.info("[LuckySky] Legacy config '" + legacy + "' verschoben nach '" + backup.getName() + "'.");
+            } else {
+                logger.warning("[LuckySky] Legacy config '" + legacy + "' konnte nicht verschoben werden.");
+            }
+        }
+    }
+
+    private void saveMaster() {
+        if (masterConfig == null) {
+            masterConfig = new YamlConfiguration();
+        }
+        writeWorldSection();
+        writeGateSection();
+        writeRoundSection();
+        writeRewardSection();
+        writeNpcSection();
+        if (masterFile == null) {
+            masterFile = new File(plugin.getDataFolder(), MASTER_CONFIG);
+        }
+        try {
+            masterConfig.save(masterFile);
+        } catch (IOException e) {
+            plugin.getLogger().warning("Could not save " + MASTER_CONFIG + ": " + e.getMessage());
+        }
+    }
+
+    private void writeWorldSection() {
+        masterConfig.set("world", null);
+        if (worlds == null) {
+            return;
+        }
+        ConfigurationSection section = masterConfig.createSection("world");
+        worlds.writeTo(section);
+    }
+
+    private void writeGateSection() {
+        masterConfig.set("gate", null);
+        if (gate == null) {
+            return;
+        }
+        ConfigurationSection section = masterConfig.createSection("gate");
+        gate.writeTo(section);
+    }
+
+    private void writeRoundSection() {
+        masterConfig.set("round", null);
+        if (game == null) {
+            return;
+        }
+        ConfigurationSection section = masterConfig.createSection("round");
+        game.writeRound(section);
+    }
+
+    private void writeRewardSection() {
+        masterConfig.set("reward", null);
+        if (game == null) {
+            return;
+        }
+        ConfigurationSection section = masterConfig.createSection("reward");
+        game.writeRewards(section);
+    }
+
+    private void writeNpcSection() {
+        masterConfig.set("npc", null);
+        if (npcs == null) {
+            return;
+        }
+        ConfigurationSection section = masterConfig.createSection("npc");
+        npcs.writeTo(section);
     }
 
     @FunctionalInterface

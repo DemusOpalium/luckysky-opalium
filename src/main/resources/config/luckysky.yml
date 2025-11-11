@@ -1,0 +1,101 @@
+world:
+  luckySky:
+    worldName: "LuckySky"
+    spawn:
+      x: 0.0
+      y: 101.0
+      z: 2.0
+      yaw: 180.0
+      pitch: 0.0
+    lobby:
+      x: 0.0
+      y: 80.0
+      z: 0.0
+      yaw: 0.0
+      pitch: 0.0
+    lucky:
+      startBanner: "§aLuckySky läuft – break the blocks!"
+      require_air_at_target: true
+  duels:
+    worldName: "duels"
+    lobby:
+      x: 1.0
+      y: -56.0
+      z: 0.0
+      yaw: 0.0
+      pitch: 0.0
+    protection_radius: 24
+
+gate:
+  id: "backspawn"
+  executor-permission: "opalium.luckysky.admin"
+  target:
+    world: "LuckySky"
+    x: 0.0
+    y: 101.0
+    z: 2.0
+    yaw: 0.0
+    pitch: 0.0
+  open:
+    commands:
+      - "mvp create {id}"
+      - "mvp select {id}"
+      - "mvp modify dest e:{target.world}:{target.x},{target.y},{target.z}"
+  close:
+    commands:
+      - "mvp remove {id}"
+
+round:
+  durations:
+    minutesDefault: 60
+    presets: [30, 45, 60]
+  lucky:
+    position:
+      x: 0
+      y: 102
+      z: 2
+    interval_ticks: 160
+    require_air_at_target: true
+    variant: "RANDOM"
+    variants_available: ["RANDOM", "CLASSIC", "CHAOS"]
+  platform:
+    big_3x3: false
+    base:
+      blocks:
+        - { x: 0, y: 100, z: 1, material: "PRISMARINE_BRICKS" }
+        - { x: 0, y: 100, z: 2, material: "PRISMARINE_BRICKS" }
+  rig:
+    base_height: 201
+    corridor_clear: true
+  wipes:
+    entity_soft_every_ticks: 3600
+    soft_radius: 30
+    hard_radius: 60
+    armorstand_radius: 100
+  lives:
+    one_life: false
+  scoreboard:
+    enabled: true
+    title: "&bLuckySky"
+    lines:
+      - "&7Status: &f{state}"
+      - "&7Timer: &f{timer}"
+      - "&7Spieler: &f{players}"
+      - "&7Wither: &f{wither}"
+  wither:
+    spawn_mode: "all"
+  spawns:
+    allow_binding: false
+    allow_lobby_override: false
+    warning: "&8Respawns werden extern verwaltet (Essentials/MV). Nur aktivieren, wenn LuckySky die Spawns übernehmen soll."
+
+reward:
+  mode: "balanced"
+  on_boss_kill:
+    commands:
+      - "say %player% besiegt den Wither!"
+  on_fail:
+    commands:
+      - "say LuckySky gescheitert."
+
+npc: {}

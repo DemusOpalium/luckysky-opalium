@@ -4,6 +4,11 @@
 
 Die LuckySky-Weltrotation organisiert, welche Arenen, Lobbywelten und Event-Instanzen aktiv sind. Diese Seite beschreibt die Planungszyklen, technische Umsetzung und Wartungsbefehle.
 
+## Konfigurationsquelle
+- Welt- und Lobby-Koordinaten sowie Schutzradien liegen im Abschnitt `world` von `config/luckysky.yml`.
+- Das Gate nach LuckySky (Multiverse-Portale) wird über `gate.*` gesteuert; dort lassen sich Zielkoordinaten und Open/Close-Kommandos anpassen.
+- Nach Änderungen an `config/luckysky.yml` `/ls reload` ausführen, damit Gate- und Weltwerte übernommen werden.
+
 ## Rotationsmodell
 - **Standardrotation:** Drei Arenen (Tag, Dämmerung, Sonderereignis) wechseln alle 4 Stunden. Die Rotationsliste liegt in `world-rotation.yml`.
 - **Saisonale Pools:** Spezielle Events (Halloween, Sommer) werden als separate Pools gepflegt und per Toggle in der Admin-GUI aktiviert.
