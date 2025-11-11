@@ -1,0 +1,154 @@
+{
+  "assets": [
+    {
+      "path": "docs/images/luckysky/branding/branding/banner/.keep",
+      "type": "placeholder",
+      "bytes": 1,
+      "dimensions": {
+        "width": null,
+        "height": null
+      },
+      "description": "Placeholder file retaining the banner directory structure."
+    },
+    {
+      "path": "docs/images/luckysky/branding/branding/banner/Banner-001.png",
+      "type": "banner",
+      "bytes": 439859,
+      "dimensions": {
+        "width": 1278,
+        "height": 380
+      },
+      "description": "Primary LuckySky promotional banner artwork in a wide format."
+    },
+    {
+      "path": "docs/images/luckysky/branding/branding/docs/LuckySky-Catch.mp4",
+      "type": "video",
+      "bytes": 1098637,
+      "dimensions": {
+        "width": 688,
+        "height": 464
+      },
+      "description": "Gameplay capture clip showcasing the LuckySky experience."
+    },
+    {
+      "path": "docs/images/luckysky/branding/branding/docs/readme.md",
+      "type": "doc",
+      "bytes": 1,
+      "dimensions": {
+        "width": null,
+        "height": null
+      },
+      "description": "Placeholder README for branding documentation assets."
+    },
+    {
+      "path": "docs/images/luckysky/branding/branding/icons/128x128/.keep",
+      "type": "placeholder",
+      "bytes": 1,
+      "dimensions": {
+        "width": null,
+        "height": null
+      },
+      "description": "Placeholder file ensuring the 128x128 icon set directory persists."
+    },
+    {
+      "path": "docs/images/luckysky/branding/branding/icons/128x128/Command-Block.png",
+      "type": "icon",
+      "bytes": 56940,
+      "dimensions": {
+        "width": 610,
+        "height": 409
+      },
+      "description": "Command block themed LuckySky icon at 128x128 resolution."
+    },
+    {
+      "path": "docs/images/luckysky/branding/branding/icons/128x128/Icon-Herz.png",
+      "type": "icon",
+      "bytes": 18496,
+      "dimensions": {
+        "width": 191,
+        "height": 128
+      },
+      "description": "Heart-shaped LuckySky icon rendered at 128x128 pixels."
+    },
+    {
+      "path": "docs/images/luckysky/branding/branding/icons/128x128/Icon-Rad.png",
+      "type": "icon",
+      "bytes": 20851,
+      "dimensions": {
+        "width": 128,
+        "height": 128
+      },
+      "description": "Gear wheel LuckySky icon sized for 128x128 usage."
+    },
+    {
+      "path": "docs/images/luckysky/branding/branding/icons/128x128/Icon-Tool-Click-Magic.png",
+      "type": "icon",
+      "bytes": 16064,
+      "dimensions": {
+        "width": 128,
+        "height": 128
+      },
+      "description": "Magic click tool LuckySky icon optimized for 128x128 displays."
+    },
+    {
+      "path": "docs/images/luckysky/branding/branding/icons/128x128/Icon-off.png",
+      "type": "icon",
+      "bytes": 17149,
+      "dimensions": {
+        "width": 128,
+        "height": 128
+      },
+      "description": "Power toggle LuckySky icon at 128x128 resolution."
+    },
+    {
+      "path": "docs/images/luckysky/branding/branding/icons/64x64/.keep",
+      "type": "placeholder",
+      "bytes": 1,
+      "dimensions": {
+        "width": null,
+        "height": null
+      },
+      "description": "Placeholder file maintaining the 64x64 icon directory."
+    },
+    {
+      "path": "docs/images/luckysky/branding/branding/logo/.keep",
+      "type": "placeholder",
+      "bytes": 1,
+      "dimensions": {
+        "width": null,
+        "height": null
+      },
+      "description": "Placeholder file retaining the logo directory structure."
+    },
+    {
+      "path": "docs/images/luckysky/branding/branding/logo/LuckySky-Logo2.png",
+      "type": "logo",
+      "bytes": 1588843,
+      "dimensions": {
+        "width": 1024,
+        "height": 1024
+      },
+      "description": "Square LuckySky emblem and logotype combination logo."
+    },
+    {
+      "path": "docs/images/luckysky/branding/branding/logo/LuckySky-Logo4.png",
+      "type": "logo",
+      "bytes": 2726169,
+      "dimensions": {
+        "width": 1536,
+        "height": 1024
+      },
+      "description": "Wide rectangular LuckySky logotype variant."
+    },
+    {
+      "path": "docs/images/luckysky/branding/branding/styling/.keep",
+      "type": "placeholder",
+      "bytes": 1,
+      "dimensions": {
+        "width": null,
+        "height": null
+      },
+      "description": "Placeholder file for the styling assets directory."
+    }
+  ]
+}
