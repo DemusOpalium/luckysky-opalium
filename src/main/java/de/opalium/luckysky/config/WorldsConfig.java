@@ -2,12 +2,20 @@ package de.opalium.luckysky.config;
 
 import java.util.Optional;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.MemoryConfiguration;
 import org.bukkit.configuration.file.FileConfiguration;
 
 public record WorldsConfig(LuckyWorld luckySky, DuelsWorld duels) {
     public static WorldsConfig from(FileConfiguration config) {
-        LuckyWorld luckySky = readLuckyWorld(config.getConfigurationSection("luckySky"));
-        DuelsWorld duels = readDuelsWorld(config.getConfigurationSection("duels"));
+        return fromSection(config);
+    }
+
+    public static WorldsConfig fromSection(ConfigurationSection section) {
+        if (section == null) {
+            section = new MemoryConfiguration();
+        }
+        LuckyWorld luckySky = readLuckyWorld(section.getConfigurationSection("luckySky"));
+        DuelsWorld duels = readDuelsWorld(section.getConfigurationSection("duels"));
         return new WorldsConfig(luckySky, duels);
     }
 
@@ -68,8 +76,14 @@ public record WorldsConfig(LuckyWorld luckySky, DuelsWorld duels) {
     }
 
     public void writeTo(FileConfiguration config) {
-        writeLuckyWorld(config.createSection("luckySky"), luckySky);
-        writeDuelsWorld(config.createSection("duels"), duels);
+        writeTo((ConfigurationSection) config);
+    }
+
+    public void writeTo(ConfigurationSection section) {
+        section.set("luckySky", null);
+        section.set("duels", null);
+        writeLuckyWorld(section.createSection("luckySky"), luckySky);
+        writeDuelsWorld(section.createSection("duels"), duels);
     }
 
     private void writeLuckyWorld(ConfigurationSection section, LuckyWorld world) {

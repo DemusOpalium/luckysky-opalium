@@ -49,7 +49,7 @@ public class ArenaService {
         if (!cfg.arenas().containsKey(id)) {
             return false;
         }
-        DuelsConfig updated = new DuelsConfig(id, cfg.arenas(), cfg.gui(), cfg.scoreboard());
+        DuelsConfig updated = new DuelsConfig(id, cfg.arenas(), cfg.scoreboard());
         plugin.configs().updateDuels(updated);
         return true;
     }

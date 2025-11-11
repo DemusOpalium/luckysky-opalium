@@ -76,7 +76,7 @@ public class GameManager {
         witherService.scheduleSpawn(witherAfterMinutes);
 
         if (openPortal) {
-            PortalService.openBackspawn();
+            PortalService.openBackspawn(plugin);
         }
 
         start();
@@ -86,7 +86,7 @@ public class GameManager {
         witherService.cancelSpawn();
         stop();
         if (closePortal) {
-            PortalService.closeBackspawn();
+            PortalService.closeBackspawn(plugin);
         }
     }
 

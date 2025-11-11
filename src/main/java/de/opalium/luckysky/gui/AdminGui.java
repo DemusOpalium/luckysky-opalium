@@ -322,12 +322,12 @@ public class AdminGui implements Listener {
     }
 
     private void openPortal(Player player) {
-        PortalService.openBackspawn(player);
+        PortalService.openBackspawn(plugin, player);
         Msg.to(player, "&bPortal geöffnet.");
     }
 
     private void closePortal(Player player) {
-        PortalService.closeBackspawn(player);
+        PortalService.closeBackspawn(plugin, player);
         Msg.to(player, "&cPortal entfernt.");
     }
 
