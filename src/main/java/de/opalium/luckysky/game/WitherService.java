@@ -26,6 +26,7 @@ public class WitherService {
     private int tauntTimer = -1;
     private boolean witherEnabled;
     private boolean tauntsEnabled;
+    private Integer pendingSpawnDelayMinutes;
 
     public WitherService(LuckySkyPlugin plugin) {
         this.plugin = plugin;
@@ -38,14 +39,23 @@ public class WitherService {
     // LEBENSZYKLUS
     // ─────────────────────────────────────────────────────────────
     public void start() {
+        Integer cachedOverride = pendingSpawnDelayMinutes;
         stop(); // Timer säubern
+        pendingSpawnDelayMinutes = cachedOverride;
         TrapsConfig traps = traps();
         witherEnabled = traps.withers().enabled();
         tauntsEnabled = traps.withers().taunts().enabled();
-        if (!witherEnabled) return;
+        if (!witherEnabled) {
+            pendingSpawnDelayMinutes = null;
+            return;
+        }
 
         // einheitlich über scheduleSpawn(...)
-        scheduleSpawn(traps.withers().spawnAfterMinutes());
+        int delayMinutes = pendingSpawnDelayMinutes != null
+                ? pendingSpawnDelayMinutes
+                : traps.withers().spawnAfterMinutes();
+        pendingSpawnDelayMinutes = null;
+        scheduleSpawn(delayMinutes);
 
         if (tauntsEnabled) {
             tauntTimer = Bukkit.getScheduler().scheduleSyncRepeatingTask(
@@ -79,8 +89,16 @@ public class WitherService {
     // ─────────────────────────────────────────────────────────────
     /** Plant den Wither-Spawn in X Minuten (überschreibt Config-Verzögerung). */
     public void scheduleSpawn(int minutes) {
-        cancelSpawn();
-        if (!witherEnabled || plugin.game().state() != GameState.RUNNING) return;
+        cancelActiveSpawn();
+        if (!witherEnabled) {
+            pendingSpawnDelayMinutes = null;
+            return;
+        }
+        if (plugin.game().state() != GameState.RUNNING) {
+            pendingSpawnDelayMinutes = minutes;
+            return;
+        }
+        pendingSpawnDelayMinutes = null;
         if (minutes <= 0) {
             Bukkit.getScheduler().runTask(plugin, this::spawn);
             return;
@@ -91,10 +109,8 @@ public class WitherService {
 
     /** Bricht geplanten Wither-Spawn ab. */
     public void cancelSpawn() {
-        if (spawnTimer != -1) {
-            Bukkit.getScheduler().cancelTask(spawnTimer);
-            spawnTimer = -1;
-        }
+        cancelActiveSpawn();
+        pendingSpawnDelayMinutes = null;
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -115,6 +131,13 @@ public class WitherService {
         }
         boolean ok = spawnNow();
         return ok ? SpawnRequestResult.ACCEPTED : SpawnRequestResult.FAILED;
+    }
+
+    private void cancelActiveSpawn() {
+        if (spawnTimer != -1) {
+            Bukkit.getScheduler().cancelTask(spawnTimer);
+            spawnTimer = -1;
+        }
     }
 
     /** Sofort spawnen, thread-sicher. */
