@@ -12,6 +12,14 @@ import de.opalium.luckysky.gui.AdminGui;
 import de.opalium.luckysky.gui.PlayerGui;
 import de.opalium.luckysky.listeners.BossListener;
 import de.opalium.luckysky.listeners.PlayerListener;
+import de.opalium.luckysky.round.RoundState;
+import de.opalium.luckysky.round.RoundStateMachine;
+import de.opalium.luckysky.round.handlers.CountdownStateHandler;
+import de.opalium.luckysky.round.handlers.EndingStateHandler;
+import de.opalium.luckysky.round.handlers.LobbyStateHandler;
+import de.opalium.luckysky.round.handlers.PrepareStateHandler;
+import de.opalium.luckysky.round.handlers.ResetStateHandler;
+import de.opalium.luckysky.round.handlers.RunStateHandler;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabCompleter;
@@ -27,6 +35,7 @@ public final class LuckySkyPlugin extends JavaPlugin {
     private PlayerGui playerGui;
     private ScoreboardService scoreboard;
     private NpcService npcs;
+    private RoundStateMachine rounds;
 
     public static LuckySkyPlugin get() {
         return instance;
@@ -44,6 +53,10 @@ public final class LuckySkyPlugin extends JavaPlugin {
         return scoreboard;
     }
 
+    public RoundStateMachine rounds() {
+        return rounds;
+    }
+
     public NpcService npcs() {
         return npcs;
     }
@@ -55,10 +68,19 @@ public final class LuckySkyPlugin extends JavaPlugin {
         this.configs = new ConfigService(this).ensureDefaults().loadAll();
         this.scoreboard = new ScoreboardService(this);
         this.game = new GameManager(this, scoreboard);
+        this.rounds = new RoundStateMachine(this, game);
+        rounds.registerHandler(RoundState.PREPARE, new PrepareStateHandler(game));
+        rounds.registerHandler(RoundState.LOBBY, new LobbyStateHandler(game));
+        rounds.registerHandler(RoundState.COUNTDOWN, new CountdownStateHandler(game));
+        rounds.registerHandler(RoundState.RUN, new RunStateHandler(game));
+        rounds.registerHandler(RoundState.ENDING, new EndingStateHandler(game));
+        rounds.registerHandler(RoundState.RESET, new ResetStateHandler(game));
+        game.attachRoundStateMachine(rounds);
         this.adminGui = new AdminGui(this);
         this.playerGui = new PlayerGui(this);
         this.duels = new DuelsManager(this);
         this.npcs = new NpcService(this);
+        rounds.onEnable();
 
         registerCommand("ls", new LsCommand(this));
         registerCommand("arena", new ArenaCommand(this));
@@ -80,6 +102,10 @@ public final class LuckySkyPlugin extends JavaPlugin {
     public void onDisable() {
         if (game != null) {
             game.shutdown();
+        }
+        if (rounds != null) {
+            rounds.onDisable();
+            rounds = null;
         }
         if (scoreboard != null) {
             scoreboard.shutdown();

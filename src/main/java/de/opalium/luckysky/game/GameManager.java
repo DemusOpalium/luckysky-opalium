@@ -4,6 +4,9 @@ import de.opalium.luckysky.LuckySkyPlugin;
 import de.opalium.luckysky.config.GameConfig;
 import de.opalium.luckysky.config.MessagesConfig;
 import de.opalium.luckysky.config.WorldsConfig;
+import de.opalium.luckysky.game.PortalService;
+import de.opalium.luckysky.round.RoundState;
+import de.opalium.luckysky.round.RoundStateMachine;
 import de.opalium.luckysky.util.Msg;
 import de.opalium.luckysky.util.Worlds;
 import java.util.Collections;
@@ -29,7 +32,8 @@ public class GameManager {
     private final RewardsService rewardsService;
     private final ScoreboardService scoreboardService;
 
-    private GameState state = GameState.IDLE;
+    private RoundStateMachine roundStateMachine;
+    private RoundState roundState = RoundState.IDLE;
 
     private final Set<UUID> activeParticipants = new HashSet<>();
     private final Set<UUID> allParticipants = new HashSet<>();
@@ -47,6 +51,9 @@ public class GameManager {
     }
 
     public void shutdown() {
+        if (roundStateMachine != null) {
+            roundStateMachine.requestStop();
+        }
         luckyService.stop();
         durationService.stop();
         witherService.stop();
@@ -54,15 +61,121 @@ public class GameManager {
     }
 
     public GameState state() {
-        return state;
+        return switch (roundState) {
+            case RUN -> GameState.RUNNING;
+            case IDLE -> GameState.IDLE;
+            default -> GameState.STOPPED;
+        };
+    }
+
+    public RoundState roundState() {
+        return roundState;
+    }
+
+    public void attachRoundStateMachine(RoundStateMachine machine) {
+        this.roundStateMachine = machine;
+        machine.addListener(this::onRoundStateTransition);
+    }
+
+    public RoundStateMachine roundMachine() {
+        return roundStateMachine;
+    }
+
+    private void onRoundStateTransition(RoundState from, RoundState to) {
+        this.roundState = to;
+        refreshScoreboard();
+    }
+
+    private boolean isRunning() {
+        return roundState == RoundState.RUN;
+    }
+
+    public boolean canStartRound() {
+        if (isRunning()) {
+            Msg.to(Bukkit.getConsoleSender(), "&cLuckySky läuft bereits.");
+            return false;
+        }
+        World world = ensureWorldLoaded();
+        GameConfig game = gameConfig();
+        GameConfig.Position position = game.lucky().position();
+        if (game.lucky().requireAirAtTarget()
+                && world.getBlockAt(position.x(), position.y(), position.z()).getType() != Material.AIR) {
+            Msg.to(Bukkit.getConsoleSender(), "&cLucky-Locus ist blockiert. Entferne Block bei "
+                    + position.x() + ", " + position.y() + ", " + position.z() + ".");
+            return false;
+        }
+        return true;
+    }
+
+    public void prepareRoundStage() {
+        activeParticipants.clear();
+        allParticipants.clear();
+        disconnectedParticipants.clear();
+        platformService.placeBase();
+        refreshScoreboard();
+    }
+
+    public void onLeavePrepareStage() {
+        // no-op placeholder for future cleanups
+    }
+
+    public void lobbyStage() {
+        bindAll();
+        teleportAllToPlatform();
+        setAllSurvivalInWorld();
+        refreshScoreboard();
+    }
+
+    public void countdownStage() {
+        refreshScoreboard();
+    }
+
+    public void runStage() {
+        luckyService.start();
+        durationService.startDefault();
+        witherService.start();
+        WitherService.SpawnRequestResult spawnAtStart =
+                witherService.requestSpawn(WitherService.SpawnTrigger.START);
+        refreshScoreboard();
+        if (spawnAtStart == WitherService.SpawnRequestResult.ACCEPTED) {
+            Bukkit.getScheduler().runTask(plugin, this::refreshScoreboard);
+        }
+        broadcast(messages().gamePrefix() + worldConfig().lucky().startBanner());
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (!platformService.isBaseIntact()) {
+                platformService.placeBase();
+                Msg.to(Bukkit.getConsoleSender(), messages().adminPrefix() + "Plattformkern wiederhergestellt.");
+            }
+        }, 100L);
+        Bukkit.getScheduler().runTaskLater(plugin,
+                () -> Msg.to(Bukkit.getConsoleSender(), messages().adminPrefix() + "Game is running."), 1L);
+    }
+
+    public void onLeaveRunStage() {
+        // no-op placeholder for additional hooks
+    }
+
+    public void endingStage() {
+        witherService.cancelSpawn();
+        luckyService.stop();
+        durationService.stop();
+        witherService.stop();
+        refreshScoreboard();
+        broadcast(messages().gamePrefix() + plugin.configs().messages().stopBanner());
+    }
+
+    public void resetStage() {
+        teleportAllToLobby();
+        clearParticipants();
+        refreshScoreboard();
     }
 
     // ─────────────────────────────────────────────────────────────
     // PRESET-START / CLEANUP
     // ─────────────────────────────────────────────────────────────
     public void startPreset(int durationMinutes, int witherAfterMinutes, boolean oneLife, boolean openPortal) {
-        if (state == GameState.RUNNING) {
-            Msg.to(Bukkit.getConsoleSender(), "&ePreset ignoriert: LuckySky läuft bereits.");
+        if (!canStartRound()) {
+            Msg.to(Bukkit.getConsoleSender(), "&ePreset ignoriert: LuckySky läuft bereits oder Ziel ist blockiert.");
             return;
         }
         setDurationMinutes(durationMinutes);
@@ -79,79 +192,19 @@ public class GameManager {
             PortalService.openBackspawn();
         }
 
-        start();
+        if (roundStateMachine == null || !roundStateMachine.requestStart()) {
+            Msg.to(Bukkit.getConsoleSender(), "&cStart konnte nicht initialisiert werden (StateMachine fehlte).");
+        }
     }
 
     public void stopAndCleanup(boolean closePortal) {
         witherService.cancelSpawn();
-        stop();
+        if (roundStateMachine != null) {
+            roundStateMachine.requestStop();
+        }
         if (closePortal) {
             PortalService.closeBackspawn();
         }
-    }
-
-    // ─────────────────────────────────────────────────────────────
-
-    public void start() {
-        if (state == GameState.RUNNING) {
-            Msg.to(Bukkit.getConsoleSender(), "&cLuckySky läuft bereits.");
-            return;
-        }
-        World world = ensureWorldLoaded();
-        GameConfig game = gameConfig();
-        GameConfig.Position position = game.lucky().position();
-        if (game.lucky().requireAirAtTarget()
-                && world.getBlockAt(position.x(), position.y(), position.z()).getType() != Material.AIR) {
-            Msg.to(Bukkit.getConsoleSender(), "&cLucky-Locus ist blockiert. Entferne Block bei "
-                    + position.x() + ", " + position.y() + ", " + position.z() + ".");
-            return;
-        }
-        activeParticipants.clear();
-        allParticipants.clear();
-        disconnectedParticipants.clear();
-        platformService.placeBase();
-        bindAll();
-        teleportAllToPlatform();
-        setAllSurvivalInWorld();
-        luckyService.start();
-        durationService.startDefault();
-        witherService.start();
-        state = GameState.RUNNING;
-
-        WitherService.SpawnRequestResult spawnAtStart =
-                witherService.requestSpawn(WitherService.SpawnTrigger.START);
-        refreshScoreboard();
-        if (spawnAtStart == WitherService.SpawnRequestResult.ACCEPTED) {
-            Bukkit.getScheduler().runTask(plugin, this::refreshScoreboard);
-        }
-
-        broadcast(messages().gamePrefix() + worldConfig().lucky().startBanner());
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            if (!platformService.isBaseIntact()) {
-                platformService.placeBase();
-                Msg.to(Bukkit.getConsoleSender(), messages().adminPrefix() + "Plattformkern wiederhergestellt.");
-            }
-        }, 100L);
-        Bukkit.getScheduler().runTaskLater(plugin,
-                () -> Msg.to(Bukkit.getConsoleSender(), messages().adminPrefix() + "Game is running."), 1L);
-    }
-
-    public void stop() {
-        if (state != GameState.RUNNING) {
-            teleportAllToLobby();
-            clearParticipants();
-            state = GameState.STOPPED;
-            refreshScoreboard();
-            return;
-        }
-        luckyService.stop();
-        durationService.stop();
-        witherService.stop();
-        state = GameState.STOPPED;
-        refreshScoreboard();
-        broadcast(messages().gamePrefix() + plugin.configs().messages().stopBanner());
-        teleportAllToLobby();
-        clearParticipants();
     }
 
     public void placePlatform() {
@@ -294,7 +347,7 @@ public class GameManager {
             if (gameConfig().spawns().allowLobbyOverride()) {
                 player.setBedSpawnLocation(lobby, true);
             }
-            if (state != GameState.RUNNING && !gameConfig().lives().oneLife()) {
+            if (!isRunning() && !gameConfig().lives().oneLife()) {
                 player.setGameMode(GameMode.SURVIVAL);
             }
         }
@@ -337,7 +390,7 @@ public class GameManager {
     }
 
     public void handleRespawn(Player player) {
-        if (state != GameState.RUNNING) {
+        if (!isRunning()) {
             return;
         }
         if (!isParticipant(player)) {
@@ -361,7 +414,7 @@ public class GameManager {
             disconnectedParticipants.remove(id);
             return;
         }
-        if (state == GameState.RUNNING) {
+        if (isRunning()) {
             disconnectedParticipants.add(id);
             if (activeParticipants.isEmpty()) {
                 handleAllPlayersEliminated();
@@ -375,7 +428,7 @@ public class GameManager {
         if (!disconnectedParticipants.contains(id)) {
             return;
         }
-        if (state != GameState.RUNNING) {
+        if (!isRunning()) {
             disconnectedParticipants.remove(id);
             return;
         }
@@ -385,7 +438,7 @@ public class GameManager {
         }
         disconnectedParticipants.remove(id);
         activeParticipants.add(id);
-        if (state == GameState.RUNNING) {
+        if (isRunning()) {
             Bukkit.getScheduler().runTask(plugin, () -> {
                 player.setGameMode(GameMode.SURVIVAL);
                 platformSpawnLocation().ifPresent(player::teleport);
@@ -395,7 +448,7 @@ public class GameManager {
     }
 
     public boolean onDurationExpired() {
-        if (state != GameState.RUNNING) {
+        if (!isRunning()) {
             return false;
         }
         WitherService.SpawnRequestResult result =
@@ -407,17 +460,21 @@ public class GameManager {
         }
         rewardsService.triggerFail(allParticipants);
         broadcast(messages().gamePrefix() + "&eZeit abgelaufen – Spiel gestoppt.");
-        stop();
+        if (roundStateMachine != null) {
+            roundStateMachine.requestStop();
+        }
         return true;
     }
 
     public void handleWitherKill(Player killer) {
-        if (state != GameState.RUNNING) {
+        if (!isRunning()) {
             return;
         }
         rewardsService.triggerWin(killer, activeParticipants);
         broadcast(messages().gamePrefix() + "&aWither besiegt! GG!");
-        stop();
+        if (roundStateMachine != null) {
+            roundStateMachine.requestStop();
+        }
     }
 
     public void reloadSettings() {
@@ -430,7 +487,9 @@ public class GameManager {
     private void handleAllPlayersEliminated() {
         rewardsService.triggerFail(allParticipants);
         broadcast(messages().gamePrefix() + "&cAlle Spieler ausgeschieden – Spiel beendet.");
-        stop();
+        if (roundStateMachine != null) {
+            roundStateMachine.requestStop();
+        }
     }
 
     public Set<UUID> activeParticipants() {
