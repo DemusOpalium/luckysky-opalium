@@ -196,8 +196,16 @@ public class PlayerGui implements Listener {
             return;
         }
         game.setDurationMinutes(minutes);
-        game.start();
-        Msg.to(player, "&aLuckySky mit &f" + minutes + "&a Minuten gestartet.");
+        if (plugin.rounds() == null) {
+            Msg.to(player, "&cStateMachine nicht verfügbar.");
+            return;
+        }
+        boolean started = plugin.rounds().requestStart();
+        if (started) {
+            Msg.to(player, "&aLuckySky mit &f" + minutes + "&a Minuten gestartet.");
+        } else {
+            Msg.to(player, "&cKonnte LuckySky nicht starten.");
+        }
     }
 
     private int parseMinutes(String argument) {

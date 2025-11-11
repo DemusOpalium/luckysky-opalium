@@ -7,6 +7,7 @@ import de.opalium.luckysky.config.WorldsConfig;
 import de.opalium.luckysky.game.GameState;
 import de.opalium.luckysky.game.PortalService;
 import de.opalium.luckysky.game.WitherService;
+import de.opalium.luckysky.round.RoundStateMachine;
 import de.opalium.luckysky.gui.layout.AdminGuiLayout;
 import de.opalium.luckysky.util.Msg;
 import de.opalium.luckysky.util.WitherSpawnMessages;
@@ -226,7 +227,12 @@ public class AdminGui implements Listener {
     }
 
     private void stopGame(Player player) {
-        plugin.game().stop();
+        RoundStateMachine rounds = plugin.rounds();
+        if (rounds == null) {
+            Msg.to(player, "&cStateMachine nicht verfügbar.");
+            return;
+        }
+        rounds.requestStop();
         Msg.to(player, "&eGame gestoppt & Lobby.");
     }
 
@@ -333,8 +339,16 @@ public class AdminGui implements Listener {
 
     private void startWithDuration(Player player, int minutes) {
         plugin.game().setDurationMinutes(minutes);
-        plugin.game().start();
-        Msg.to(player, "&aStart mit Dauer: &f" + minutes + " Minuten.");
+        RoundStateMachine rounds = plugin.rounds();
+        if (rounds == null) {
+            Msg.to(player, "&cStateMachine nicht verfügbar.");
+            return;
+        }
+        if (rounds.requestStart()) {
+            Msg.to(player, "&aStart mit Dauer: &f" + minutes + " Minuten.");
+        } else {
+            Msg.to(player, "&cKonnte LuckySky nicht starten.");
+        }
     }
 
     private int parseMinutes(String argument) {
