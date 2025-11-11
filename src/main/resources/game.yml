@@ -1,6 +1,12 @@
 durations:
-  minutesDefault: 60
-  presets: [30, 45, 60]
+  minutesDefault: 20
+  presets: [5, 20, 60]
+  bossbar:
+    enabled: false
+    title: "&dLuckySky"
+  actionbar:
+    enabled: false
+    format: "&eTimer: &f{time}"
 lucky:
   position:
     x: 0

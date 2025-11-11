@@ -4,7 +4,6 @@ import de.opalium.luckysky.LuckySkyPlugin;
 import de.opalium.luckysky.game.GameManager;
 import de.opalium.luckysky.game.GameState;
 import de.opalium.luckysky.gui.PlayerGui;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -24,43 +23,24 @@ public class PlayerListener implements Listener {
 
     @EventHandler
     public void onPlayerDeath(PlayerDeathEvent event) {
-        if (plugin.game().state() != GameState.RUNNING) {
+        GameManager game = plugin.game();
+        if (game == null) {
             return;
         }
-        Player player = event.getEntity();
-        if (!plugin.game().isParticipant(player)) {
+        GameState state = game.state();
+        if (state != GameState.COUNTDOWN && state != GameState.RUN) {
             return;
         }
-        plugin.game().handleParticipantDeath(player);
+        game.respawn().handleDeath(event);
     }
 
     @EventHandler
     public void onPlayerRespawn(PlayerRespawnEvent event) {
-        Player player = event.getPlayer();
         GameManager game = plugin.game();
-        boolean running = game.state() == GameState.RUNNING;
-        boolean oneLife = game.oneLifeEnabled();
-        boolean eliminated = game.isParticipant(player) && !game.isActiveParticipant(player);
-
-        if (running) {
-            game.platformSpawnLocation().ifPresent(event::setRespawnLocation);
-            if (oneLife && eliminated) {
-                Bukkit.getScheduler().runTask(plugin, () -> player.setGameMode(org.bukkit.GameMode.SPECTATOR));
-                return;
-            }
-            game.handleRespawn(player);
-            Bukkit.getScheduler().runTask(plugin, () -> player.setGameMode(org.bukkit.GameMode.SURVIVAL));
-        } else {
-            game.lobbySpawnLocation().ifPresent(event::setRespawnLocation);
-            Bukkit.getScheduler().runTask(plugin, () -> {
-                game.teleportPlayerToLobby(player);
-                if (oneLife && eliminated) {
-                    player.setGameMode(org.bukkit.GameMode.SPECTATOR);
-                } else if (!oneLife) {
-                    player.setGameMode(org.bukkit.GameMode.SURVIVAL);
-                }
-            });
+        if (game == null) {
+            return;
         }
+        game.respawn().handleRespawn(event);
     }
 
     @EventHandler

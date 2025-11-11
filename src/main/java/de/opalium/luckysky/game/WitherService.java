@@ -5,6 +5,7 @@ import de.opalium.luckysky.config.GameConfig;
 import de.opalium.luckysky.config.MessagesConfig;
 import de.opalium.luckysky.config.TrapsConfig;
 import de.opalium.luckysky.config.WorldsConfig;
+import de.opalium.luckysky.game.GameState;
 import de.opalium.luckysky.util.Msg;
 import de.opalium.luckysky.util.Worlds;
 import java.util.Collection;
@@ -65,7 +66,7 @@ public class WitherService {
     }
 
     public void reload() {
-        if (plugin.game().state() == GameState.RUNNING) {
+        if (isGameActive()) {
             start();
         } else {
             TrapsConfig traps = traps();
@@ -80,7 +81,7 @@ public class WitherService {
     /** Plant den Wither-Spawn in X Minuten (überschreibt Config-Verzögerung). */
     public void scheduleSpawn(int minutes) {
         cancelSpawn();
-        if (!witherEnabled || plugin.game().state() != GameState.RUNNING) return;
+        if (!witherEnabled || !isGameActive()) return;
         if (minutes <= 0) {
             Bukkit.getScheduler().runTask(plugin, this::spawn);
             return;
@@ -105,7 +106,7 @@ public class WitherService {
         if (!witherEnabled) {
             return SpawnRequestResult.WITHER_DISABLED;
         }
-        if (plugin.game().state() != GameState.RUNNING) {
+        if (!isGameActive()) {
             return SpawnRequestResult.GAME_NOT_RUNNING;
         }
         // Falls später Wither-Spawn-Mode in der Config ausgewertet wird,
@@ -135,7 +136,7 @@ public class WitherService {
         }
 
         // Taunts nur reaktivieren, wenn wirklich gespawnt wurde und Game läuft
-        if (spawned && tauntsEnabled && plugin.game().state() == GameState.RUNNING) {
+        if (spawned && tauntsEnabled && isGameActive()) {
             setTauntsEnabled(true);
         }
         return spawned;
@@ -145,7 +146,7 @@ public class WitherService {
         this.witherEnabled = enabled;
         if (!enabled) {
             stop();
-        } else if (plugin.game().state() == GameState.RUNNING) {
+        } else if (isGameActive()) {
             start();
         }
     }
@@ -155,7 +156,7 @@ public class WitherService {
         if (!enabled && tauntTimer != -1) {
             Bukkit.getScheduler().cancelTask(tauntTimer);
             tauntTimer = -1;
-        } else if (enabled && plugin.game().state() == GameState.RUNNING) {
+        } else if (enabled && isGameActive()) {
             TrapsConfig traps = traps();
             if (tauntTimer != -1) Bukkit.getScheduler().cancelTask(tauntTimer);
             tauntTimer = Bukkit.getScheduler().scheduleSyncRepeatingTask(
@@ -170,7 +171,7 @@ public class WitherService {
     // INTERN
     // ─────────────────────────────────────────────────────────────
     private boolean spawn() {
-        if (!witherEnabled || plugin.game().state() != GameState.RUNNING) {
+        if (!witherEnabled || !isGameActive()) {
             return false;
         }
 
@@ -210,7 +211,7 @@ public class WitherService {
     }
 
     private void taunt() {
-        if (!tauntsEnabled || plugin.game().state() != GameState.RUNNING) return;
+        if (!tauntsEnabled || !isGameActive()) return;
         World world = Worlds.require(worldConfig().worldName());
         if (world.getEntitiesByClass(Wither.class).isEmpty()) return;
 
@@ -234,6 +235,11 @@ public class WitherService {
     private TrapsConfig traps() { return plugin.configs().traps(); }
     private WorldsConfig.LuckyWorld worldConfig() { return plugin.configs().worlds().luckySky(); }
     private MessagesConfig messages() { return plugin.configs().messages(); }
+
+    private boolean isGameActive() {
+        GameState state = plugin.game().state();
+        return state == GameState.COUNTDOWN || state == GameState.RUN;
+    }
 
     // ─────────────────────────────────────────────────────────────
     // ENUMS

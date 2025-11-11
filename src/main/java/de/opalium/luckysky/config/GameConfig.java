@@ -39,14 +39,23 @@ public record GameConfig(
 
     private static Durations readDurations(ConfigurationSection section) {
         if (section == null) {
-            return new Durations(60, List.of(30, 45, 60));
+            return new Durations(60, List.of(30, 45, 60), false, "&dLuckySky", false, "&eTimer: &f{time}");
         }
         int minutesDefault = section.getInt("minutesDefault", section.getInt("minutes_default", 60));
         List<Integer> presets = section.getIntegerList("presets");
         if (presets.isEmpty()) {
             presets = List.of(minutesDefault);
         }
-        return new Durations(minutesDefault, Collections.unmodifiableList(new ArrayList<>(presets)));
+        boolean bossbarEnabled = section.getBoolean("bossbar.enabled", false);
+        String bossbarTitle = section.getString("bossbar.title", "&dLuckySky");
+        boolean actionbarEnabled = section.getBoolean("actionbar.enabled", false);
+        String actionbarFormat = section.getString("actionbar.format", "&eTimer: &f{time}");
+        return new Durations(minutesDefault,
+                Collections.unmodifiableList(new ArrayList<>(presets)),
+                bossbarEnabled,
+                bossbarTitle,
+                actionbarEnabled,
+                actionbarFormat);
     }
 
     private static Lucky readLucky(ConfigurationSection section) {
@@ -165,6 +174,12 @@ public record GameConfig(
         ConfigurationSection durationsSection = config.createSection("durations");
         durationsSection.set("minutesDefault", durations.minutesDefault());
         durationsSection.set("presets", durations.presets());
+        ConfigurationSection bossbarSection = durationsSection.createSection("bossbar");
+        bossbarSection.set("enabled", durations.bossbarEnabled());
+        bossbarSection.set("title", durations.bossbarTitle());
+        ConfigurationSection actionbarSection = durationsSection.createSection("actionbar");
+        actionbarSection.set("enabled", durations.actionbarEnabled());
+        actionbarSection.set("format", durations.actionbarFormat());
 
         ConfigurationSection luckySection = config.createSection("lucky");
         ConfigurationSection position = luckySection.createSection("position");
@@ -227,7 +242,13 @@ public record GameConfig(
         return new GameConfig(durations, updated, platform, rig, wipes, rewards, lives, scoreboard, wither, spawns);
     }
 
-    public record Durations(int minutesDefault, List<Integer> presets) {
+    public record Durations(
+            int minutesDefault,
+            List<Integer> presets,
+            boolean bossbarEnabled,
+            String bossbarTitle,
+            boolean actionbarEnabled,
+            String actionbarFormat) {
     }
 
     public record Lucky(Position position, int intervalTicks, boolean requireAirAtTarget, String variant,

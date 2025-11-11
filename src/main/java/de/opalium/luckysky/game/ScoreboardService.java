@@ -254,8 +254,11 @@ public class ScoreboardService {
             return "&cOffline";
         }
         return switch (game.state()) {
-            case RUNNING -> "&aLaufend";
-            case STOPPED -> "&eGestoppt";
+            case RUN -> "&aLaufend";
+            case COUNTDOWN -> "&eCountdown";
+            case LOBBY -> "&bLobby";
+            case ENDING -> "&6Endphase";
+            case RESETTING -> "&cReset";
             case IDLE -> "&7Bereit";
         };
     }
@@ -287,7 +290,11 @@ public class ScoreboardService {
             return "&cAus";
         }
         GameManager game = plugin.game();
-        if (game == null || game.state() != GameState.RUNNING) {
+        if (game == null) {
+            return "&eBereit";
+        }
+        GameState state = game.state();
+        if (state != GameState.RUN && state != GameState.COUNTDOWN) {
             return "&eBereit";
         }
         World world = luckyWorld();

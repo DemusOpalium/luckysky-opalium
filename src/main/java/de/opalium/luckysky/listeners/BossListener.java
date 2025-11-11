@@ -19,7 +19,8 @@ public class BossListener implements Listener {
         if (event.getEntityType() != EntityType.WITHER) {
             return;
         }
-        if (plugin.game().state() != GameState.RUNNING) {
+        GameState state = plugin.game().state();
+        if (state != GameState.COUNTDOWN && state != GameState.RUN) {
             return;
         }
         plugin.game().handleWitherKill(event.getEntity().getKiller());

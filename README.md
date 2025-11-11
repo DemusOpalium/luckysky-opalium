@@ -7,7 +7,7 @@
 - **Match lifecycle:** `/ls start` prepares the world, builds the safe platform, binds online players to the configured respawn, switches them to Survival, and launches the running timers/services. `/ls stop` (or defeating the boss/timeout) cleanly halts the round while keeping protection blocks intact.
 - **Safe platform builder:** Platform presets from `config.yml` are placed via commands or the admin GUI, including optional 3×3 extensions for the landing area.
 - **Lucky Block spawner:** `LuckyService` periodically places the configured Lucky Block variant at the arena coordinates, respecting air-only placement when desired.
-- **Round timer:** `DurationService` tracks the configured duration or preset minute modes and stops the game when the countdown elapses.
+- **Round timer:** `CountdownService` tracks the configured duration or preset minute modes with tick-accurate updates and optional bossbar/actionbar output, stopping the game when the countdown elapses.
 - **Wither encounter:** `WitherService` handles delayed spawns, broadcast taunts, manual spawn triggers, and toggles for both features.
 - **Arena wipes:** Soft and hard wipe routines remove lingering entities around the Lucky Block radius, including armor stand limits.
 - **Rewards engine:** Command lists run on boss victory or failure, supporting winner-only or everyone payout modes.
