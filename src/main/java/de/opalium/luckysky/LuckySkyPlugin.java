@@ -12,6 +12,8 @@ import de.opalium.luckysky.gui.AdminGui;
 import de.opalium.luckysky.gui.PlayerGui;
 import de.opalium.luckysky.listeners.BossListener;
 import de.opalium.luckysky.listeners.PlayerListener;
+import de.opalium.luckysky.round.RoundStateMachine;
+import de.opalium.luckysky.world.WorldProvisioner;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.command.TabCompleter;
@@ -27,6 +29,8 @@ public final class LuckySkyPlugin extends JavaPlugin {
     private PlayerGui playerGui;
     private ScoreboardService scoreboard;
     private NpcService npcs;
+    private WorldProvisioner worldProvisioner;
+    private RoundStateMachine rounds;
 
     public static LuckySkyPlugin get() {
         return instance;
@@ -48,6 +52,10 @@ public final class LuckySkyPlugin extends JavaPlugin {
         return npcs;
     }
 
+    public RoundStateMachine rounds() {
+        return rounds;
+    }
+
     @Override
     public void onEnable() {
         instance = this;
@@ -59,6 +67,8 @@ public final class LuckySkyPlugin extends JavaPlugin {
         this.playerGui = new PlayerGui(this);
         this.duels = new DuelsManager(this);
         this.npcs = new NpcService(this);
+        this.worldProvisioner = new WorldProvisioner(this);
+        this.rounds = new RoundStateMachine(this, worldProvisioner);
 
         registerCommand("ls", new LsCommand(this));
         registerCommand("arena", new ArenaCommand(this));
@@ -72,6 +82,8 @@ public final class LuckySkyPlugin extends JavaPlugin {
         pm.registerEvents(duels, this);
 
         scoreboard.attachAll();
+
+        rounds.recoverIfLocked();
 
         getLogger().info("[LuckySky] enabled.");
     }
@@ -89,6 +101,11 @@ public final class LuckySkyPlugin extends JavaPlugin {
             npcs.shutdown();
             npcs = null;
         }
+        if (rounds != null) {
+            rounds.shutdown();
+            rounds = null;
+        }
+        worldProvisioner = null;
         instance = null;
         getLogger().info("[LuckySky] disabled.");
     }
