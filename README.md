@@ -130,10 +130,3 @@ GameManager game = LuckySkyPlugin.get().game();
 game.start();                       // Startet die Runde
 game.countdown().startMinutes(20);  // Setzt die Rundendauer
 game.stop();                        // Stoppt die Runde
-
-
-
----
-
-✅ Kopiere das **komplett** so in dein GitHub-README.  
-Dann wird **nur der YAML-Block und der Java-Block** formatiert, alles andere bleibt normal.
