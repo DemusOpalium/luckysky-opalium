@@ -1,3 +1,65 @@
+⚠ Worlds-Konfiguration (worlds.yml)
+
+Beim ersten Start legt LuckySky
+/plugins/LuckySky/worlds.yml an.
+In manchen Setups wird der Spawn zu niedrig (Y=80) gesetzt. Ergebnis: Fall ins Void.
+
+Fix:
+
+Server stoppen
+
+Datei öffnen:
+
+/plugins/LuckySky/worlds.yml
+
+
+Inhalt prüfen/ersetzen:
+
+luckySky:
+  worldName: "LuckySky"
+  spawn:
+    x: 0.0
+    y: 101.0
+    z: 2.0
+    yaw: 180.0
+    pitch: 0.0
+  # Lobby wird extern verwaltet (Multiverse/Essentials)
+  # lobby:
+  #   x: 0.0
+  #   y: 101.0
+  #   z: 2.0
+  #   yaw: 180.0
+  #   pitch: 0.0
+  lucky:
+    startBanner: "§aLuckySky läuft – break the blocks!"
+    require_air_at_target: true
+
+duels:
+  worldName: "duels"
+  lobby:
+    x: 1.0
+    y: -56.0
+    z: 0.0
+    yaw: 0.0
+    pitch: 0.0
+  protection_radius: 24
+
+
+Speichern, Server starten. Spieler spawnen auf Y=101.
+
+Multiverse-Alternative:
+
+/mvtp LuckySky
+/mv setspawn 0 101 2
+/gamerule spawnRadius 0
+
+
+
+
+
+
+
+
 ![LuckySky Hauptbanner](docs/images/luckysky/banner/Lucky-banner01.png)
 
 # LuckySky-Opalium
