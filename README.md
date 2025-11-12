@@ -1,9 +1,9 @@
-![LuckySky Banner](docs/images/luckysky/branding/banner/Banner-001.png)
+![LuckySky Hauptbanner](docs/images/luckysky/banner/Lucky-banner01.png)
 
 # LuckySky-Opalium
 
 Paper 1.21.10 Plugin für das LuckySky-Minigame von Opalium.  
-Bietet Spielsteuerung, Plattform-Utilities, automatische Lucky-Block-Spawns, Countdown-/Reward-Systeme, Wither-Events und vollständige In-Game-GUIs.
+Bietet Spielsteuerung, Plattform-Utilities, automatische Lucky-Block-Spawns, Countdown- / Reward-Systeme, Wither-Events und vollständige In-Game-GUIs.
 
 ---
 
@@ -20,18 +20,20 @@ Bietet Spielsteuerung, Plattform-Utilities, automatische Lucky-Block-Spawns, Cou
 
 | Symbol | Komponente | Beschreibung |
 |:--:|:--|:--|
-| ![Gear](docs/images/luckysky/branding/icons/128x128/Icon-Rad.png) | **GameManager** | Koordiniert Start/Stop, lädt Welt, platziert Safe-Plattform, bindet Spieler, startet Lucky/Countdown/Wither-Services, verwaltet Teilnehmer. |
+| ![Gear](docs/images/luckysky/branding/icons/128x128/Icon-Herz.png) | **GameManager** | Koordiniert Start / Stop, lädt Welt, platziert Safe-Plattform, bindet Spieler, startet Lucky / Countdown / Wither-Services, verwaltet Teilnehmer. |
 | ![CommandBlock](docs/images/luckysky/branding/icons/128x128/Command-Block.png) | **LuckyService** | Platziert periodisch den konfigurierten Lucky-Block-Typ an der Arena-Position. |
-| ![Power](docs/images/luckysky/branding/icons/128x128/Icon-off.png) | **CountdownService** | Führt tick-genauen Rundentimer mit Bossbar / Actionbar aus und stoppt nach Ablauf. |
-| ![Magic](docs/images/luckysky/branding/icons/128x128/Icon-Tool-Click-Magic.png) | **WitherService** | Verwaltet verzögerte Spawns, Taunt-Nachrichten und Aktivierungs-Toggles. |
-| ![Heart](docs/images/luckysky/branding/icons/128x128/Icon-Herz.png) | **RewardService** | Führt Rewards/Fails aus, startet 60-Sekunden-Endtimer und setzt danach in LOBBY zurück. |
-| ![Magic](docs/images/luckysky/branding/icons/128x128/Icon-Tool-Click-Magic.png) | **Admin GUI** | In-Game-Steuerung für Start/Stop, Zeitpresets, Wipes, Plattform, Toggles, Reload. |
-| ![Heart](docs/images/luckysky/branding/icons/128x128/Icon-Herz.png) | **Duels Integration** | Verknüpft Lucky-Varianten mit Duels-Kits über GUI oder Commands. |
+| ![Heart](docs/images/luckysky/branding/icons/128x128/Icon-Herz.png) | **RewardService** | Führt Rewards / Fails aus, startet 60-Sekunden-Endtimer und setzt danach in LOBBY zurück. |
 
 ---
 
-## 🗺 Struktur
-
+## 🖼 Galerie · Aurora Blue & Sunrise Gold
+<div align="center">
+  <img src="docs/images/luckysky/banner/Lucky-banner01.png" width="80%" alt="Banner 01"/>
+  <img src="docs/images/luckysky/banner/Lucky-Banner02.png" width="80%" alt="Banner 02"/>
+  <img src="docs/images/luckysky/banner/Lucky-banner03.png" width="80%" alt="Banner 03"/>
+  <img src="docs/images/luckysky/banner/Lucky.Banner04.png" width="80%" alt="Banner 04"/>
+  <img src="docs/images/luckysky/banner/Lucky.Banner05.png" width="80%" alt="Banner 05"/>
+</div>
 
 ---
 
@@ -41,7 +43,7 @@ Bietet Spielsteuerung, Plattform-Utilities, automatische Lucky-Block-Spawns, Cou
          controls
          poster="docs/images/luckysky/branding/logo/LuckySky-Logo4.png"
          width="640">
-    Dein Browser unterstützt keine Videoeinbettung.
+    Dein Browser unterstützt keine Videoeinbettung.  
     <a href="docs/images/luckysky/branding/docs/LuckySky-Catch.mp4">Download LuckySky-Catch.mp4</a>
   </video>
   <figcaption>
@@ -63,8 +65,8 @@ Bietet Spielsteuerung, Plattform-Utilities, automatische Lucky-Block-Spawns, Cou
 ---
 
 ## 🧱 Build
-- **Java 21 / Gradle 8.10+ / Paper 1.21.10**
-- Build-Pfad: `gradle build` → `build/libs/LuckySky-Opalium-0.1.0-SNAPSHOT.jar`
+- **Java 21 / Gradle 8.10+ / Paper 1.21.10**  
+- Build-Pfad: `gradle build` → `build/libs/LuckySky-Opalium-0.1.0-SNAPSHOT.jar`  
 - Keine externen Abhängigkeiten außer Paper API und Bukkit.
 
 ---
@@ -72,11 +74,11 @@ Bietet Spielsteuerung, Plattform-Utilities, automatische Lucky-Block-Spawns, Cou
 ## 📦 Status
 Aktueller Stand laut `docs/plugin-status.md`:  
 Funktionierende Services, Rewards, GUIs und AccessGate.  
-Arena-Helper (Rig/Corridor Automation, Warp Signage) folgen.
+Arena-Helper (Rig / Corridor Automation, Warp Signage) folgen.
 
 ---
 
 <div align="center">
-  <img src="docs/images/luckysky/branding/logo/LuckySky-Logo2.png" width="140" alt="LuckySky Logo 2" />
+  <img src="docs/images/luckysky/branding/logo/LuckySky-Logo4.png" width="260" alt="LuckySky Logo 4"/>
   <p><strong>LuckySky · Opalium Haven Project</strong></p>
 </div>
