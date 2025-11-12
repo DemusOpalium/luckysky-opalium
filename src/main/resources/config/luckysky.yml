@@ -7,12 +7,12 @@ world:
       z: 2.0
       yaw: 180.0
       pitch: 0.0
-    lobby:
-      x: 0.0
-      y: 80.0
-      z: 0.0
-      yaw: 0.0
-      pitch: 0.0
+    # lobby:   # absichtlich auskommentiert, MV verwaltet Respawn
+    #   x: 0.0
+    #   y: 101.0
+    #   z: 2.0
+    #   yaw: 0.0
+    #   pitch: 0.0
     lucky:
       startBanner: "§aLuckySky läuft – break the blocks!"
       require_air_at_target: true
@@ -52,8 +52,8 @@ round:
   lucky:
     position:
       x: 0
-      y: 102
-      z: 2
+      y: 101
+      z: 4
     interval_ticks: 160
     require_air_at_target: true
     variant: "RANDOM"
@@ -62,10 +62,10 @@ round:
     big_3x3: false
     base:
       blocks:
-        - { x: 0, y: 100, z: 1, material: "PRISMARINE_BRICKS" }
         - { x: 0, y: 100, z: 2, material: "PRISMARINE_BRICKS" }
+        - { x: 0, y: 100, z: 3, material: "PRISMARINE_BRICKS" }
   rig:
-    base_height: 201
+    base_height: 100
     corridor_clear: true
   wipes:
     entity_soft_every_ticks: 3600
