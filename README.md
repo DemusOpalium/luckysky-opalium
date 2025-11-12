@@ -1,37 +1,36 @@
-![LuckySky banner in Aurora Blue and Sunrise Gold](docs/images/luckysky/banner/Lucky-banner01.png)
+![LuckySky Banner](../images/luckysky/branding/banner/Banner-001.png)
 
-# LuckySky-Opalium
- Paper plugin for Opalium's LuckySky minigame. Provides match control, safe-platform utilities, Lucky Block automation, timers, Wither events, wipes, rewards, and in-game administration GUIs.
+# LuckySky Wiki
 
-## Features
-- **Match lifecycle:** `/ls start` prepares the world, builds the safe platform, binds online players to the configured respawn, switches them to Survival, and launches the running timers/services. `/ls stop` (or defeating the boss/timeout) cleanly halts the round while keeping protection blocks intact.
-- **Safe platform builder:** Platform presets from `config.yml` are placed via commands or the admin GUI, including optional 3×3 extensions for the landing area.
-- **Lucky Block spawner:** `LuckyService` periodically places the configured Lucky Block variant at the arena coordinates, respecting air-only placement when desired.
-- **Round timer:** `DurationService` tracks the configured duration or preset minute modes and stops the game when the countdown elapses.
-- **Wither encounter:** `WitherService` handles delayed spawns, broadcast taunts, manual spawn triggers, and toggles for both features.
-- **Arena wipes:** Soft and hard wipe routines remove lingering entities around the Lucky Block radius, including armor stand limits.
-- **Rewards engine:** Command lists run on boss victory or failure, supporting winner-only or everyone payout modes.
-- **Admin & Duels GUIs:** The LuckySky Admin GUI exposes all match controls in-game, while the optional Duels GUI/command maps Lucky variants to configured Duels kits.
+Diese Dokumentation fasst Betriebs- und Content-Prozesse des LuckySky-Servers zusammen. Die einzelnen Seiten decken spezialisierte Themen wie NPC-Management, grafische Bedienoberflächen, Weltrotation, PvP-Baublöcke und Fallen ab.
 
-## 🎬 Trailer · Aurora Blue & Sunrise Gold
-<figure>
-  <video src="docs/images/luckysky/branding/branding/docs/LuckySky-Catch.mp4" controls poster="docs/images/luckysky/banner/Lucky-banner03.png">
-    Your browser does not support the video tag. You can download it directly via
-    <a href="docs/images/luckysky/branding/branding/docs/LuckySky-Catch.mp4">LuckySky-Catch.mp4</a>.
-  </video>
-  <figcaption>
-    <strong>Aurora Blue</strong> gradients and <strong>Sunrise Gold</strong> flares frame the LuckySky catch sequence.
-  </figcaption>
-</figure>
+## Konfiguration & Provisioning
+- Zentrale Blaupause: `config/luckysky.yml` bündelt Welt-Spawnpunkte, Gate-Befehle, Rundeneinstellungen, Rewards und NPC-Definitionen.
+- GUI-Layouts: Alle Admin/Player-Menüs liegen in `config/gui/` und können ohne Rebuild angepasst werden.
+- Provisioning-Workflow: Nutze das Template beim Aufsetzen neuer Instanzen und führe anschließend `/ls reload` aus, damit LuckySky Gate-, GUI- und World-Definitionen lädt.
+- Welt-Lifecycle & Rotation werden im Detail unter [LuckySky-Weltrotation](luckysky-weltrotation.md) beschrieben.
 
-## Configuration Notes
-- `admin-gui.yml` command buttons must declare a non-empty `commands:` list. Buttons without runnable commands are ignored when the layout is loaded.
+## Inhaltsverzeichnis
+- [NPC-Depot](npc-depot.md)
+- [Admin- und Player-GUIs](admin-player-guis.md)
+- [LuckySky-Weltrotation](luckysky-weltrotation.md)
+- [Duels Crystal PvP Builder](duels-crystal-pvp-builder.md)
+- [Fallen-Handbuch](fallen-handbuch.md)
+- [Permissions & LuckPerms-Setups](permissions.md)
 
-## In Arbeit
-- Arena quality-of-life helpers such as rig/corridor/sign automation remain TODO and require implementation before parity with legacy tooling.
-- Continuous integration/packaging automation is not yet part of the repository (no Gradle wrapper or CI workflows provided).
+## Branding Assets Überblick
 
-## Build
-Requires Java 21 and Gradle. Run `gradle build` to produce `build/libs/LuckySky-Opalium-0.1.0-SNAPSHOT.jar`.
+Der Bereich `docs/images/luckysky/branding/` stellt alle grafischen Ressourcen für Marketing, GUI und Wiki zentral bereit. Die folgenden Beispiele zeigen die wichtigsten Artefakte:
 
-> _#in work  Start 5.11.2025  +  (GPT Test CODEX)_
+### Banner & Video
+
+![LuckySky Promotional Banner](../images/luckysky/branding/banner/Banner-001.png)
+
+<video src="../images/luckysky/branding/docs/LuckySky-Catch.mp4" width="480" controls></video>
+
+### Logo-Varianten
+
+<div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
+  <img src="../images/luckysky/branding/logo/LuckySky-Logo2.png" alt="LuckySky Logo quadratisch" width="160" />
+  <img src="../images/luckysky/branding/logo/LuckySky-Logo4.png" alt="LuckySky Logo breit" width="240" />
+</div>
