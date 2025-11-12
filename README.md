@@ -1,20 +1,17 @@
-⚠ Worlds-Konfiguration (worlds.yml)
+![LuckySky Hauptbanner](docs/images/luckysky/banner/Lucky-banner01.png)
 
-Beim ersten Start legt LuckySky
-/plugins/LuckySky/worlds.yml an.
-In manchen Setups wird der Spawn zu niedrig (Y=80) gesetzt. Ergebnis: Fall ins Void.
+# LuckySky-Opalium
 
-Fix:
+⚠ **Worlds-Konfiguration (`worlds.yml`)**
 
-Server stoppen
+Beim ersten Start legt LuckySky automatisch  
+`/plugins/LuckySky/worlds.yml` an.  
+In manchen Setups kann der Spawn zu niedrig (Y = 80) sein → Spieler fallen ins Void.  
 
-Datei öffnen:
+**Fix:**  
+Ersetze den Inhalt der Datei `worlds.yml` mit:
 
-/plugins/LuckySky/worlds.yml
-
-
-Inhalt prüfen/ersetzen:
-
+```yaml
 luckySky:
   worldName: "LuckySky"
   spawn:
@@ -44,108 +41,99 @@ duels:
     pitch: 0.0
   protection_radius: 24
 
+  ```
 
-Speichern, Server starten. Spieler spawnen auf Y=101.
-
-Multiverse-Alternative:
-
-/mvtp LuckySky
-/mv setspawn 0 101 2
-/gamerule spawnRadius 0
-
-
-
-
-
-
-
-
-![LuckySky Hauptbanner](docs/images/luckysky/banner/Lucky-banner01.png)
-
-# LuckySky-Opalium
-
-Ein Paper-Plugin für **Minecraft 1.21.10**, entstanden aus Leidenschaft, Neugier und dem Wunsch, etwas Eigenes zu schaffen.  
+Ein Paper-Plugin für Minecraft 1.21.10, entstanden aus Leidenschaft, Neugier und dem Wunsch, etwas Eigenes zu schaffen.
 LuckySky vereint Startplattform, automatische Lucky-Block-Spawns, Countdown- und Reward-Systeme, Wither-Events, Respawns, Scoreboards und grafische GUIs in einem modernen, modularen Minigame-System.
 
----
+💙 Projekt & Idee
 
-## 💙 Projekt & Idee
-
-LuckySky-Opalium ist ein freies Community-Projekt, das auf dem Server **mcopalium.de** entwickelt und getestet wird.  
-Die Idee entstand aus einem alten YouTube-Video über *Lucky Skyblock* – zwei Spieler auf einem schwebenden Block, ständig neue Lucky Blocks, voller Chaos und Spaß.  
-Doch keine aktuelle Paper-Version bot so etwas. Also wurde beschlossen:  
-**„Dann bauen wir es selbst.“**
-
-Anfangs war es nur ein Versuch mit Command-Blöcken.  
-Dann kam die Erkenntnis: das braucht ein richtiges Plugin.  
-Heute ist LuckySky-Opalium ein wachsendes System mit klarer Struktur und offenem Code – entwickelt aus Freude am Lernen, nicht für Profit.
+LuckySky-Opalium ist ein freies Community-Projekt, das auf dem Server mcopalium.de entwickelt und getestet wird.
+Die Idee entstand aus einem alten YouTube-Video über Lucky Skyblock – zwei Spieler auf einem schwebenden Block, ständig neue Lucky Blocks, voller Chaos und Spaß.
+Keine aktuelle Paper-Version bot so etwas. Also wurde beschlossen:
+„Dann bauen wir es selbst.“
 
 Ziele:
-- ein einfaches, stabiles Minigame für Freunde und Gäste  
-- modularer Aufbau, klar konfigurierbar  
-- erweiterbar mit Duels, NPCs und Multiverse-Welten  
-- Open Source und zugänglich für jeden, der basteln will  
 
-> *„LuckySky ist kein Produkt – es ist ein Zuhause für Ideen.“*
+Einfaches, stabiles Minigame für Freunde und Gäste
 
----
+Modularer Aufbau, klar konfigurierbar
 
-![Banner Abschnitt](docs/images/luckysky/banner/Lucky-Banner02.png)
+Erweiterbar mit Duels, NPCs und Multiverse
 
-## ⚙ Konfiguration & Provisioning <img src="docs/images/luckysky/branding/icons/128x128/Command-Block.png" alt="cfg" width="22"/>
+Open Source für alle, die basteln wollen
 
-- **Hauptdatei `game.yml`** – Spawns (Lobby/Plattform), Lucky-Block-Position, Rundendauer (Bossbar / Actionbar), Rewards, Lives, Wither-Modus  
-- **GUIs:** `admin-gui.yml` & `player-gui.yml` – anpassbar ohne Rebuild  
-- **Setup:** Welt-Template bereitstellen → Server starten → `/ls reload`  
-- **AccessGate:** Lobby offen, Countdown / Run nur Whitelist oder Admin  
-- **Kompatibilität:** Multiverse-Core, LuckPerms, Duels, Citizens  
-- **Welt-Lifecycle:** siehe [Wiki → LuckySky-Weltrotation](docs/wiki/luckysky-weltrotation.md)
+„LuckySky ist kein Produkt – es ist ein Zuhause für Ideen.“
 
----
+⚙ Konfiguration & Provisioning
 
-## ✨ Hauptfunktionen
+Hauptdatei game.yml – Spawns, Lucky-Block-Position, Rundendauer, Rewards, Lives, Wither-Modus
 
-- **GameManager** – Steuert Start / Stop, lädt Welten, setzt Plattformen, verwaltet Spieler und Services  
-- **LuckyService** – Platziert periodisch den konfigurierten Lucky Block  
-- **CountdownService** – Tickgenauer Rundentimer mit Bossbar / Actionbar  
-- **RewardService** – Führt Sieger-/Verlierer-Befehle aus und setzt nach Ablauf zurück  
-- **RespawnService** – One-Life-Modus, Spectator-Übergänge, korrekte Respawns  
-- **AccessGate** – Kontrolliert Join / Teleport / WorldChange  
+GUIs: admin-gui.yml & player-gui.yml – anpassbar ohne Rebuild
 
-**Weitere Systeme:**  
-WitherService (Spawn + Taunts), ScoreboardService (Status / Timer / Spieler / Wither),  
-WipeService (Entity-Cleanup), NPCService (Teleports / Menüs),  
-Duels-Integration (Kits & Arena-Bindung), StateMachine (LOBBY → COUNTDOWN → RUN → ENDING → RESETTING)
+Setup: Welt-Template bereitstellen → Server starten → /ls reload
 
----
+AccessGate: Lobby offen, Countdown/Run nur Whitelist oder Admin
 
-![Banner Abschnitt](docs/images/luckysky/banner/Lucky-Banner03.png)
+Kompatibilität: Multiverse-Core, LuckPerms, Duels, Citizens
 
-## 📚 Dokumentation · Wiki
+Welt-Lifecycle: siehe Wiki → LuckySky-Weltrotation
 
-- [NPC-Depot](docs/wiki/npc-depot.md)  
-- [Admin- & Player-GUIs](docs/wiki/admin-player-guis.md)  
-- [LuckySky-Weltrotation](docs/wiki/luckysky-weltrotation.md)  
-- [Duels Crystal PvP Builder](docs/wiki/duels-crystal-pvp-builder.md)  
-- [Fallen-Handbuch](docs/wiki/fallen-handbuch.md)  
-- [Permissions & LuckPerms-Setups](docs/wiki/permissions.md)
+✨ Hauptfunktionen
 
----
+GameManager – Steuert Start/Stop, lädt Welten, setzt Plattformen, verwaltet Spieler und Services
 
-## 🧱 Build & Entwicklung
+LuckyService – Platziert periodisch den konfigurierten Lucky Block
 
-- **Java 21 · Gradle 8.10+ · Paper 1.21.10**  
-- **Build:** `gradle build` → `build/libs/LuckySky-Opalium-0.1.0-SNAPSHOT.jar`  
-- **Tests überspringen:** `gradle clean build -x test`  
-- **Abhängigkeiten:** Nur Paper / Bukkit  
-- **Empfohlene IDE:** IntelliJ IDEA oder VS Code mit Gradle-Plugin  
+CountdownService – Tickgenauer Rundentimer mit Bossbar/Actionbar
 
----
+RewardService – Führt Sieger-/Verlierer-Befehle aus
 
-## 🧩 API & Erweiterbarkeit <img src="docs/images/luckysky/branding/icons/128x128/Icon-Herz.png" alt="api" width="20"/>
+RespawnService – One-Life-Modus, Spectator-Übergänge
 
-```java
+AccessGate – Kontrolliert Join/Teleport/WorldChange
+
+Weitere Systeme:
+WitherService, ScoreboardService, WipeService, NPCService,
+Duels-Integration, StateMachine (LOBBY → COUNTDOWN → RUN → ENDING → RESETTING)
+
+📚 Dokumentation · Wiki
+
+NPC-Depot
+
+Admin- & Player-GUIs
+
+LuckySky-Weltrotation
+
+Duels Crystal PvP Builder
+
+Fallen-Handbuch
+
+Permissions & LuckPerms-Setups
+
+🧱 Build & Entwicklung
+
+Java 21 · Gradle 8.10+ · Paper 1.21.10
+
+Build: gradle build → build/libs/LuckySky-Opalium-<version>.jar
+
+Tests überspringen: gradle clean build -x test
+
+Abhängigkeiten: Nur Paper / Bukkit
+
+Empfohlene IDE: IntelliJ IDEA oder VS Code
+
+🧩 API & Erweiterbarkeit
+
+
 GameManager game = LuckySkyPlugin.get().game();
 game.start();                       // Startet die Runde
 game.countdown().startMinutes(20);  // Setzt die Rundendauer
 game.stop();                        // Stoppt die Runde
+
+
+
+---
+
+✅ Kopiere das **komplett** so in dein GitHub-README.  
+Dann wird **nur der YAML-Block und der Java-Block** formatiert, alles andere bleibt normal.
