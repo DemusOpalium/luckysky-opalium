@@ -10,17 +10,25 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 public record NpcConfig(Map<String, NpcEntry> npcs) {
     public static NpcConfig from(FileConfiguration config) {
-        ConfigurationSection root = config.getConfigurationSection("npcs");
-        if (root == null) {
+        return fromSection(config.getConfigurationSection("npcs"));
+    }
+
+    public static NpcConfig fromSection(ConfigurationSection section) {
+        if (section == null) {
             return new NpcConfig(Collections.emptyMap());
+        }
+        ConfigurationSection root = section;
+        ConfigurationSection nested = section.getConfigurationSection("npcs");
+        if (nested != null && !nested.getKeys(false).isEmpty()) {
+            root = nested;
         }
         Map<String, NpcEntry> entries = new HashMap<>();
         for (String key : root.getKeys(false)) {
-            ConfigurationSection section = root.getConfigurationSection(key);
-            if (section == null) {
+            ConfigurationSection entrySection = root.getConfigurationSection(key);
+            if (entrySection == null) {
                 continue;
             }
-            NpcEntry entry = readEntry(key, section);
+            NpcEntry entry = readEntry(key, entrySection);
             if (entry != null) {
                 entries.put(key, entry);
             }
@@ -34,6 +42,10 @@ public record NpcConfig(Map<String, NpcEntry> npcs) {
 
     public void writeTo(FileConfiguration config) {
         ConfigurationSection root = config.createSection("npcs");
+        writeTo(root);
+    }
+
+    public void writeTo(ConfigurationSection root) {
         for (Map.Entry<String, NpcEntry> entry : npcs.entrySet()) {
             ConfigurationSection section = root.createSection(entry.getKey());
             NpcEntry npc = entry.getValue();

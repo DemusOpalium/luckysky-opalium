@@ -4,6 +4,7 @@ import de.opalium.luckysky.LuckySkyPlugin;
 import de.opalium.luckysky.duels.DuelsManager;
 import de.opalium.luckysky.game.GameManager;
 import de.opalium.luckysky.game.WitherService;
+import de.opalium.luckysky.round.RoundStateMachine;
 import de.opalium.luckysky.util.Msg;
 import de.opalium.luckysky.util.WitherSpawnMessages;
 import java.util.ArrayList;
@@ -85,8 +86,15 @@ public class LsCommand implements CommandExecutor, TabCompleter {
                 if (game == null || !requirePermission(sender, PERM_ADMIN)) {
                     return true;
                 }
-                game.start();
-                if (sub.equals("countdown")) {
+                RoundStateMachine rounds = plugin.rounds();
+                if (rounds == null) {
+                    Msg.to(sender, "&cStateMachine nicht verfügbar.");
+                    return true;
+                }
+                boolean started = rounds.requestStart();
+                if (!started) {
+                    Msg.to(sender, "&cKonnte LuckySky nicht starten (bereits aktiv oder blockiert).");
+                } else if (sub.equals("countdown")) {
                     Msg.to(sender, "&aCountdown gestartet.");
                 } else {
                     Msg.to(sender, "&aGame started.");
@@ -97,7 +105,12 @@ public class LsCommand implements CommandExecutor, TabCompleter {
                 if (game == null || !requirePermission(sender, PERM_ADMIN)) {
                     return true;
                 }
-                game.stop();
+                RoundStateMachine rounds = plugin.rounds();
+                if (rounds == null) {
+                    Msg.to(sender, "&cStateMachine nicht verfügbar.");
+                    return true;
+                }
+                rounds.requestStop();
                 Msg.to(sender, "&eGame stopped.");
             }
             case "reset" -> {
@@ -105,7 +118,12 @@ public class LsCommand implements CommandExecutor, TabCompleter {
                 if (game == null || !requirePermission(sender, PERM_ADMIN)) {
                     return true;
                 }
-                game.stop();
+                RoundStateMachine rounds = plugin.rounds();
+                if (rounds == null) {
+                    Msg.to(sender, "&cStateMachine nicht verfügbar.");
+                    return true;
+                }
+                rounds.requestStop();
                 Msg.to(sender, "&eGame beendet – Spieler zur Lobby teleportiert.");
             }
             case "plat" -> {

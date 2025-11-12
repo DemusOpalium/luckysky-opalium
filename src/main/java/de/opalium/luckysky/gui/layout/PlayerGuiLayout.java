@@ -35,9 +35,14 @@ public final class PlayerGuiLayout {
     }
 
     public static PlayerGuiLayout load(LuckySkyPlugin plugin) {
-        File file = new File(plugin.getDataFolder(), "player-gui.yml");
+        String relativePath = "config/gui/luckysky-player.yml";
+        File file = new File(plugin.getDataFolder(), relativePath);
         if (!file.exists()) {
-            plugin.saveResource("player-gui.yml", false);
+            File parent = file.getParentFile();
+            if (parent != null && !parent.exists()) {
+                parent.mkdirs();
+            }
+            plugin.saveResource(relativePath, false);
         }
         YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
         Logger logger = plugin.getLogger();
@@ -64,26 +69,26 @@ public final class PlayerGuiLayout {
                 }
                 int slot = section.getInt("slot", -1);
                 if (slot < 0) {
-                    logger.warning("[LuckySky] player-gui.yml button '" + id + "' missing slot. Skipping.");
+                    logger.warning("[LuckySky] luckysky-player.yml button '" + id + "' missing slot. Skipping.");
                     continue;
                 }
                 if (slot >= size) {
-                    logger.warning("[LuckySky] player-gui.yml button '" + id + "' uses slot " + slot
+                    logger.warning("[LuckySky] luckysky-player.yml button '" + id + "' uses slot " + slot
                             + " outside of inventory size " + size + ". Skipping.");
                     continue;
                 }
                 if (!occupiedSlots.add(slot)) {
-                    logger.warning("[LuckySky] player-gui.yml duplicate button slot " + slot + " (" + id + "). Skipping.");
+                    logger.warning("[LuckySky] luckysky-player.yml duplicate button slot " + slot + " (" + id + "). Skipping.");
                     continue;
                 }
                 Action action = Action.from(section.getString("action"));
                 if (action == null) {
-                    logger.warning("[LuckySky] player-gui.yml button '" + id + "' has unknown action. Skipping.");
+                    logger.warning("[LuckySky] luckysky-player.yml button '" + id + "' has unknown action. Skipping.");
                     continue;
                 }
                 ItemDisplay display = ItemDisplay.from(section.getConfigurationSection("display"), null, logger);
                 if (display == null) {
-                    logger.warning("[LuckySky] player-gui.yml button '" + id + "' missing display. Skipping.");
+                    logger.warning("[LuckySky] luckysky-player.yml button '" + id + "' missing display. Skipping.");
                     continue;
                 }
                 String argument = section.getString("argument", "");
@@ -188,7 +193,7 @@ public final class PlayerGuiLayout {
                 material = Material.matchMaterial(materialName, true);
                 if (material == null) {
                     logger.warning("[LuckySky] Unknown material '" + materialName
-                            + "' in player-gui.yml. Using fallback.");
+                            + "' in luckysky-player.yml. Using fallback.");
                 }
             }
             if (material == null) {

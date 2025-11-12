@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.MemoryConfiguration;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.util.Vector;
 
@@ -24,16 +25,25 @@ public record GameConfig(
         Spawns spawns
 ) {
     public static GameConfig from(FileConfiguration config) {
-        Durations durations = readDurations(config.getConfigurationSection("durations"));
-        Lucky lucky = readLucky(config.getConfigurationSection("lucky"));
-        Platform platform = readPlatform(config.getConfigurationSection("platform"));
-        Rig rig = readRig(config.getConfigurationSection("rig"));
-        Wipes wipes = readWipes(config.getConfigurationSection("wipes"));
-        Rewards rewards = readRewards(config.getConfigurationSection("rewards"));
-        Lives lives = new Lives(config.getBoolean("lives.one_life", false));
-        Scoreboard scoreboard = readScoreboard(config.getConfigurationSection("scoreboard"));
-        Wither wither = readWither(config.getConfigurationSection("wither"));
-        Spawns spawns = readSpawns(config.getConfigurationSection("spawns"));
+        return fromSections(config, config.getConfigurationSection("rewards"));
+    }
+
+    public static GameConfig fromSections(ConfigurationSection roundSection, ConfigurationSection rewardSection) {
+        if (roundSection == null) {
+            roundSection = new MemoryConfiguration();
+        }
+        Durations durations = readDurations(roundSection.getConfigurationSection("durations"));
+        Lucky lucky = readLucky(roundSection.getConfigurationSection("lucky"));
+        Platform platform = readPlatform(roundSection.getConfigurationSection("platform"));
+        Rig rig = readRig(roundSection.getConfigurationSection("rig"));
+        Wipes wipes = readWipes(roundSection.getConfigurationSection("wipes"));
+        Rewards rewards = readRewards(rewardSection != null
+                ? rewardSection
+                : roundSection.getConfigurationSection("rewards"));
+        Lives lives = readLives(roundSection.getConfigurationSection("lives"));
+        Scoreboard scoreboard = readScoreboard(roundSection.getConfigurationSection("scoreboard"));
+        Wither wither = readWither(roundSection.getConfigurationSection("wither"));
+        Spawns spawns = readSpawns(roundSection.getConfigurationSection("spawns"));
         return new GameConfig(durations, lucky, platform, rig, wipes, rewards, lives, scoreboard, wither, spawns);
     }
 
@@ -123,6 +133,14 @@ public record GameConfig(
                 Collections.unmodifiableList(new ArrayList<>(onFail)));
     }
 
+    private static Lives readLives(ConfigurationSection section) {
+        if (section == null) {
+            return new Lives(false);
+        }
+        boolean oneLife = section.getBoolean("one_life", section.getBoolean("oneLife", false));
+        return new Lives(oneLife);
+    }
+
     private static Scoreboard readScoreboard(ConfigurationSection section) {
         if (section == null) {
             return new Scoreboard(false, "&bLuckySky", List.of(
@@ -162,6 +180,12 @@ public record GameConfig(
     }
 
     public void writeTo(FileConfiguration config) {
+        writeRound(config);
+        ConfigurationSection rewardsSection = config.createSection("rewards");
+        writeRewards(rewardsSection);
+    }
+
+    public void writeRound(ConfigurationSection config) {
         ConfigurationSection durationsSection = config.createSection("durations");
         durationsSection.set("minutesDefault", durations.minutesDefault());
         durationsSection.set("presets", durations.presets());
@@ -199,11 +223,6 @@ public record GameConfig(
         wipesSection.set("hard_radius", wipes.hardRadius());
         wipesSection.set("armorstand_radius", wipes.armorstandRadius());
 
-        ConfigurationSection rewardsSection = config.createSection("rewards");
-        rewardsSection.set("mode", rewards.mode());
-        rewardsSection.set("on_boss_kill.commands", rewards.onBossKill());
-        rewardsSection.set("on_fail.commands", rewards.onFail());
-
         ConfigurationSection livesSection = config.createSection("lives");
         livesSection.set("one_life", lives.oneLife());
 
@@ -219,6 +238,12 @@ public record GameConfig(
         spawnsSection.set("allow_binding", spawns.allowBinding());
         spawnsSection.set("allow_lobby_override", spawns.allowLobbyOverride());
         spawnsSection.set("warning", spawns.warning());
+    }
+
+    public void writeRewards(ConfigurationSection section) {
+        section.set("mode", rewards.mode());
+        section.set("on_boss_kill.commands", rewards.onBossKill());
+        section.set("on_fail.commands", rewards.onFail());
     }
 
     public GameConfig withLuckyVariant(String variant) {

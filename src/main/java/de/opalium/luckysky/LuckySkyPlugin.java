@@ -48,6 +48,10 @@ public final class LuckySkyPlugin extends JavaPlugin {
         return scoreboard;
     }
 
+    public RoundStateMachine rounds() {
+        return rounds;
+    }
+
     public NpcService npcs() {
         return npcs;
     }
@@ -63,6 +67,14 @@ public final class LuckySkyPlugin extends JavaPlugin {
         this.configs = new ConfigService(this).ensureDefaults().loadAll();
         this.scoreboard = new ScoreboardService(this);
         this.game = new GameManager(this, scoreboard);
+        this.rounds = new RoundStateMachine(this, game);
+        rounds.registerHandler(RoundState.PREPARE, new PrepareStateHandler(game));
+        rounds.registerHandler(RoundState.LOBBY, new LobbyStateHandler(game));
+        rounds.registerHandler(RoundState.COUNTDOWN, new CountdownStateHandler(game));
+        rounds.registerHandler(RoundState.RUN, new RunStateHandler(game));
+        rounds.registerHandler(RoundState.ENDING, new EndingStateHandler(game));
+        rounds.registerHandler(RoundState.RESET, new ResetStateHandler(game));
+        game.attachRoundStateMachine(rounds);
         this.adminGui = new AdminGui(this);
         this.playerGui = new PlayerGui(this);
         this.duels = new DuelsManager(this);
@@ -92,6 +104,10 @@ public final class LuckySkyPlugin extends JavaPlugin {
     public void onDisable() {
         if (game != null) {
             game.shutdown();
+        }
+        if (rounds != null) {
+            rounds.onDisable();
+            rounds = null;
         }
         if (scoreboard != null) {
             scoreboard.shutdown();

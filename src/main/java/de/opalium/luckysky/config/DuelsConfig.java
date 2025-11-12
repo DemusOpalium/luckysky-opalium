@@ -6,25 +6,22 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 
 public record DuelsConfig(
         String activeArena,
         Map<String, Arena> arenas,
-        Gui gui,
         Scoreboard scoreboard
 ) {
     public static DuelsConfig from(FileConfiguration config) {
         String activeArena = config.getString("active_arena", "default");
         Map<String, Arena> arenas = readArenas(config.getConfigurationSection("arenas"));
-        Gui gui = readGui(config.getConfigurationSection("gui"));
         Scoreboard scoreboard = readScoreboard(config.getConfigurationSection("scoreboard"));
         if (!arenas.containsKey(activeArena) && !arenas.isEmpty()) {
             activeArena = arenas.keySet().iterator().next();
         }
-        return new DuelsConfig(activeArena, Collections.unmodifiableMap(arenas), gui, scoreboard);
+        return new DuelsConfig(activeArena, Collections.unmodifiableMap(arenas), scoreboard);
     }
 
     private static Map<String, Arena> readArenas(ConfigurationSection section) {
@@ -186,53 +183,6 @@ public record DuelsConfig(
         return Collections.unmodifiableList(steps);
     }
 
-    private static Gui readGui(ConfigurationSection section) {
-        if (section == null) {
-            return new Gui(27, new GuiSlots(11, 15, 13), Map.of());
-        }
-        int size = Math.max(9, Math.min(54, section.getInt("size", 27)));
-        GuiSlots slots = readGuiSlots(section.getConfigurationSection("slots"));
-        Map<Integer, GuiItem> items = new LinkedHashMap<>();
-        ConfigurationSection itemsSection = section.getConfigurationSection("items");
-        if (itemsSection != null) {
-            for (String key : itemsSection.getKeys(false)) {
-                ConfigurationSection itemSection = itemsSection.getConfigurationSection(key);
-                if (itemSection == null) {
-                    continue;
-                }
-                int slot = slots.byName(key);
-                if (slot == -1) {
-                    slot = itemSection.getInt("slot", -1);
-                }
-                if (slot < 0) {
-                    continue;
-                }
-                String material = itemSection.getString("material", "BARRIER");
-                String name = itemSection.getString("name", "");
-                List<String> lore = itemSection.getStringList("lore");
-                String action = itemSection.getString("action", key);
-                items.put(slot, new GuiItem(slot, material, name, lore, action));
-            }
-        }
-        return new Gui(size, slots, Collections.unmodifiableMap(items));
-    }
-
-    private static GuiSlots readGuiSlots(ConfigurationSection section) {
-        if (section == null) {
-            return new GuiSlots(11, 15, 13);
-        }
-        int start = section.getInt("start", 11);
-        int stop = section.getInt("stop", 15);
-        int refill = section.getInt("refill", 13);
-        Map<String, Integer> named = new LinkedHashMap<>();
-        for (String key : section.getKeys(false)) {
-            if (!Set.of("start", "stop", "refill").contains(key)) {
-                named.put(key, section.getInt(key));
-            }
-        }
-        return new GuiSlots(start, stop, refill, Collections.unmodifiableMap(named));
-    }
-
     private static Scoreboard readScoreboard(ConfigurationSection section) {
         if (section == null) {
             return new Scoreboard(true);
@@ -304,7 +254,6 @@ public record DuelsConfig(
             writeRules(section.createSection("rules"), arena.rules());
             writeResets(section.createSection("resets"), arena.resets());
         }
-        writeGui(config.createSection("gui"), gui);
         ConfigurationSection scoreboardSection = config.createSection("scoreboard");
         scoreboardSection.set("enabled", scoreboard.enabled());
     }
@@ -380,26 +329,6 @@ public record DuelsConfig(
         }
     }
 
-    private void writeGui(ConfigurationSection section, Gui gui) {
-        section.set("size", gui.size());
-        ConfigurationSection slotsSection = section.createSection("slots");
-        slotsSection.set("start", gui.slots().start());
-        slotsSection.set("stop", gui.slots().stop());
-        slotsSection.set("refill", gui.slots().refill());
-        for (Map.Entry<String, Integer> entry : gui.slots().named().entrySet()) {
-            slotsSection.set(entry.getKey(), entry.getValue());
-        }
-        ConfigurationSection itemsSection = section.createSection("items");
-        for (GuiItem item : gui.items().values()) {
-            ConfigurationSection itemSection = itemsSection.createSection(item.action());
-            itemSection.set("slot", item.slot());
-            itemSection.set("material", item.material());
-            itemSection.set("name", item.name());
-            itemSection.set("lore", item.lore());
-            itemSection.set("action", item.action());
-        }
-    }
-
     private void writeVector(ConfigurationSection section, Vector3i vector) {
         section.set("x", vector.x());
         section.set("y", vector.y());
@@ -468,31 +397,6 @@ public record DuelsConfig(
         public String with() {
             return Objects.toString(parameters.get("with"), null);
         }
-    }
-
-    public record Gui(int size, GuiSlots slots, Map<Integer, GuiItem> items) {
-    }
-
-    public record GuiSlots(int start, int stop, int refill, Map<String, Integer> named) {
-        public GuiSlots(int start, int stop, int refill) {
-            this(start, stop, refill, Map.of());
-        }
-
-        public int byName(String key) {
-            if (key.equalsIgnoreCase("start")) {
-                return start;
-            }
-            if (key.equalsIgnoreCase("stop")) {
-                return stop;
-            }
-            if (key.equalsIgnoreCase("refill")) {
-                return refill;
-            }
-            return named.getOrDefault(key, -1);
-        }
-    }
-
-    public record GuiItem(int slot, String material, String name, List<String> lore, String action) {
     }
 
     public record Scoreboard(boolean enabled) {

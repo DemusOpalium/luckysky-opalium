@@ -20,7 +20,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 /**
  * Runtime representation of the admin GUI layout. Everything is loaded from
- * {@code admin-gui.yml} to make the menu extensible without recompiling.
+ * {@code config/gui/luckysky-admin.yml} to make the menu extensible without recompiling.
  */
 public final class AdminGuiLayout {
     private final Map<String, Menu> menus;
@@ -34,9 +34,14 @@ public final class AdminGuiLayout {
     }
 
     public static AdminGuiLayout load(LuckySkyPlugin plugin) {
-        File file = new File(plugin.getDataFolder(), "admin-gui.yml");
+        String relativePath = "config/gui/luckysky-admin.yml";
+        File file = new File(plugin.getDataFolder(), relativePath);
         if (!file.exists()) {
-            plugin.saveResource("admin-gui.yml", false);
+            File parent = file.getParentFile();
+            if (parent != null && !parent.exists()) {
+                parent.mkdirs();
+            }
+            plugin.saveResource(relativePath, false);
         }
         YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
         Logger logger = plugin.getLogger();
@@ -76,7 +81,7 @@ public final class AdminGuiLayout {
             Material fallbackMaterial, Set<String> unknownMaterials) {
         Map<String, Button> map = new HashMap<>();
         if (section == null) {
-            logger.warning("[LuckySky] admin-gui.yml contains no buttons section. Using empty layout.");
+            logger.warning("[LuckySky] luckysky-admin.yml contains no buttons section. Using empty layout.");
             return map;
         }
         for (String id : section.getKeys(false)) {
@@ -88,12 +93,12 @@ public final class AdminGuiLayout {
                     fallbackMaterial, logger, unknownMaterials);
             if (display == null) {
                 logger.warning("[LuckySky] Hiding admin GUI button '" + id
-                        + "' due to invalid or missing material configuration.");
+                        + "' due to invalid or missing material configuration in luckysky-admin.yml.");
             }
             Action action = Action.from(buttonSection, logger);
             if (action == null) {
                 logger.warning("[LuckySky] Skipping admin GUI button '" + id
-                        + "' because its action could not be loaded.");
+                        + "' because its action could not be loaded from luckysky-admin.yml.");
                 continue;
             }
             boolean lockWhenRunning = buttonSection.getBoolean("lock-when-running", buttonSection.getBoolean("lock_when_running"));
@@ -113,7 +118,7 @@ public final class AdminGuiLayout {
         Map<String, Menu> menus = new HashMap<>();
         ButtonDisplay defaultFiller = ButtonDisplay.defaultFiller(defaults, fallbackMaterial, logger, unknownMaterials);
         if (section == null) {
-            logger.warning("[LuckySky] admin-gui.yml contains no menus section. Using empty layout.");
+            logger.warning("[LuckySky] luckysky-admin.yml contains no menus section. Using empty layout.");
             return menus;
         }
         for (String id : section.getKeys(false)) {
@@ -142,10 +147,12 @@ public final class AdminGuiLayout {
                         if (buttons.containsKey(buttonId)) {
                             mapping.put(slot, buttonId);
                         } else {
-                            logger.warning("[LuckySky] Menu '" + id + "' references unknown button '" + buttonId + "'.");
+                            logger.warning("[LuckySky] Menu '" + id + "' references unknown button '" + buttonId
+                                    + "' in luckysky-admin.yml.");
                         }
                     } catch (NumberFormatException ex) {
-                        logger.warning("[LuckySky] Invalid slot '" + slotKey + "' in menu '" + id + "'.");
+                        logger.warning("[LuckySky] Invalid slot '" + slotKey + "' in menu '" + id
+                                + "' (luckysky-admin.yml).");
                     }
                 }
             }
@@ -187,7 +194,7 @@ public final class AdminGuiLayout {
                         }
                     }
                     if (commands.isEmpty()) {
-                        logger.warning("[LuckySky] Command button without commands defined in admin-gui.yml at "
+                    logger.warning("[LuckySky] Command button without commands defined in luckysky-admin.yml at "
                                 + section.getCurrentPath());
                         yield null;
                     }
@@ -196,7 +203,7 @@ public final class AdminGuiLayout {
                 case "open", "menu", "open-menu", "open_menu" -> {
                     String target = section.getString("target");
                     if (target == null) {
-                        logger.warning("[LuckySky] open-menu button without target in admin-gui.yml");
+                        logger.warning("[LuckySky] open-menu button without target in luckysky-admin.yml");
                     }
                     yield new OpenMenuAction(target);
                 }
@@ -318,10 +325,10 @@ public final class AdminGuiLayout {
             String trackingKey = trimmed.toLowerCase(Locale.ROOT);
             if (unknownMaterials.add(trackingKey)) {
                 if (configPath != null && !configPath.isEmpty()) {
-                    logger.warning("[LuckySky] Unknown material '" + trimmed + "' in admin-gui.yml at '" + configPath
+                    logger.warning("[LuckySky] Unknown material '" + trimmed + "' in luckysky-admin.yml at '" + configPath
                             + "'. Button will be hidden.");
                 } else {
-                    logger.warning("[LuckySky] Unknown material '" + trimmed + "' in admin-gui.yml. Button will be hidden.");
+                    logger.warning("[LuckySky] Unknown material '" + trimmed + "' in luckysky-admin.yml. Button will be hidden.");
                 }
             }
 

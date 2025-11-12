@@ -4,6 +4,12 @@
 
 Diese Dokumentation fasst Betriebs- und Content-Prozesse des LuckySky-Servers zusammen. Die einzelnen Seiten decken spezialisierte Themen wie NPC-Management, grafische Bedienoberflächen, Weltrotation, PvP-Baublöcke und Fallen ab.
 
+## Konfiguration & Provisioning
+- Zentrale Blaupause: `config/luckysky.yml` bündelt Welt-Spawnpunkte, Gate-Befehle, Rundeneinstellungen, Rewards und NPC-Definitionen.
+- GUI-Layouts: Alle Admin/Player-Menüs liegen in `config/gui/` und können ohne Rebuild angepasst werden.
+- Provisioning-Workflow: Nutze das Template beim Aufsetzen neuer Instanzen und führe anschließend `/ls reload`, damit LuckySky Gate-, GUI- und World-Definitionen lädt.
+- Welt-Lifecycle & Rotation werden im Detail unter [LuckySky-Weltrotation](luckysky-weltrotation.md) beschrieben.
+
 ## Inhaltsverzeichnis
 - [NPC-Depot](npc-depot.md)
 - [Admin- und Player-GUIs](admin-player-guis.md)
