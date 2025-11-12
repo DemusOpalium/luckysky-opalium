@@ -32,3 +32,51 @@ Bietet Spielsteuerung, Plattform-Utilities, automatische Lucky-Block-Spawns, Cou
 
 ## 🗺 Struktur
 
+
+---
+
+## 🎬 Trailer · Aurora Blue & Sunrise Gold
+<figure>
+  <video src="docs/images/luckysky/branding/docs/LuckySky-Catch.mp4"
+         controls
+         poster="docs/images/luckysky/branding/logo/LuckySky-Logo4.png"
+         width="640">
+    Dein Browser unterstützt keine Videoeinbettung.
+    <a href="docs/images/luckysky/branding/docs/LuckySky-Catch.mp4">Download LuckySky-Catch.mp4</a>
+  </video>
+  <figcaption>
+    <strong>Aurora Blue</strong> und <strong>Sunrise Gold</strong> prägen die visuelle Identität von LuckySky.
+  </figcaption>
+</figure>
+
+---
+
+## 🧭 Dokumentation / Wiki
+
+- [NPC-Depot](docs/wiki/npc-depot.md)  
+- [Admin- & Player-GUIs](docs/wiki/admin-player-guis.md)  
+- [LuckySky-Weltrotation](docs/wiki/luckysky-weltrotation.md)  
+- [Duels Crystal PvP Builder](docs/wiki/duels-crystal-pvp-builder.md)  
+- [Fallen-Handbuch](docs/wiki/fallen-handbuch.md)  
+- [Permissions & LuckPerms-Setups](docs/wiki/permissions.md)
+
+---
+
+## 🧱 Build
+- **Java 21 / Gradle 8.10+ / Paper 1.21.10**
+- Build-Pfad: `gradle build` → `build/libs/LuckySky-Opalium-0.1.0-SNAPSHOT.jar`
+- Keine externen Abhängigkeiten außer Paper API und Bukkit.
+
+---
+
+## 📦 Status
+Aktueller Stand laut `docs/plugin-status.md`:  
+Funktionierende Services, Rewards, GUIs und AccessGate.  
+Arena-Helper (Rig/Corridor Automation, Warp Signage) folgen.
+
+---
+
+<div align="center">
+  <img src="docs/images/luckysky/branding/logo/LuckySky-Logo2.png" width="140" alt="LuckySky Logo 2" />
+  <p><strong>LuckySky · Opalium Haven Project</strong></p>
+</div>
