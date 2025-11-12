@@ -168,12 +168,4 @@ Dieses Projekt steht unter der MIT License
 💬 Fragen? → Issues öffnen
  oder mcopalium.de
 
- 
-```yaml
-
-Das ist die fertige Version:  
-- **Interne Links** funktionieren (z. B. `docs/wiki/...`)  
-- **Nur YAML- und Java-Abschnitte** sind als kopierbare Codeblöcke formatiert  
-- Markdown rendert korrekt auf GitHub  
-- Keine übergroße Schrift, keine Layout-Fehler.
-  ```
+mfg Demus
