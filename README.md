@@ -33,16 +33,12 @@ Sichere Startplattform, automatische Lucky-Block-Spawns, Countdown-/Reward-Syste
 
 ![Abschnittsbanner](docs/images/luckysky/banner/Lucky-Banner02.png)
 
-## 🎬 Trailer
-[Imgur](https://imgur.com/SczJEsW)
-[img]https://i.imgur.com/SczJEsW.mp4[/img]
-<video
-  src="https://i.imgur.com/SczJEsW.mp4"
-  controls
-  width="100%"
-  preload="metadata">
-  <a href="https://i.imgur.com/SczJEsW.mp4">Download LuckySky-Catch.mp4</a>
+## 🎬
+<video src="https://<DEIN_USERNAME>.github.io/<DEIN_REPO>/media/LuckySky-Catch.mp4"
+       controls width="100%" preload="metadata">
+  <a href="https://<DEIN_USERNAME>.github.io/<DEIN_REPO>/media/LuckySky-Catch.mp4">Download</a>
 </video>
+
 
 ---
 
