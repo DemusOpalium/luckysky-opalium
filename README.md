@@ -1,42 +1,34 @@
-diff --git a/docs/wiki/README.md b/docs/wiki/README.md
-index c841c6563d23e351eb8136cd796f2d12e0dad4a2..2f2699b9a8fb8c6ac8cf50f58cd02a4973ecbf13 100644
---- a/docs/wiki/README.md
-+++ b/docs/wiki/README.md
-@@ -1,31 +1,37 @@
- ![LuckySky Banner](../images/luckysky/branding/banner/Banner-001.png)
- 
- # LuckySky Wiki
- 
- Diese Dokumentation fasst Betriebs- und Content-Prozesse des LuckySky-Servers zusammen. Die einzelnen Seiten decken spezialisierte Themen wie NPC-Management, grafische Bedienoberflächen, Weltrotation, PvP-Baublöcke und Fallen ab.
- 
-+## Konfiguration & Provisioning
-+- Zentrale Blaupause: `config/luckysky.yml` bündelt Welt-Spawnpunkte, Gate-Befehle, Rundeneinstellungen, Rewards und NPC-Definitionen.
-+- GUI-Layouts: Alle Admin/Player-Menüs liegen in `config/gui/` und können ohne Rebuild angepasst werden.
-+- Provisioning-Workflow: Nutze das Template beim Aufsetzen neuer Instanzen und führe anschließend `/ls reload`, damit LuckySky Gate-, GUI- und World-Definitionen lädt.
-+- Welt-Lifecycle & Rotation werden im Detail unter [LuckySky-Weltrotation](luckysky-weltrotation.md) beschrieben.
-+
- ## Inhaltsverzeichnis
- - [NPC-Depot](npc-depot.md)
- - [Admin- und Player-GUIs](admin-player-guis.md)
- - [LuckySky-Weltrotation](luckysky-weltrotation.md)
- - [Duels Crystal PvP Builder](duels-crystal-pvp-builder.md)
- - [Fallen-Handbuch](fallen-handbuch.md)
- - [Permissions & LuckPerms-Setups](permissions.md)
- 
- ## Branding Assets Überblick
- 
- Der neue Branding-Bereich unter `docs/images/luckysky/branding/` stellt alle grafischen Ressourcen für Marketing, GUI und Wiki zentral bereit. Die folgenden Beispiele zeigen die wichtigsten Artefakte:
- 
- ### Banner & Video
- 
- ![LuckySky Promotional Banner](../images/luckysky/branding/banner/Banner-001.png)
- 
- <video src="../images/luckysky/branding/docs/LuckySky-Catch.mp4" width="480" controls></video>
- 
- ### Logo-Varianten
- 
- <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
-   <img src="../images/luckysky/branding/logo/LuckySky-Logo2.png" alt="LuckySky Logo quadratisch" width="160" />
-   <img src="../images/luckysky/branding/logo/LuckySky-Logo4.png" alt="LuckySky Logo breit" width="240" />
- </div>
- 
+![LuckySky Banner](docs/images/luckysky/branding/banner/Banner-001.png)
+
+# LuckySky-Opalium
+
+Paper 1.21.10 Plugin für das LuckySky-Minigame von Opalium.  
+Bietet Spielsteuerung, Plattform-Utilities, automatische Lucky-Block-Spawns, Countdown-/Reward-Systeme, Wither-Events und vollständige In-Game-GUIs.
+
+---
+
+## ⚙ Konfiguration & Provisioning
+- **Zentrale Blaupause:** `game.yml` bündelt Welt-Spawnpunkte, Lucky-Block-Position, Rundendauer (inkl. Bossbar / Actionbar), Rewards, Lives, Spawns und Wither-Mode.  
+- **GUI-Layouts:** `admin-gui.yml` und `player-gui.yml` lassen sich ohne Rebuild ändern.  
+- **Provisioning-Workflow:** Welt-Template bereitstellen, Server starten, dann `/ls reload` ausführen, damit LuckySky `game.yml`, GUIs und Weltdefinitionen lädt.  
+- **AccessGate:** erlaubt Zutritt in *LOBBY*, sperrt COUNTDOWN / RUN für Nicht-Whitelist-Spieler.  
+- **Weltrotation / Lifecycle:** siehe [LuckySky-Weltrotation](docs/wiki/luckysky-weltrotation.md).
+
+---
+
+## 💡 Hauptfunktionen
+
+| Symbol | Komponente | Beschreibung |
+|:--:|:--|:--|
+| ![Gear](docs/images/luckysky/branding/icons/128x128/Icon-Rad.png) | **GameManager** | Koordiniert Start/Stop, lädt Welt, platziert Safe-Plattform, bindet Spieler, startet Lucky/Countdown/Wither-Services, verwaltet Teilnehmer. |
+| ![CommandBlock](docs/images/luckysky/branding/icons/128x128/Command-Block.png) | **LuckyService** | Platziert periodisch den konfigurierten Lucky-Block-Typ an der Arena-Position. |
+| ![Power](docs/images/luckysky/branding/icons/128x128/Icon-off.png) | **CountdownService** | Führt tick-genauen Rundentimer mit Bossbar / Actionbar aus und stoppt nach Ablauf. |
+| ![Magic](docs/images/luckysky/branding/icons/128x128/Icon-Tool-Click-Magic.png) | **WitherService** | Verwaltet verzögerte Spawns, Taunt-Nachrichten und Aktivierungs-Toggles. |
+| ![Heart](docs/images/luckysky/branding/icons/128x128/Icon-Herz.png) | **RewardService** | Führt Rewards/Fails aus, startet 60-Sekunden-Endtimer und setzt danach in LOBBY zurück. |
+| ![Magic](docs/images/luckysky/branding/icons/128x128/Icon-Tool-Click-Magic.png) | **Admin GUI** | In-Game-Steuerung für Start/Stop, Zeitpresets, Wipes, Plattform, Toggles, Reload. |
+| ![Heart](docs/images/luckysky/branding/icons/128x128/Icon-Herz.png) | **Duels Integration** | Verknüpft Lucky-Varianten mit Duels-Kits über GUI oder Commands. |
+
+---
+
+## 🗺 Struktur
+
